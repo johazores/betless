@@ -107,3 +107,17 @@
 - [x] Typecheck passes after structural hardening
 - [x] MVP verification passes after structural hardening
 - [x] Next production build passes after structural hardening
+
+## Loop 11 — UX Stepper and Non-Technical Demo Fixes
+- [x] Create vault form converted into a guided three-step flow
+- [x] Stepper component added with accessible active/done states
+- [x] Stellar public key guidance added for non-technical users
+- [x] One-click demo Stellar testnet public address added
+- [x] Client-side step validation added before moving forward
+- [x] Review step added before vault creation
+- [x] White-on-white/low-contrast scan completed
+- [x] Global autofill contrast styles added
+- [x] Create vault page copy updated to explain the guided demo flow
+- [x] Typecheck passes after UX fixes
+- [x] MVP verification passes after UX fixes
+- [x] Next production build passes after UX fixes

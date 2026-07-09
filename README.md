@@ -81,12 +81,13 @@ docs/engineering-loop-report.md
 
 1. Open the landing page.
 2. Click **Create a Commitment Vault**.
-3. Enter a Stellar testnet public address.
-4. Use the demo defaults: ₱10,000 target, ₱2,000 monthly top-up, 12 months.
-5. Create the vault.
-6. On the vault detail page, mark the next top-up completed.
-7. Claim the available milestone reward.
-8. Create Stellar proof.
+3. Click **Use demo testnet address** or paste a Stellar public address.
+4. Move through the guided Wallet, Savings Plan, and Reward & Reason steps.
+5. Use the demo defaults: ₱10,000 target, ₱2,000 monthly top-up, 12 months.
+6. Review the summary and create the vault.
+7. On the vault detail page, mark the next top-up completed.
+8. Claim the available milestone reward.
+9. Create Stellar proof.
 
 ## Testnet wallet note
 
@@ -100,13 +101,16 @@ GET /api/health
 
 ## Latest Engineering Loop
 
-Loop 10 added structural hardening:
+Loop 11 fixed the main demo UX issues:
 
-- shared domain constants/types in `lib/domain.ts`;
-- lazy Prisma Client loading for restricted sandbox checks;
-- centralized API method validation in `lib/api-methods.ts`;
-- expanded MVP verification for route architecture, schema presence, QA scripts, and unsafe UI wording;
-- new `docs/qa-report.md` file.
+- guided three-step create vault flow;
+- accessible stepper component;
+- one-click demo Stellar testnet public address for non-technical users;
+- clearer public-key safety guidance;
+- client-side step validation;
+- final review summary before vault creation;
+- contrast and autofill safety pass;
+- expanded MVP verifier to check the stepper, demo key helper, and contrast patterns.
 
 Use this command for the current practical QA loop:
 

@@ -24,13 +24,23 @@ The app follows the recommended hybrid direction:
 - Prisma remains the database layer.
 - Stellar logic stays in `services/stellar-proof-service.ts` and `lib/stellar.ts`.
 
+## UX Fixes Completed
+
+- Create vault page now uses a three-step guided setup instead of one long form.
+- Stepper shows active, completed, and upcoming states clearly.
+- Non-technical users can click **Use demo testnet address** instead of manually creating or finding a Stellar public key.
+- Public key helper text explains that public keys are safe to share and secret keys/private keys must never be entered.
+- The form validates each step before allowing the user to continue.
+- The final step includes a review summary before vault creation.
+- Inputs, selects, textareas, autofill states, and disabled buttons were checked for contrast.
+- A scan for direct white-background/white-text class combinations returned clean.
+
 ## Commands Run
 
 ```bash
 npm run typecheck
 npm run verify:mvp
 NEXT_TELEMETRY_DISABLED=1 npm run build:next
-npm run check
 ```
 
 ## Results
@@ -38,7 +48,6 @@ npm run check
 - TypeScript check: passed.
 - MVP file and wording verification: passed.
 - Next production build: passed.
-- Combined check script: passed.
 
 ## Known Environment Limitation
 
@@ -58,6 +67,8 @@ npm run build
 
 - [x] Landing page loads.
 - [x] Create vault page loads.
+- [x] Create vault form uses a clear stepper.
+- [x] Demo Stellar public key helper exists.
 - [x] Create vault form uses realistic demo defaults.
 - [x] API route exists for vault creation.
 - [x] Vault detail route exists.

@@ -24,6 +24,7 @@ const requiredFiles = [
   'lib/api-methods.ts',
   'lib/domain.ts',
   'lib/status-labels.ts',
+  'components/ui/stepper.tsx',
   'prisma/schema.prisma',
   'prisma/seed.ts',
   'docs/project-plan.md',
@@ -40,6 +41,7 @@ const uiFilesToScan = [
   'app/create-vault/page.tsx',
   'app/vaults/[id]/vault-detail-client.tsx',
   'components/layout/public-layout.tsx',
+  'components/ui/stepper.tsx',
   'components/vault/create-vault-form.tsx',
   'components/vault/reward-card.tsx',
   'components/vault/reward-timeline.tsx',
@@ -47,6 +49,13 @@ const uiFilesToScan = [
   'components/vault/top-up-schedule.tsx',
   'components/vault/unlock-card.tsx',
   'components/vault/vault-summary-card.tsx',
+];
+
+const contrastProblemPatterns = [
+  /bg-white[^'\n]*text-white/,
+  /text-white[^'\n]*bg-white/,
+  /bg-white\/[^'\n]*text-white/,
+  /text-white[^'\n]*bg-white\//,
 ];
 
 const bannedUiPatterns = [
@@ -82,6 +91,24 @@ for (const file of uiFilesToScan) {
     if (pattern.test(content)) {
       failures.push(`Banned or unsafe UI wording found in ${file}: ${pattern}`);
     }
+  }
+
+  for (const pattern of contrastProblemPatterns) {
+    if (pattern.test(content)) {
+      failures.push(`Potential white-on-white contrast issue found in ${file}: ${pattern}`);
+    }
+  }
+}
+
+const demoConfig = readFileSync(join(root, 'lib/demo-config.ts'), 'utf8');
+if (!demoConfig.includes('demoPublicKey')) {
+  failures.push('Missing non-technical demo public key helper in lib/demo-config.ts');
+}
+
+const createVaultForm = readFileSync(join(root, 'components/vault/create-vault-form.tsx'), 'utf8');
+for (const requiredCopy of ['Use demo testnet address', 'Guided setup', 'Step {progressLabel}', 'Never paste a secret key']) {
+  if (!createVaultForm.includes(requiredCopy)) {
+    failures.push(`Create vault form is missing UX helper copy: ${requiredCopy}`);
   }
 }
 

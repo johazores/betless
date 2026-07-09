@@ -124,3 +124,38 @@ All commands passed.
 `npm run build` still intentionally runs `prisma generate && next build`. That remains the correct production command because the real Prisma Client should be generated before deploying API routes that use the database.
 
 The sandbox limitation is only the Prisma engine download from `binaries.prisma.sh`. The app code, TypeScript checks, MVP verifier, and Next production build pass after this loop.
+
+## Loop 11 — UX Stepper and Non-Technical Demo Fixes
+
+### Problems Found
+
+- The create vault form was functional but hard to follow because all fields were shown at once.
+- Non-technical demo users could get blocked by the Stellar public address field.
+- The UI needed another contrast pass to avoid white-background/white-text issues, especially around active states and browser autofill.
+
+### Completed
+
+- Converted `components/vault/create-vault-form.tsx` into a guided three-step flow:
+  1. Wallet
+  2. Savings plan
+  3. Reward & reason
+- Added `components/ui/stepper.tsx` with clear active, completed, and upcoming step states.
+- Added a one-click demo Stellar testnet public address so users do not need to understand wallet setup during the demo.
+- Added plain-language helper copy explaining that a public key is safe to share and secret keys/private keys should never be entered.
+- Added client-side step validation before allowing users to continue to the next step.
+- Added a final review panel before vault creation.
+- Updated `app/create-vault/page.tsx` to explain the guided setup and non-technical demo path.
+- Added global input/autofill styles in `app/globals.css` to force dark text on white inputs and prevent browser autofill contrast issues.
+- Ran a code scan for white-background/white-text patterns in app and component files.
+
+### QA Commands Run
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+```
+
+### Result
+
+All commands passed.

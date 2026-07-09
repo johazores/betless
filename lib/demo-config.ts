@@ -3,6 +3,8 @@ import { TopUpFrequency, VaultMode } from '@/lib/domain';
 export const VAULT_MODE = VaultMode;
 export const TOP_UP_FREQUENCY = TopUpFrequency;
 
+export const demoPublicKey = 'GCONNAR5P736FK7Z6GD42PDEY7OGGD7WBPTXYVYSRVDZZO44LRH4L4W4';
+
 export const rewardOptions = [
   'Jollibee meal voucher',
   'Transport voucher',
