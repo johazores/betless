@@ -121,3 +121,20 @@
 - [x] Typecheck passes after UX fixes
 - [x] MVP verification passes after UX fixes
 - [x] Next production build passes after UX fixes
+
+## Loop 12 — Simple UI Reset and Contrast Fix
+- [x] Screenshot issue reviewed
+- [x] Root cause identified: dark text styles conflicting with base white Card background
+- [x] Global background reset to plain light gray
+- [x] Shared Card component simplified
+- [x] Landing page dark demo card removed
+- [x] Create vault dark guidance card removed
+- [x] Vault summary dark card removed
+- [x] Stepper active state simplified to light readable styling
+- [x] Progress bar simplified
+- [x] Loading and empty states simplified
+- [x] White-text-on-white-card issue removed from main content cards
+- [x] Typecheck passes after reset
+- [x] MVP verification passes after reset
+- [x] Next production build passes after reset
+- [x] Combined check passes after reset

@@ -1,14 +1,8 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-
-export function EmptyState({ title = 'Vault not found', message = 'Create a new commitment savings vault to continue.' }) {
+export function EmptyState({ title = 'Nothing to show yet', message = 'Create a Betless vault to begin the demo flow.' }: { title?: string; message?: string }) {
   return (
-    <div className="rounded-3xl border border-orange-100 bg-white/90 p-8 text-center shadow-card">
-      <p className="text-2xl font-black text-slate-950">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">{message}</p>
-      <Link href="/create-vault" className="mt-5 inline-flex">
-        <Button>Create a Betless Vault</Button>
-      </Link>
+    <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <p className="text-xl font-black text-slate-950">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
     </div>
   );
 }

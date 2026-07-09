@@ -4,10 +4,10 @@ import type { ReactNode } from 'react';
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-orange-100/70 bg-white/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-950 text-lg font-black text-white">B</span>
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-950 text-lg font-black text-white">B</span>
             <span>
               <span className="block text-base font-black tracking-tight text-slate-950">Betless</span>
               <span className="block text-xs font-bold text-slate-500">Commitment savings</span>
@@ -22,7 +22,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
-      <footer className="border-t border-orange-100 bg-white/70">
+      <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="font-bold text-slate-800">Betless MVP uses Stellar testnet only.</p>
           <p>No real custody, voucher fulfillment, GCash, yield promise, or regulated financial product in this demo.</p>

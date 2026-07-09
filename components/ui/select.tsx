@@ -21,7 +21,7 @@ export function Select({ label, options, hint, className, id, ...props }: Select
       <select
         id={fieldId}
         className={cn(
-          'mt-2 w-full rounded-2xl border border-orange-100 bg-white px-4 py-3 text-base font-semibold text-slate-950 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100',
+          'mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-semibold text-slate-950 outline-none transition focus:border-amber-500 focus:ring-4 focus:ring-amber-100',
           className,
         )}
         {...props}

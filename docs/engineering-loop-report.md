@@ -159,3 +159,42 @@ NEXT_TELEMETRY_DISABLED=1 npm run build:next
 ### Result
 
 All commands passed.
+
+## Loop 12 — Simple UI Reset and Contrast Fix
+
+### Problems Found
+
+- Dark card styling was still being applied through reusable cards that already had a white background class.
+- Because Tailwind utility order is not controlled by the order of strings in `className`, the white card background could override a dark card background while dark-card text remained white.
+- This created the exact bad UX shown in the screenshots: white or very light text on a white card.
+- The visual style was also too decorative for a fast workshop demo.
+
+### Completed
+
+- Reset the global app background to a plain light gray instead of layered gradients.
+- Simplified the base `Card` component to a readable white card with slate text, slate border, and light shadow.
+- Removed dark-card layouts from the landing page, create vault page, and vault detail summary.
+- Rebuilt the vault summary card as a simple readable white card with dark text and light gray metric boxes.
+- Simplified the landing page demo card and final CTA section.
+- Simplified the create vault side panel so all copy uses dark text on white or amber-tinted backgrounds.
+- Updated the stepper to use light active states instead of dark active states.
+- Updated progress bars to use a simple amber fill on a slate track.
+- Updated empty and loading states to plain white cards.
+- Kept dark buttons only where they are directly applied to actual buttons or brand marks, not inside cards with conflicting backgrounds.
+
+### QA Commands Run
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+npm run check
+```
+
+### Result
+
+All commands passed.
+
+### UI Rule Going Forward
+
+For this MVP, avoid passing dark background classes into the shared `Card` component. Use simple white cards for content and reserve dark backgrounds for buttons, small badges, or brand marks only.

@@ -156,11 +156,11 @@ export function CreateVaultForm() {
     <div className="space-y-5">
       <Stepper steps={steps} currentStep={currentStep} />
 
-      <Card className="bg-white/95 shadow-soft">
+      <Card>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-black text-orange-700">Step {progressLabel}</p>
+              <p className="text-sm font-black text-amber-700">Step {progressLabel}</p>
               <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{steps[currentStep].title}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{steps[currentStep].description}</p>
             </div>
@@ -174,7 +174,7 @@ export function CreateVaultForm() {
 
           {currentStep === 0 ? (
             <div className="space-y-5">
-              <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5 text-blue-950">
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950">
                 <p className="font-black">Not technical? Use the demo address.</p>
                 <p className="mt-2 text-sm font-semibold leading-6">
                   A Stellar public address is like a wallet username. It starts with <span className="font-black">G</span> and is safe to share. Never paste a secret key or private key.
@@ -197,7 +197,7 @@ export function CreateVaultForm() {
                 autoComplete="off"
               />
 
-              <div className="rounded-3xl bg-orange-50 p-4 text-sm leading-6 text-orange-950">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                 <span className="font-black">For the demo:</span> the app validates the public key format only. It does not ask for wallet seed words, private keys, GCash details, or real deposits.
               </div>
             </div>
@@ -258,7 +258,7 @@ export function CreateVaultForm() {
                   />
                 </div>
               ) : (
-                <div className="rounded-3xl bg-orange-50 p-4 text-sm font-semibold leading-6 text-orange-950">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
                   One-time lock mode skips recurring top-ups and focuses on protecting the starting amount until the unlock date.
                 </div>
               )}
@@ -278,7 +278,7 @@ export function CreateVaultForm() {
               <label className="block">
                 <span className="text-sm font-black text-slate-800">Reason for commitment</span>
                 <textarea
-                  className="mt-2 min-h-28 w-full rounded-2xl border border-orange-100 bg-white px-4 py-3 text-base font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                  className="mt-2 min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
                   value={form.reason}
                   onChange={(event) => updateField('reason', event.target.value)}
                   placeholder="Example: I want to protect my savings and stay committed to my goal."
@@ -287,11 +287,11 @@ export function CreateVaultForm() {
                 <span className="mt-2 block text-xs font-semibold leading-5 text-slate-500">{reasonCharactersLeft} characters left.</span>
               </label>
 
-              <div className="rounded-3xl bg-orange-50 p-4 text-sm leading-6 text-orange-950">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                 <span className="font-black">Estimated milestone reward:</span> {formatPeso(rewardEstimate)} demo value. Rewards are fixed positive reinforcement for completed progress milestones.
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-black text-slate-950">Review before creating</p>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
@@ -315,7 +315,7 @@ export function CreateVaultForm() {
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-orange-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="ghost" onClick={goToPreviousStep} disabled={currentStep === 0 || isSubmitting}>
               Back
             </Button>

@@ -94,3 +94,28 @@ npm run build
 - Full admin dashboard.
 - Medical questionnaire.
 - Gambling, ticket, random reward, or betting mechanics.
+
+## Loop 12 Visual QA Update
+
+The UI was reset to a simpler, safer style after screenshot review showed white text appearing on white cards.
+
+Completed visual fixes:
+
+- Global background changed to plain light gray.
+- Shared cards now use solid white backgrounds with dark text.
+- Dark card variants were removed from the landing hero, create vault guide, and vault summary.
+- Vault summary metrics now use readable gray boxes with dark labels and values.
+- Stepper active state now uses a light amber background with dark text.
+- Demo cards and disclaimer panels now use light backgrounds with dark text.
+- Loading and empty states now use plain white cards.
+
+Verification after the reset:
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+npm run check
+```
+
+Result: all passed.

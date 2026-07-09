@@ -101,6 +101,8 @@ GET /api/health
 
 ## Latest Engineering Loop
 
+Loop 12 reset the UI to a simpler, safer style after screenshot review showed white text appearing on white cards. The app now uses plain light backgrounds, white cards, dark text, readable metric boxes, and fewer decorative gradients.
+
 Loop 11 fixed the main demo UX issues:
 
 - guided three-step create vault flow;
@@ -111,6 +113,14 @@ Loop 11 fixed the main demo UX issues:
 - final review summary before vault creation;
 - contrast and autofill safety pass;
 - expanded MVP verifier to check the stepper, demo key helper, and contrast patterns.
+
+Loop 12 visual fixes:
+
+- global background reset to plain light gray;
+- shared Card component simplified to white background with dark text;
+- dark cards removed from landing, create vault, and vault summary;
+- stepper active state changed to light amber with dark text;
+- progress bars, loading states, and empty states simplified.
 
 Use this command for the current practical QA loop:
 
