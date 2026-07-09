@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AppConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  isSecret  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vault {
+  id               String          @id @default(cuid())
+  walletAddress    String
+  displayName      String?
+  mode             VaultMode       @default(ONE_TIME_LOCK)
+
+  targetAmount     Decimal
+  currentAmount    Decimal         @default(0)
+  topUpAmount      Decimal?
+  topUpFrequency   TopUpFrequency?
+
+  durationWeeks    Int
+  rewardType       String
+  rewardRate       Decimal         @default(0.01)
+  reason           String?
+  status           VaultStatus     @default(ACTIVE)
+
+  stellarBalanceId String?
+  stellarStatus    StellarStatus   @default(NOT_CREATED)
+
+  unlockAt         DateTime
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  rewards          RewardClaim[]
+  topUps           TopUp[]
+}
+
+enum VaultMode {
+  ONE_TIME_LOCK
+  PERIODIC_TOP_UP
+}
+
+enum TopUpFrequency {
+  WEEKLY
+  MONTHLY
+}
+
+enum VaultStatus {
+  ACTIVE
+  UNLOCK_READY
+  COMPLETED
+  CANCELLED
+}
+
+enum StellarStatus {
+  NOT_CREATED
+  PENDING
+  CREATED
+  FAILED
+}
+
+model TopUp {
+  id        String      @id @default(cuid())
+  vaultId   String
+  amount    Decimal
+  dueAt     DateTime
+  paidAt    DateTime?
+  status    TopUpStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+
+  vault     Vault       @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+}
+
+enum TopUpStatus {
+  PENDING
+  COMPLETED
+  MISSED
+}
+
+model RewardClaim {
+  id          String       @id @default(cuid())
+  vaultId     String
+  weekNumber  Int
+  rewardName  String
+  rewardValue Decimal
+  voucherCode String?
+  status      RewardStatus @default(LOCKED)
+  claimedAt   DateTime?
+  createdAt   DateTime     @default(now())
+
+  vault       Vault        @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@unique([vaultId, weekNumber])
+}
+
+enum RewardStatus {
+  LOCKED
+  AVAILABLE
+  CLAIMED
+}

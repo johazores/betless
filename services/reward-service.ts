@@ -1,0 +1,77 @@
+import { RewardStatus } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { VoucherService } from '@/services/voucher-service';
+
+type DbClient = PrismaClient | Prisma.TransactionClient;
+
+export class RewardService {
+  static calculateRewardValue(targetAmount: number, rewardRate: number) {
+    return Math.max(20, Math.round(targetAmount * rewardRate));
+  }
+
+  static buildWeeklyRewards(params: {
+    vaultId: string;
+    durationWeeks: number;
+    rewardName: string;
+    rewardValue: number;
+    makeFirstAvailable?: boolean;
+  }) {
+    return Array.from({ length: params.durationWeeks }).map((_, index) => ({
+      vaultId: params.vaultId,
+      weekNumber: index + 1,
+      rewardName: params.rewardName,
+      rewardValue: params.rewardValue,
+      status: index === 0 && params.makeFirstAvailable ? RewardStatus.AVAILABLE : RewardStatus.LOCKED,
+    }));
+  }
+
+  static async createWeeklyRewards(client: DbClient, params: {
+    vaultId: string;
+    durationWeeks: number;
+    rewardName: string;
+    rewardValue: number;
+    makeFirstAvailable?: boolean;
+  }) {
+    const rewards = this.buildWeeklyRewards(params);
+
+    if (rewards.length === 0) {
+      return;
+    }
+
+    await client.rewardClaim.createMany({ data: rewards });
+  }
+
+  static async claimReward(vaultId: string, rewardId?: string) {
+    return prisma.$transaction(async (tx) => {
+      const reward = rewardId
+        ? await tx.rewardClaim.findFirst({ where: { id: rewardId, vaultId } })
+        : await tx.rewardClaim.findFirst({ where: { vaultId, status: RewardStatus.AVAILABLE }, orderBy: { weekNumber: 'asc' } });
+
+      if (!reward) {
+        throw new Error('No reward is available yet. Complete a top-up first.');
+      }
+
+      if (reward.status === RewardStatus.CLAIMED) {
+        throw new Error('This reward was already claimed.');
+      }
+
+      if (reward.status !== RewardStatus.AVAILABLE) {
+        throw new Error('This reward is not available yet.');
+      }
+
+      const voucher = VoucherService.createVoucher(reward.rewardName, reward.rewardValue.toNumber());
+
+      await tx.rewardClaim.update({
+        where: { id: reward.id },
+        data: {
+          voucherCode: voucher.code,
+          status: RewardStatus.CLAIMED,
+          claimedAt: new Date(),
+        },
+      });
+
+      return voucher;
+    });
+  }
+}
