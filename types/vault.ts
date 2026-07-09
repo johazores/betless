@@ -1,4 +1,4 @@
-import type { RewardStatus, StellarStatus, TopUpFrequency, TopUpStatus, VaultMode, VaultStatus } from '@prisma/client';
+import type { RewardStatus, StellarStatus, TopUpFrequency, TopUpStatus, VaultMode, VaultStatus } from '@/lib/domain';
 
 export type TopUpView = {
   id: string;

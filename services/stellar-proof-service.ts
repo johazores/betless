@@ -1,4 +1,4 @@
-import { StellarStatus } from '@prisma/client';
+import { StellarStatus } from '@/lib/domain';
 import { ConfigService } from '@/services/config-service';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { prisma } from '@/lib/prisma';

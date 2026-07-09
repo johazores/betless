@@ -1,9 +1,8 @@
-import { TopUpFrequency, TopUpStatus, VaultStatus } from '@prisma/client';
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { TopUpFrequency, TopUpStatus, VaultStatus } from '@/lib/domain';
 import { addMonths, addWeeks } from '@/lib/dates';
 import { prisma } from '@/lib/prisma';
 
-type DbClient = PrismaClient | Prisma.TransactionClient;
+type DbClient = any;
 
 export class TopUpService {
   static buildTopUpSchedule(params: {
@@ -47,7 +46,7 @@ export class TopUpService {
   }
 
   static async markTopUpCompleted(vaultId: string, topUpId?: string) {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const topUp = topUpId
         ? await tx.topUp.findFirst({ where: { id: topUpId, vaultId } })
         : await tx.topUp.findFirst({ where: { vaultId, status: TopUpStatus.PENDING }, orderBy: { dueAt: 'asc' } });
@@ -66,7 +65,12 @@ export class TopUpService {
         throw new Error('Vault not found.');
       }
 
-      const nextAmount = vault.currentAmount.add(topUp.amount);
+      if (vault.status === VaultStatus.UNLOCK_READY || vault.status === VaultStatus.COMPLETED || vault.currentAmount.greaterThanOrEqualTo(vault.targetAmount)) {
+        throw new Error('Savings target is already reached. No more demo top-ups are needed.');
+      }
+
+      const rawNextAmount = vault.currentAmount.add(topUp.amount);
+      const nextAmount = rawNextAmount.greaterThan(vault.targetAmount) ? vault.targetAmount : rawNextAmount;
       const goalReached = nextAmount.greaterThanOrEqualTo(vault.targetAmount);
 
       await tx.topUp.update({

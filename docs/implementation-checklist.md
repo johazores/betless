@@ -80,3 +80,30 @@
 - [x] Full proposal and pitch Markdown added
 - [x] Post-update typecheck completed
 - [x] Post-update build completed with `NEXT_TELEMETRY_DISABLED=1 npx next build`
+
+## Loop 9 — Code Structure Polish
+- [x] Frontend API calls centralized in `lib/api-client.ts`
+- [x] Status label formatting centralized in `lib/status-labels.ts`
+- [x] Create vault validation tightened
+- [x] Invalid enum values blocked instead of defaulted silently
+- [x] Top-up completion capped at target amount
+- [x] Extra top-ups blocked after target is reached
+- [x] Invalid `next lint` script replaced with MVP verification
+- [x] MVP structure verification script added
+- [x] Engineering loop report added
+- [x] Typecheck passes after polish
+- [x] MVP verification passes after polish
+- [x] Next production build passes after polish
+
+## Loop 10 — Structural Resilience and QA Hardening
+- [x] Local domain constants/types added in `lib/domain.ts`
+- [x] Prisma generated-type imports removed from app/service/domain code
+- [x] Prisma Client loading made lazy for restricted build environments
+- [x] API method handling centralized in `lib/api-methods.ts`
+- [x] Demo config now reuses shared domain constants
+- [x] MVP verifier expanded to check App Router page rendering and Pages API split
+- [x] MVP verifier checks required Prisma models
+- [x] MVP verifier checks required QA scripts
+- [x] Typecheck passes after structural hardening
+- [x] MVP verification passes after structural hardening
+- [x] Next production build passes after structural hardening

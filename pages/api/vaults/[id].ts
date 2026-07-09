@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { getSingleQueryValue } from '@/lib/validators';
 import { VaultService } from '@/services/vault-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return sendError(res, 'Method not allowed.', 405);
-  }
+  if (!requireMethod(req, res, 'GET')) return;
 
   const id = getSingleQueryValue(req.query.id);
 

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { STELLAR_NETWORK_LABEL } from '@/lib/stellar';
+import { getStellarStatusLabel } from '@/lib/status-labels';
 import type { VaultDetailView } from '@/types/vault';
 
 type StellarProofCardProps = {
@@ -9,15 +10,8 @@ type StellarProofCardProps = {
   isLoading: boolean;
 };
 
-const statusCopy = {
-  NOT_CREATED: 'Proof not created yet',
-  PENDING: 'Proof pending',
-  CREATED: 'Testnet proof created',
-  FAILED: 'Testnet proof unavailable',
-};
-
 export function StellarProofCard({ vault, onCreateProof, isLoading }: StellarProofCardProps) {
-  const status = statusCopy[vault.stellarStatus];
+  const status = getStellarStatusLabel(vault.stellarStatus);
 
   return (
     <Card>

@@ -1,5 +1,4 @@
-import { TopUpFrequency, VaultMode } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
+import { VaultMode, decimalToNumber } from '@/lib/domain';
 import { addWeeks } from '@/lib/dates';
 import { prisma } from '@/lib/prisma';
 import type { CreateVaultInput } from '@/lib/validators';
@@ -8,12 +7,46 @@ import { RewardService } from '@/services/reward-service';
 import { TopUpService } from '@/services/top-up-service';
 import type { RewardClaimView, TopUpView, VaultDetailView } from '@/types/vault';
 
-type VaultWithRelations = Prisma.VaultGetPayload<{
-  include: {
-    topUps: { orderBy: { dueAt: 'asc' } };
-    rewards: { orderBy: { weekNumber: 'asc' } };
-  };
-}>;
+type TopUpRecord = {
+  id: string;
+  amount: unknown;
+  dueAt: Date;
+  paidAt: Date | null;
+  status: TopUpView['status'];
+};
+
+type RewardClaimRecord = {
+  id: string;
+  weekNumber: number;
+  rewardName: string;
+  rewardValue: unknown;
+  voucherCode: string | null;
+  status: RewardClaimView['status'];
+  claimedAt: Date | null;
+};
+
+type VaultWithRelations = {
+  id: string;
+  walletAddress: string;
+  displayName: string | null;
+  mode: VaultDetailView['mode'];
+  targetAmount: unknown;
+  currentAmount: unknown;
+  topUpAmount: unknown | null;
+  topUpFrequency: VaultDetailView['topUpFrequency'];
+  durationWeeks: number;
+  rewardType: string;
+  rewardRate: unknown;
+  reason: string | null;
+  status: VaultDetailView['status'];
+  stellarBalanceId: string | null;
+  stellarStatus: VaultDetailView['stellarStatus'];
+  unlockAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  topUps: TopUpRecord[];
+  rewards: RewardClaimRecord[];
+};
 
 export class VaultService {
   static calculateDurationWeeks(durationMonths: number) {
@@ -30,7 +63,7 @@ export class VaultService {
     const rewardValue = RewardService.calculateRewardValue(input.targetAmount, rewardRate);
     const unlockAt = this.calculateUnlockDate(durationWeeks);
 
-    const vault = await prisma.$transaction(async (tx) => {
+    const vault = await prisma.$transaction(async (tx: any) => {
       const createdVault = await tx.vault.create({
         data: {
           walletAddress: input.walletAddress,
@@ -93,7 +126,7 @@ export class VaultService {
   private static toTopUpView(topUp: VaultWithRelations['topUps'][number]): TopUpView {
     return {
       id: topUp.id,
-      amount: topUp.amount.toNumber(),
+      amount: decimalToNumber(topUp.amount),
       dueAt: topUp.dueAt.toISOString(),
       paidAt: topUp.paidAt ? topUp.paidAt.toISOString() : null,
       status: topUp.status,
@@ -105,7 +138,7 @@ export class VaultService {
       id: reward.id,
       weekNumber: reward.weekNumber,
       rewardName: reward.rewardName,
-      rewardValue: reward.rewardValue.toNumber(),
+      rewardValue: decimalToNumber(reward.rewardValue),
       voucherCode: reward.voucherCode,
       status: reward.status,
       claimedAt: reward.claimedAt ? reward.claimedAt.toISOString() : null,
@@ -113,11 +146,12 @@ export class VaultService {
   }
 
   private static toVaultDetailView(vault: VaultWithRelations): VaultDetailView {
-    const currentAmount = vault.currentAmount.toNumber();
-    const targetAmount = vault.targetAmount.toNumber();
+    const currentAmount = decimalToNumber(vault.currentAmount);
+    const targetAmount = decimalToNumber(vault.targetAmount);
     const progressPercent = targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
-    const topUps = vault.topUps.map(this.toTopUpView);
-    const rewards = vault.rewards.map(this.toRewardClaimView);
+    const topUps = vault.topUps.map((topUp) => this.toTopUpView(topUp));
+    const rewards = vault.rewards.map((reward) => this.toRewardClaimView(reward));
+    const goalReached = currentAmount >= targetAmount;
 
     return {
       id: vault.id,
@@ -126,11 +160,11 @@ export class VaultService {
       mode: vault.mode,
       targetAmount,
       currentAmount,
-      topUpAmount: vault.topUpAmount ? vault.topUpAmount.toNumber() : null,
+      topUpAmount: vault.topUpAmount ? decimalToNumber(vault.topUpAmount) : null,
       topUpFrequency: vault.topUpFrequency,
       durationWeeks: vault.durationWeeks,
       rewardType: vault.rewardType,
-      rewardRate: vault.rewardRate.toNumber(),
+      rewardRate: decimalToNumber(vault.rewardRate),
       reason: vault.reason,
       status: vault.status,
       stellarBalanceId: vault.stellarBalanceId,
@@ -139,7 +173,7 @@ export class VaultService {
       createdAt: vault.createdAt.toISOString(),
       updatedAt: vault.updatedAt.toISOString(),
       progressPercent: Math.min(100, progressPercent),
-      nextTopUp: topUps.find((topUp) => topUp.status === 'PENDING') ?? null,
+      nextTopUp: goalReached ? null : topUps.find((topUp) => topUp.status === 'PENDING') ?? null,
       availableReward: rewards.find((reward) => reward.status === 'AVAILABLE') ?? null,
       topUps,
       rewards,

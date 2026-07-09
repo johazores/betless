@@ -1,5 +1,5 @@
 import { Keypair } from '@stellar/stellar-sdk';
-import { VaultMode, TopUpFrequency } from '@prisma/client';
+import { TopUpFrequency, VaultMode } from '../lib/domain';
 import { prisma } from '../lib/prisma';
 import { VaultService } from '../services/vault-service';
 

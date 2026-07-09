@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
+import { getVaultModeLabel } from '@/lib/status-labels';
 import type { VaultDetailView } from '@/types/vault';
 
 export function UnlockCard({ vault }: { vault: VaultDetailView }) {
@@ -15,7 +16,7 @@ export function UnlockCard({ vault }: { vault: VaultDetailView }) {
         </div>
         <div className="flex justify-between gap-4 rounded-2xl bg-orange-50 p-4">
           <span className="font-bold">Mode</span>
-          <span className="font-black text-slate-950">{vault.mode.replace(/_/g, ' ')}</span>
+          <span className="font-black text-slate-950">{getVaultModeLabel(vault.mode)}</span>
         </div>
         <div className="flex justify-between gap-4 rounded-2xl bg-orange-50 p-4">
           <span className="font-bold">Next top-up</span>

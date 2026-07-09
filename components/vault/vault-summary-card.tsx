@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatPeso } from '@/lib/money';
+import { getVaultStatusLabel } from '@/lib/status-labels';
 import type { VaultDetailView } from '@/types/vault';
 
 export function VaultSummaryCard({ vault }: { vault: VaultDetailView }) {
@@ -9,7 +10,7 @@ export function VaultSummaryCard({ vault }: { vault: VaultDetailView }) {
     <Card className="bg-slate-950 text-white">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Badge className="bg-orange-200 text-orange-950">{vault.status.replace(/_/g, ' ')}</Badge>
+          <Badge className="bg-orange-200 text-orange-950">{getVaultStatusLabel(vault.status)}</Badge>
           <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Your commitment vault is active.</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">{vault.reason}</p>
         </div>

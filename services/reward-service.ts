@@ -1,9 +1,8 @@
-import { RewardStatus } from '@prisma/client';
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { RewardStatus, decimalToNumber } from '@/lib/domain';
 import { prisma } from '@/lib/prisma';
 import { VoucherService } from '@/services/voucher-service';
 
-type DbClient = PrismaClient | Prisma.TransactionClient;
+type DbClient = any;
 
 export class RewardService {
   static calculateRewardValue(targetAmount: number, rewardRate: number) {
@@ -43,7 +42,7 @@ export class RewardService {
   }
 
   static async claimReward(vaultId: string, rewardId?: string) {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       const reward = rewardId
         ? await tx.rewardClaim.findFirst({ where: { id: rewardId, vaultId } })
         : await tx.rewardClaim.findFirst({ where: { vaultId, status: RewardStatus.AVAILABLE }, orderBy: { weekNumber: 'asc' } });
@@ -60,7 +59,7 @@ export class RewardService {
         throw new Error('This reward is not available yet.');
       }
 
-      const voucher = VoucherService.createVoucher(reward.rewardName, reward.rewardValue.toNumber());
+      const voucher = VoucherService.createVoucher(reward.rewardName, decimalToNumber(reward.rewardValue));
 
       await tx.rewardClaim.update({
         where: { id: reward.id },

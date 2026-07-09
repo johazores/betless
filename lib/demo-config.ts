@@ -1,12 +1,7 @@
-export const VAULT_MODE = {
-  ONE_TIME_LOCK: 'ONE_TIME_LOCK',
-  PERIODIC_TOP_UP: 'PERIODIC_TOP_UP',
-} as const;
+import { TopUpFrequency, VaultMode } from '@/lib/domain';
 
-export const TOP_UP_FREQUENCY = {
-  WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY',
-} as const;
+export const VAULT_MODE = VaultMode;
+export const TOP_UP_FREQUENCY = TopUpFrequency;
 
 export const rewardOptions = [
   'Jollibee meal voucher',

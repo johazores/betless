@@ -57,6 +57,26 @@ Open:
 http://localhost:3000
 ```
 
+
+## Quality checks
+
+Use this practical check loop while polishing the MVP:
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+npm run check
+```
+
+`npm run build` still runs `prisma generate && next build`, which is correct for normal local development and deployment. If Prisma engine downloads are blocked by the environment, run the check loop above to verify the app code while keeping Prisma generation in the production build script.
+
+## Engineering loop report
+
+```txt
+docs/engineering-loop-report.md
+```
+
 ## Demo flow
 
 1. Open the landing page.
@@ -76,4 +96,26 @@ Only a Stellar public key is required. Never paste a private key or secret key i
 
 ```txt
 GET /api/health
+```
+
+## Latest Engineering Loop
+
+Loop 10 added structural hardening:
+
+- shared domain constants/types in `lib/domain.ts`;
+- lazy Prisma Client loading for restricted sandbox checks;
+- centralized API method validation in `lib/api-methods.ts`;
+- expanded MVP verification for route architecture, schema presence, QA scripts, and unsafe UI wording;
+- new `docs/qa-report.md` file.
+
+Use this command for the current practical QA loop:
+
+```bash
+npm run check
+```
+
+Use this command for normal production/deployment environments:
+
+```bash
+npm run build
 ```

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
+import { apiRequest, postJson } from '@/lib/api-client';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { RewardCard } from '@/components/vault/reward-card';
@@ -12,8 +13,6 @@ import { TopUpSchedule } from '@/components/vault/top-up-schedule';
 import { UnlockCard } from '@/components/vault/unlock-card';
 import { VaultSummaryCard } from '@/components/vault/vault-summary-card';
 import type { VaultDetailView, VoucherResult } from '@/types/vault';
-
-type ApiPayload<T> = { ok: true; data: T } | { ok: false; error: string };
 
 type VaultDetailClientProps = {
   id: string;
@@ -33,14 +32,8 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     setError('');
 
     try {
-      const response = await fetch(`/api/vaults/${id}`);
-      const payload = (await response.json()) as ApiPayload<VaultDetailView>;
-
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.ok ? 'Vault could not be loaded.' : payload.error);
-      }
-
-      setVault(payload.data);
+      const loadedVault = await apiRequest<VaultDetailView>(`/api/vaults/${id}`);
+      setVault(loadedVault);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Vault could not be loaded.');
     } finally {
@@ -57,18 +50,8 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     setError('');
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const payload = (await response.json()) as ApiPayload<T>;
-
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.ok ? 'Request failed.' : payload.error);
-      }
-
-      onSuccess(payload.data);
+      const data = await postJson<T>(url, body);
+      onSuccess(data);
     } catch (mutationError) {
       setError(mutationError instanceof Error ? mutationError.message : 'Request failed.');
     } finally {

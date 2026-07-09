@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
+import { getTopUpStatusLabel } from '@/lib/status-labels';
 import type { TopUpView, VaultDetailView } from '@/types/vault';
 
 type TopUpScheduleProps = {
@@ -17,7 +18,7 @@ function TopUpStatusPill({ topUp }: { topUp: TopUpView }) {
       ? 'bg-red-100 text-red-800'
       : 'bg-orange-100 text-orange-900';
 
-  return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{topUp.status}</span>;
+  return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{getTopUpStatusLabel(topUp.status)}</span>;
 }
 
 export function TopUpSchedule({ vault, onMarkTopUp, isLoading }: TopUpScheduleProps) {

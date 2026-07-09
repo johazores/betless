@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatPeso } from '@/lib/money';
+import { getRewardStatusLabel } from '@/lib/status-labels';
 import type { RewardClaimView, VaultDetailView } from '@/types/vault';
 
 type RewardTimelineProps = {
@@ -16,7 +17,7 @@ function RewardStatusPill({ reward }: { reward: RewardClaimView }) {
       ? 'bg-blue-100 text-blue-800'
       : 'bg-slate-100 text-slate-600';
 
-  return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{reward.status}</span>;
+  return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{getRewardStatusLabel(reward.status)}</span>;
 }
 
 export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimelineProps) {

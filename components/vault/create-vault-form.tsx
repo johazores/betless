@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/alert';
+import { apiRequest } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,9 +34,8 @@ export function CreateVaultForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/vaults', {
+      const vault = await apiRequest<{ id: string }>('/api/vaults', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           targetAmount: Number(form.targetAmount),
@@ -46,13 +46,7 @@ export function CreateVaultForm() {
         }),
       });
 
-      const payload = await response.json() as { ok: boolean; data?: { id: string }; error?: string };
-
-      if (!response.ok || !payload.ok || !payload.data?.id) {
-        throw new Error(payload.error || 'Vault could not be created.');
-      }
-
-      router.push(`/vaults/${payload.data.id}`);
+      router.push(`/vaults/${vault.id}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Vault could not be created.');
     } finally {
