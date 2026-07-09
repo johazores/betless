@@ -66,4 +66,17 @@
 
 - `npx tsc --noEmit` passes.
 - `NEXT_TELEMETRY_DISABLED=1 npx next build` passes.
-- `npx prisma generate` could not run inside this sandbox because Prisma engine downloads from `binaries.prisma.sh` failed with DNS `EAI_AGAIN`. The project still keeps `prisma generate && next build` in the production build script so a normal local/dev environment with Prisma engine access generates the real Prisma Client before build.
+- `npm run build` still cannot complete inside this sandbox because Prisma engine downloads from `binaries.prisma.sh` fail with DNS `EAI_AGAIN`. The project still keeps `prisma generate && next build` in the production build script so a normal local/dev environment with Prisma engine access generates the real Prisma Client before build.
+
+## Loop 8 — Recommended Concept Alignment
+- [x] App copy updated to Commitment Vault positioning
+- [x] Recovery-supportive angle kept as impact narrative, not clinical product claim
+- [x] Landing page updated with safer product design copy
+- [x] Create vault page updated with recommended demo framing
+- [x] Reward wording changed from weekly reward focus to milestone reward focus
+- [x] README updated with recommended direction
+- [x] Demo script updated with safer language
+- [x] Project plan updated with recommended hybrid strategy
+- [x] Full proposal and pitch Markdown added
+- [x] Post-update typecheck completed
+- [x] Post-update build completed with `NEXT_TELEMETRY_DISABLED=1 npx next build`

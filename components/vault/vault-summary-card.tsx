@@ -10,7 +10,7 @@ export function VaultSummaryCard({ vault }: { vault: VaultDetailView }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Badge className="bg-orange-200 text-orange-950">{vault.status.replace(/_/g, ' ')}</Badge>
-          <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Your Betless vault is active.</h1>
+          <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">Your commitment vault is active.</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">{vault.reason}</p>
         </div>
         <div className="rounded-3xl bg-white/10 p-4 text-sm text-slate-200">

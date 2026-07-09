@@ -1,8 +1,23 @@
 # Betless
 
-Betless is a Stellar-powered commitment savings and recovery rewards MVP.
+Betless is a Stellar-powered commitment savings and milestone rewards MVP.
 
 It uses App Router for page rendering and Pages Router API routes under `/pages/api` for backend endpoints.
+
+## Recommended Direction
+
+Betless should be presented as a **Commitment Vault** product:
+
+- Main category: rewarded savings
+- Impact angle: recovery-supportive money protection
+- Reward design: fixed milestone rewards
+- MVP status: demo-only vouchers and Stellar testnet proof
+
+Read the full proposal and pitch draft here:
+
+```txt
+docs/recommended-concept-and-pitch.md
+```
 
 ## What this MVP does
 
@@ -10,7 +25,7 @@ It uses App Router for page rendering and Pages Router API routes under `/pages/
 - Stores vault, top-up, and reward records with Prisma/PostgreSQL
 - Shows a polished vault detail page
 - Lets a user mark the next top-up as completed
-- Unlocks a fixed weekly reward after progress
+- Unlocks a fixed milestone reward after progress
 - Generates a demo-only mock voucher code
 - Validates Stellar public keys with Stellar SDK
 - Attempts a graceful Stellar testnet proof status
@@ -23,7 +38,8 @@ It uses App Router for page rendering and Pages Router API routes under `/pages/
 - No real yield
 - No auth/KYC
 - No chance mechanics
-- No ticket or random reward mechanics
+- No ticket or prize mechanics
+- No treatment or diagnosis claims
 
 ## Setup
 
@@ -44,12 +60,12 @@ http://localhost:3000
 ## Demo flow
 
 1. Open the landing page.
-2. Click **Create a Betless Vault**.
+2. Click **Create a Commitment Vault**.
 3. Enter a Stellar testnet public address.
 4. Use the demo defaults: ₱10,000 target, ₱2,000 monthly top-up, 12 months.
 5. Create the vault.
 6. On the vault detail page, mark the next top-up completed.
-7. Claim the available weekly reward.
+7. Claim the available milestone reward.
 8. Create Stellar proof.
 
 ## Testnet wallet note

@@ -26,18 +26,18 @@ export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimeli
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-black text-orange-700">Reward timeline</p>
+          <p className="text-sm font-black text-orange-700">Milestone reward timeline</p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">
             {vault.availableReward ? `${vault.availableReward.rewardName} is ready` : 'Complete a top-up to unlock the next reward'}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">Rewards are fixed progress incentives worth around 1% of the savings target.</p>
+          <p className="mt-2 text-sm text-slate-600">Rewards are fixed progress incentives worth around 1% of the savings target in demo mode.</p>
         </div>
         <Button
           onClick={() => onClaimReward(vault.availableReward?.id)}
           disabled={!vault.availableReward}
           isLoading={isLoading}
         >
-          Claim weekly reward
+          Claim milestone reward
         </Button>
       </div>
 

@@ -25,7 +25,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <footer className="border-t border-orange-100 bg-white/70">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="font-bold text-slate-800">Betless MVP uses Stellar testnet only.</p>
-          <p>No real custody, voucher fulfillment, yield, GCash, or regulated financial product in this demo.</p>
+          <p>No real custody, voucher fulfillment, GCash, yield promise, or regulated financial product in this demo.</p>
         </div>
       </footer>
     </div>

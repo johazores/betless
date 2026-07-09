@@ -146,7 +146,7 @@ export function CreateVaultForm() {
         </label>
 
         <div className="rounded-3xl bg-orange-50 p-4 text-sm leading-6 text-orange-950">
-          <span className="font-black">Estimated weekly reward:</span> {formatPeso(rewardEstimate)} demo value. Rewards are fixed positive reinforcement, not random and not chance-based.
+          <span className="font-black">Estimated milestone reward:</span> {formatPeso(rewardEstimate)} demo value. Rewards are fixed positive reinforcement for completed progress milestones.
         </div>
 
         <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
