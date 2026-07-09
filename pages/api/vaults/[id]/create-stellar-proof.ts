@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await StellarProofService.createOrSimulateProof(id);
+    await StellarProofService.createOrUpdateCommitmentProof(id);
     const vault = await VaultService.refreshVaultDetail(id);
     return sendSuccess(res, vault);
   } catch (error) {

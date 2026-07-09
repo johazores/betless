@@ -21,6 +21,18 @@ function TopUpStatusPill({ topUp }: { topUp: TopUpView }) {
   return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{getTopUpStatusLabel(topUp.status)}</span>;
 }
 
+function getTopUpEmptyMessage(vault: VaultDetailView) {
+  if (vault.mode === 'ONE_TIME_LOCK') {
+    return 'One-time lock mode commits the full target upfront, so recurring top-ups are not needed.';
+  }
+
+  if (!vault.nextTopUp) {
+    return 'All planned demo top-ups are complete. Claim any available reward, then save the commitment proof.';
+  }
+
+  return 'No scheduled top-ups are available yet.';
+}
+
 export function TopUpSchedule({ vault, onMarkTopUp, isLoading }: TopUpScheduleProps) {
   const visibleTopUps = vault.topUps.slice(0, 8);
 
@@ -33,12 +45,12 @@ export function TopUpSchedule({ vault, onMarkTopUp, isLoading }: TopUpSchedulePr
           <p className="mt-2 text-sm leading-6 text-slate-600">Mark the next scheduled top-up as completed to update saved amount and unlock the next fixed reward.</p>
         </div>
         <Button onClick={() => onMarkTopUp(vault.nextTopUp?.id)} disabled={!vault.nextTopUp} isLoading={isLoading}>
-          Mark top-up completed
+          {vault.nextTopUp ? 'Mark top-up completed' : 'No top-up needed'}
         </Button>
       </div>
 
       {visibleTopUps.length === 0 ? (
-        <div className="mt-6 rounded-3xl bg-orange-50 p-5 text-sm font-semibold text-orange-950">One-time lock mode does not require recurring top-ups.</div>
+        <div className="mt-6 rounded-2xl border border-orange-100 bg-orange-50 p-5 text-sm font-semibold leading-6 text-orange-950">{getTopUpEmptyMessage(vault)}</div>
       ) : (
         <div className="mt-6 space-y-3">
           {visibleTopUps.map((topUp) => (

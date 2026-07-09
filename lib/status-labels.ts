@@ -2,7 +2,7 @@ import type { RewardStatus, StellarStatus, TopUpStatus, VaultMode, VaultStatus }
 
 const vaultStatusLabels: Record<VaultStatus, string> = {
   ACTIVE: 'Active',
-  UNLOCK_READY: 'Unlock ready',
+  UNLOCK_READY: 'Target reached',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
 };
@@ -25,10 +25,10 @@ const rewardStatusLabels: Record<RewardStatus, string> = {
 };
 
 const stellarStatusLabels: Record<StellarStatus, string> = {
-  NOT_CREATED: 'Proof not created yet',
-  PENDING: 'Proof pending',
-  CREATED: 'Testnet proof created',
-  FAILED: 'Testnet proof unavailable',
+  NOT_CREATED: 'Commitment proof not saved yet',
+  PENDING: 'Saving commitment proof',
+  CREATED: 'Commitment proof saved',
+  FAILED: 'Commitment proof needs review',
 };
 
 export function getVaultStatusLabel(status: VaultStatus) {

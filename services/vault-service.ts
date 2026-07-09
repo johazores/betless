@@ -1,5 +1,6 @@
 import { VaultMode, decimalToNumber } from '@/lib/domain';
 import { addWeeks } from '@/lib/dates';
+import { getPlannedTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
 import type { CreateVaultInput } from '@/lib/validators';
 import { ConfigService } from '@/services/config-service';
@@ -62,6 +63,16 @@ export class VaultService {
     const durationWeeks = this.calculateDurationWeeks(input.durationMonths);
     const rewardValue = RewardService.calculateRewardValue(input.targetAmount, rewardRate);
     const unlockAt = this.calculateUnlockDate(durationWeeks);
+    const plannedTopUpCount = input.mode === VaultMode.PERIODIC_TOP_UP && input.topUpAmount && input.topUpFrequency
+      ? getPlannedTopUpCount({
+          targetAmount: input.targetAmount,
+          currentAmount: input.currentAmount,
+          topUpAmount: input.topUpAmount,
+          durationWeeks,
+          frequency: input.topUpFrequency,
+        })
+      : 0;
+    const rewardMilestoneCount = input.mode === VaultMode.PERIODIC_TOP_UP ? Math.max(1, plannedTopUpCount) : 1;
 
     const vault = await prisma.$transaction(async (tx: any) => {
       const createdVault = await tx.vault.create({
@@ -86,15 +97,16 @@ export class VaultService {
           amount: input.topUpAmount,
           durationWeeks,
           frequency: input.topUpFrequency,
+          count: plannedTopUpCount,
         });
       }
 
       await RewardService.createWeeklyRewards(tx, {
         vaultId: createdVault.id,
-        durationWeeks,
+        durationWeeks: rewardMilestoneCount,
         rewardName: input.rewardType,
         rewardValue,
-        makeFirstAvailable: input.mode === VaultMode.ONE_TIME_LOCK && input.currentAmount > 0,
+        makeFirstAvailable: input.mode === VaultMode.ONE_TIME_LOCK && input.currentAmount >= input.targetAmount,
       });
 
       return createdVault;

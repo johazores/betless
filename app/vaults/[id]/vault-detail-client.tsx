@@ -12,6 +12,7 @@ import { StellarProofCard } from '@/components/vault/stellar-proof-card';
 import { TopUpSchedule } from '@/components/vault/top-up-schedule';
 import { UnlockCard } from '@/components/vault/unlock-card';
 import { VaultSummaryCard } from '@/components/vault/vault-summary-card';
+import { VaultNextStepCard } from '@/components/vault/vault-next-step-card';
 import type { VaultDetailView, VoucherResult } from '@/types/vault';
 
 type VaultDetailClientProps = {
@@ -112,6 +113,15 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
       {voucher ? <RewardCard voucher={voucher} /> : null}
 
       <VaultSummaryCard vault={vault} />
+      <VaultNextStepCard
+        vault={vault}
+        onMarkTopUp={handleMarkTopUp}
+        onClaimReward={handleClaimReward}
+        onCreateProof={handleCreateProof}
+        isTopUpLoading={topUpLoading}
+        isRewardLoading={rewardLoading}
+        isProofLoading={proofLoading}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <UnlockCard vault={vault} />

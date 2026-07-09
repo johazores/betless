@@ -2,6 +2,7 @@ import { TopUpFrequency, VaultMode } from '@/lib/domain';
 import { rewardOptions } from '@/lib/demo-config';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { toNumber } from '@/lib/money';
+import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';
 
 export type CreateVaultInput = {
   walletAddress: string;
@@ -89,6 +90,10 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
   if (reason && reason.length > 280) throw new Error('Reason must be 280 characters or less.');
 
   if (mode === VaultMode.ONE_TIME_LOCK) {
+    if (currentAmount !== targetAmount) {
+      throw new Error('For one-time lock mode, the committed amount must match the target amount. Use periodic top-up if the user will add money over time.');
+    }
+
     return {
       walletAddress,
       mode,
@@ -105,6 +110,12 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
 
   if (topUpAmount > targetAmount) {
     throw new Error('Top-up amount should not be higher than the target amount.');
+  }
+
+  const durationWeeks = Math.max(1, Math.round(durationMonths * 4));
+
+  if (!canPeriodicPlanReachTarget({ targetAmount, currentAmount, topUpAmount, durationWeeks, frequency: topUpFrequency })) {
+    throw new Error(getPlanReachMessage({ targetAmount, currentAmount, topUpAmount, durationWeeks, frequency: topUpFrequency }));
   }
 
   return {

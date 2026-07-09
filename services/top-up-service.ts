@@ -1,5 +1,6 @@
-import { TopUpFrequency, TopUpStatus, VaultStatus } from '@/lib/domain';
+import { RewardStatus, TopUpFrequency, TopUpStatus, VaultStatus } from '@/lib/domain';
 import { addMonths, addWeeks } from '@/lib/dates';
+import { getMaxTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
 
 type DbClient = any;
@@ -10,12 +11,14 @@ export class TopUpService {
     amount: number;
     durationWeeks: number;
     frequency: TopUpFrequency;
+    count?: number;
     startDate?: Date;
   }) {
     const startDate = params.startDate ?? new Date();
-    const count = params.frequency === TopUpFrequency.WEEKLY
-      ? params.durationWeeks
-      : Math.max(1, Math.ceil(params.durationWeeks / 4));
+    const maxCount = getMaxTopUpCount(params.durationWeeks, params.frequency);
+    const count = typeof params.count === 'number'
+      ? Math.max(0, Math.min(params.count, maxCount))
+      : maxCount;
 
     return Array.from({ length: count }).map((_, index) => {
       const dueAt = params.frequency === TopUpFrequency.WEEKLY
@@ -35,6 +38,7 @@ export class TopUpService {
     amount: number;
     durationWeeks: number;
     frequency: TopUpFrequency;
+    count?: number;
   }) {
     const schedule = this.buildTopUpSchedule(params);
 
@@ -52,7 +56,7 @@ export class TopUpService {
         : await tx.topUp.findFirst({ where: { vaultId, status: TopUpStatus.PENDING }, orderBy: { dueAt: 'asc' } });
 
       if (!topUp) {
-        throw new Error('No pending top-up is available.');
+        throw new Error('No pending top-up is available. The savings plan is already caught up.');
       }
 
       if (topUp.status === TopUpStatus.COMPLETED) {
@@ -66,7 +70,7 @@ export class TopUpService {
       }
 
       if (vault.status === VaultStatus.UNLOCK_READY || vault.status === VaultStatus.COMPLETED || vault.currentAmount.greaterThanOrEqualTo(vault.targetAmount)) {
-        throw new Error('Savings target is already reached. No more demo top-ups are needed.');
+        throw new Error('Savings target is already reached. The next step is to claim any available reward and save the commitment proof.');
       }
 
       const rawNextAmount = vault.currentAmount.add(topUp.amount);
@@ -90,14 +94,14 @@ export class TopUpService {
       });
 
       const nextLockedReward = await tx.rewardClaim.findFirst({
-        where: { vaultId, status: 'LOCKED' },
+        where: { vaultId, status: RewardStatus.LOCKED },
         orderBy: { weekNumber: 'asc' },
       });
 
       if (nextLockedReward) {
         await tx.rewardClaim.update({
           where: { id: nextLockedReward.id },
-          data: { status: 'AVAILABLE' },
+          data: { status: RewardStatus.AVAILABLE },
         });
       }
     });

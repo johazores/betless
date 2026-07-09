@@ -119,3 +119,28 @@ npm run check
 ```
 
 Result: all passed.
+
+## Loop 13 QA — End-to-End Audit Fixes
+
+### Commands run
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+npm run check
+```
+
+### Result
+
+All checks passed.
+
+### Verified behavior
+
+- Create vault remains available through the App Router.
+- API routes remain under `/pages/api`.
+- Periodic plans cannot be created if the selected top-up amount and duration cannot reach the target.
+- One-time lock mode no longer creates a partial commitment with no next action.
+- Vault detail page now has a clear next-step card.
+- Commitment proof no longer exposes `testnet-proof-unavailable` as a user-facing dead end.
+- Demo proof workflow completes with a saved proof reference when the public address is valid.

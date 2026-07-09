@@ -4,7 +4,7 @@ Betless helps people protect money from harmful spending impulses by turning sav
 
 The user can create a vault by choosing either a one-time lock or a periodic top-up plan. In this demo, we will create a ₱10,000 savings goal with ₱2,000 monthly top-ups.
 
-Once the vault is created, the user can see their progress, next top-up date, unlock schedule, reward eligibility, and Stellar proof status.
+Once the vault is created, the user can see their progress, next top-up date, unlock schedule, reward eligibility, and commitment proof.
 
 The reward is fixed and milestone-based. It is not a prize, not a chance outcome, and not game-based. It is a small positive reinforcement, such as a food, transport, grocery, or eGift-style voucher.
 

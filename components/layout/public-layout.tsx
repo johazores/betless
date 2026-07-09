@@ -15,7 +15,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-bold text-slate-600 sm:flex">
             <a href="/#how-it-works" className="hover:text-slate-950">How it works</a>
-            <a href="/#stellar-proof" className="hover:text-slate-950">Stellar proof</a>
+            <a href="/#stellar-proof" className="hover:text-slate-950">Commitment proof</a>
             <Link href="/create-vault" className="rounded-full bg-slate-950 px-4 py-2 text-white hover:bg-slate-800">Create vault</Link>
           </nav>
           <Link href="/create-vault" className="rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white hover:bg-slate-800 sm:hidden">Start</Link>

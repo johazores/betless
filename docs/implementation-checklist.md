@@ -46,7 +46,7 @@
 - [x] Stellar public key validation added
 - [x] Stellar testnet config added
 - [x] create-stellar-proof endpoint added
-- [x] Stellar proof status saved
+- [x] commitment proof saved
 - [x] Failure handled gracefully
 - [x] No private keys exposed
 - [x] Build passes
@@ -138,3 +138,24 @@
 - [x] MVP verification passes after reset
 - [x] Next production build passes after reset
 - [x] Combined check passes after reset
+
+## Loop 13 — End-to-End Audit and Workflow Completion
+- [x] Product flow audited end to end
+- [x] Frontend pages and components reviewed
+- [x] Backend API route usage reviewed
+- [x] Business logic dead ends identified
+- [x] One-time lock partial-commitment dead end fixed
+- [x] Periodic top-up reachability validation added
+- [x] Top-up schedule count aligned to target amount
+- [x] Reward milestone count aligned to reachable actions
+- [x] Vault next-step guidance added
+- [x] Commitment proof workflow completed
+- [x] Technical proof failure text removed from user flow
+- [x] Duplicate proof action prevented
+- [x] Database indexes added
+- [x] End-to-end audit document added
+- [x] README updated
+- [x] TypeScript check passed
+- [x] MVP verification passed
+- [x] Next production build passed
+- [x] Combined check passed

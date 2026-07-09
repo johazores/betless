@@ -1,4 +1,4 @@
-import { TopUpFrequency, VaultMode } from '@/lib/domain';
+import { TopUpFrequency, VaultMode, type TopUpFrequency as TopUpFrequencyType, type VaultMode as VaultModeType } from '@/lib/domain';
 
 export const VAULT_MODE = VaultMode;
 export const TOP_UP_FREQUENCY = TopUpFrequency;
@@ -22,7 +22,19 @@ export const topUpFrequencyOptions = [
   { label: 'Monthly', value: TOP_UP_FREQUENCY.MONTHLY },
 ];
 
-export const defaultVaultForm = {
+export type VaultFormState = {
+  walletAddress: string;
+  mode: VaultModeType;
+  targetAmount: string;
+  currentAmount: string;
+  topUpAmount: string;
+  topUpFrequency: TopUpFrequencyType;
+  durationMonths: string;
+  rewardType: string;
+  reason: string;
+};
+
+export const defaultVaultForm: VaultFormState = {
   walletAddress: '',
   mode: VAULT_MODE.PERIODIC_TOP_UP,
   targetAmount: '10000',

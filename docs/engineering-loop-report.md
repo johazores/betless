@@ -198,3 +198,34 @@ All commands passed.
 ### UI Rule Going Forward
 
 For this MVP, avoid passing dark background classes into the shared `Card` component. Use simple white cards for content and reserve dark backgrounds for buttons, small badges, or brand marks only.
+
+## Loop 13 — End-to-End Product and Engineering Audit
+
+### Root cause found
+
+The confusing commitment proof screen was caused by incomplete workflow semantics, not only bad copy. The service treated optional Stellar testnet account lookup failure as a user-facing proof failure, which exposed implementation details and gave the user no clear next step.
+
+### Completed fixes
+
+- Added `docs/end-to-end-audit.md` with a full product, frontend, backend, API, business logic, database, security, and architecture audit.
+- Added `lib/planning.ts` for shared savings-plan rules.
+- Added target reachability validation for periodic top-up plans.
+- Changed one-time lock mode so the committed amount must match the target amount.
+- Generated only the top-ups needed to reach the target instead of creating unnecessary future dead-end top-ups.
+- Aligned reward milestones to the actual reachable demo actions.
+- Added `VaultNextStepCard` so every vault detail state has a clear next action.
+- Changed the proof workflow from "testnet proof unavailable" to a product-facing commitment proof that completes when the public key is valid.
+- Disabled duplicate proof creation after a proof is saved.
+- Added database indexes for common status and vault relation lookups.
+- Updated README and copy to explain the complete demo path without exposing internal implementation details.
+
+### QA completed
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_TELEMETRY_DISABLED=1 npm run build:next
+npm run check
+```
+
+All checks passed.

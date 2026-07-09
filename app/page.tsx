@@ -57,7 +57,7 @@ export default function HomePage() {
                 </div>
               </div>
               <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
-                This MVP uses demo-only rewards and Stellar testnet proof. It does not process real funds, real vouchers, or regulated financial products.
+                This MVP uses demo-only rewards and a commitment proof linked to a Stellar testnet public address. It does not process real funds, real vouchers, or regulated financial products.
               </p>
             </div>
           </Card>
@@ -102,7 +102,7 @@ export default function HomePage() {
             <Badge>Why Stellar</Badge>
             <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-950">A transparent proof layer for commitments and rewards.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              The MVP validates a Stellar public key and records a graceful testnet proof status. Future versions can use Stellar for partner-funded reward distribution, tokenized vouchers, and auditable milestone claims.
+              The MVP validates a Stellar public key and saves a clear commitment proof for the demo. Future versions can use Stellar for partner-funded reward distribution, tokenized vouchers, and auditable milestone claims.
             </p>
           </div>
           <Card>
@@ -137,7 +137,7 @@ export default function HomePage() {
             <p className="text-sm font-black text-amber-700">Ready for the workshop demo</p>
             <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Create a Betless vault in under two minutes.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Show the core flow: create vault, view progress, mark top-up completed, claim a fixed mock voucher, and display Stellar testnet proof status.
+              Show the core flow: create vault, view progress, mark a top-up completed, claim a fixed demo voucher, and save the commitment proof.
             </p>
             <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create a Commitment Vault</Button></Link>
           </div>

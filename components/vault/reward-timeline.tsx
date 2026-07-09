@@ -20,6 +20,13 @@ function RewardStatusPill({ reward }: { reward: RewardClaimView }) {
   return <span className={`rounded-full px-3 py-1 text-xs font-black ${className}`}>{getRewardStatusLabel(reward.status)}</span>;
 }
 
+function getRewardHeading(vault: VaultDetailView) {
+  if (vault.availableReward) return `${vault.availableReward.rewardName} is ready`;
+  if (vault.rewards.every((reward) => reward.status === 'CLAIMED')) return 'Milestone rewards claimed';
+  if (vault.mode === 'ONE_TIME_LOCK') return 'Claim the available one-time reward';
+  return 'Complete the next top-up to unlock a reward';
+}
+
 export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimelineProps) {
   const visibleRewards = vault.rewards.slice(0, 8);
 
@@ -28,9 +35,7 @@ export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimeli
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-black text-orange-700">Milestone reward timeline</p>
-          <h2 className="mt-2 text-2xl font-black text-slate-950">
-            {vault.availableReward ? `${vault.availableReward.rewardName} is ready` : 'Complete a top-up to unlock the next reward'}
-          </h2>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">{getRewardHeading(vault)}</h2>
           <p className="mt-2 text-sm text-slate-600">Rewards are fixed progress incentives worth around 1% of the savings target in demo mode.</p>
         </div>
         <Button
@@ -46,7 +51,7 @@ export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimeli
         {visibleRewards.map((reward) => (
           <div key={reward.id} className="flex flex-col gap-3 rounded-2xl border border-orange-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-black text-slate-950">Week {reward.weekNumber}: {reward.rewardName}</p>
+              <p className="font-black text-slate-950">Milestone {reward.weekNumber}: {reward.rewardName}</p>
               <p className="text-sm text-slate-600">{formatPeso(reward.rewardValue)} demo value {reward.voucherCode ? `• ${reward.voucherCode}` : ''}</p>
             </div>
             <RewardStatusPill reward={reward} />

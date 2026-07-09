@@ -9,11 +9,12 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Stepper, type StepperStep } from '@/components/ui/stepper';
-import { defaultVaultForm, demoPublicKey, rewardOptions, topUpFrequencyOptions, vaultModeOptions, VAULT_MODE } from '@/lib/demo-config';
+import { defaultVaultForm, demoPublicKey, rewardOptions, topUpFrequencyOptions, vaultModeOptions, VAULT_MODE, type VaultFormState } from '@/lib/demo-config';
 import { formatPeso } from '@/lib/money';
 import { isValidStellarPublicKey } from '@/lib/stellar';
+import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';
 
-type FormState = typeof defaultVaultForm;
+type FormState = VaultFormState;
 
 const steps: StepperStep[] = [
   {
@@ -46,9 +47,17 @@ function getStepError(step: number, form: FormState) {
     if (!Number.isFinite(currentAmount) || currentAmount < 0) return 'Starting amount cannot be negative.';
     if (currentAmount > targetAmount) return 'Starting amount cannot be higher than the target amount.';
     if (!Number.isFinite(durationMonths) || durationMonths < 1 || durationMonths > 36) return 'Duration must be between 1 and 36 months.';
+    if (form.mode === VAULT_MODE.ONE_TIME_LOCK && currentAmount !== targetAmount) {
+      return 'For one-time lock mode, the committed amount must match the target amount. Use periodic top-up if the user will add money over time.';
+    }
     if (form.mode === VAULT_MODE.PERIODIC_TOP_UP) {
       if (!Number.isFinite(topUpAmount) || topUpAmount <= 0) return 'Top-up amount must be greater than zero.';
       if (topUpAmount > targetAmount) return 'Top-up amount should not be higher than the target amount.';
+
+      const durationWeeks = Math.max(1, Math.round(durationMonths * 4));
+      if (!canPeriodicPlanReachTarget({ targetAmount, currentAmount, topUpAmount, durationWeeks, frequency: form.topUpFrequency })) {
+        return getPlanReachMessage({ targetAmount, currentAmount, topUpAmount, durationWeeks, frequency: form.topUpFrequency });
+      }
     }
   }
 
@@ -79,7 +88,17 @@ export function CreateVaultForm() {
   const reasonCharactersLeft = 280 - form.reason.length;
 
   function updateField(name: keyof FormState, value: string) {
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => {
+      if (name === 'mode' && value === VAULT_MODE.ONE_TIME_LOCK) {
+        return { ...current, mode: value, currentAmount: current.targetAmount };
+      }
+
+      if (current.mode === VAULT_MODE.ONE_TIME_LOCK && name === 'targetAmount') {
+        return { ...current, targetAmount: value, currentAmount: value };
+      }
+
+      return { ...current, [name]: value };
+    });
     setError('');
     setSuccessMessage('');
   }
@@ -135,7 +154,7 @@ export function CreateVaultForm() {
           ...form,
           walletAddress: form.walletAddress.trim(),
           targetAmount: Number(form.targetAmount),
-          currentAmount: Number(form.currentAmount),
+          currentAmount: form.mode === VAULT_MODE.ONE_TIME_LOCK ? Number(form.targetAmount) : Number(form.currentAmount),
           topUpAmount: form.mode === VAULT_MODE.PERIODIC_TOP_UP ? Number(form.topUpAmount) : undefined,
           topUpFrequency: form.mode === VAULT_MODE.PERIODIC_TOP_UP ? form.topUpFrequency : undefined,
           durationMonths: Number(form.durationMonths),
@@ -232,12 +251,13 @@ export function CreateVaultForm() {
                   onChange={(event) => updateField('targetAmount', event.target.value)}
                 />
                 <Input
-                  label="Starting amount"
+                  label={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'Committed amount' : 'Starting amount'}
                   type="number"
                   min="0"
-                  value={form.currentAmount}
+                  value={form.mode === VAULT_MODE.ONE_TIME_LOCK ? form.targetAmount : form.currentAmount}
                   onChange={(event) => updateField('currentAmount', event.target.value)}
-                  hint="Use 0 if the user is starting fresh."
+                  disabled={form.mode === VAULT_MODE.ONE_TIME_LOCK}
+                  hint={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'One-time lock commits the full target upfront in demo mode.' : 'Use 0 if the user is starting fresh.'}
                 />
               </div>
 
@@ -259,7 +279,7 @@ export function CreateVaultForm() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
-                  One-time lock mode skips recurring top-ups and focuses on protecting the starting amount until the unlock date.
+                  One-time lock mode commits the full target upfront and skips recurring top-ups. Use periodic top-up when the user wants to build the target over time.
                 </div>
               )}
             </div>

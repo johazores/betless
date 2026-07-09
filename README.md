@@ -1,45 +1,65 @@
-# Betless
+# Betless MVP
 
-Betless is a Stellar-powered commitment savings and milestone rewards MVP.
+Betless is a Stellar-powered commitment savings MVP for a hackathon/demo setting.
 
-It uses App Router for page rendering and Pages Router API routes under `/pages/api` for backend endpoints.
+The recommended direction is **Commitment Vault first, recovery-supportive rewards second**. The app helps users protect money from harmful spending impulses by creating a savings commitment, following a top-up plan, claiming fixed demo rewards, and saving a commitment proof linked to a Stellar testnet public address.
 
-## Recommended Direction
+## What This MVP Does
 
-Betless should be presented as a **Commitment Vault** product:
+- Renders pages with the Next.js App Router.
+- Uses `/pages/api` for backend API routes.
+- Creates a Betless vault from a guided 3-step form.
+- Supports one-time lock and periodic top-up modes.
+- Validates Stellar public addresses without asking for private keys.
+- Generates only the top-ups needed to reach the selected target.
+- Validates that a periodic plan can reach the target within the selected duration.
+- Unlocks fixed milestone rewards after completed progress actions.
+- Generates demo-only voucher codes.
+- Saves a user-facing commitment proof reference.
+- Includes a health endpoint.
 
-- Main category: rewarded savings
-- Impact angle: recovery-supportive money protection
-- Reward design: fixed milestone rewards
-- MVP status: demo-only vouchers and Stellar testnet proof
+## What This MVP Does Not Do
 
-Read the full proposal and pitch draft here:
+- No real money custody.
+- No GCash integration.
+- No real voucher supplier integration.
+- No real yield.
+- No auto-debit.
+- No KYC.
+- No auth system.
+- No medical or recovery treatment claims.
+- No random rewards, prize pools, tickets, or gambling mechanics.
 
-```txt
-docs/recommended-concept-and-pitch.md
-```
+## Tech Stack
 
-## What this MVP does
+- Next.js
+- App Router for page rendering
+- Pages Router API routes under `/pages/api`
+- TypeScript
+- Tailwind CSS
+- Prisma
+- PostgreSQL
+- Stellar SDK
 
-- Creates a commitment savings vault
-- Stores vault, top-up, and reward records with Prisma/PostgreSQL
-- Shows a polished vault detail page
-- Lets a user mark the next top-up as completed
-- Unlocks a fixed milestone reward after progress
-- Generates a demo-only mock voucher code
-- Validates Stellar public keys with Stellar SDK
-- Attempts a graceful Stellar testnet proof status
+## Main User Flow
 
-## What this MVP does not do
+1. Open the landing page.
+2. Click **Create a Commitment Vault**.
+3. Use the one-click demo Stellar public address or paste a valid public key.
+4. Choose one-time lock or periodic top-up.
+5. Set the target, duration, top-up, reward, and reason.
+6. Create the vault.
+7. Follow the next-step card on the vault detail page.
+8. Mark the top-up as complete if using periodic mode.
+9. Claim the fixed milestone reward.
+10. Save the commitment proof.
+11. End with a complete demo state.
 
-- No real GCash integration
-- No real voucher supplier
-- No real money custody
-- No real yield
-- No auth/KYC
-- No chance mechanics
-- No ticket or prize mechanics
-- No treatment or diagnosis claims
+## Important Product Notes
+
+The proof step is a demo commitment proof, not custody and not a guarantee of funds. The app validates a public Stellar address and saves a proof reference. If testnet account lookup is unavailable, the workflow still completes because the MVP should not block the user on a network dependency.
+
+Real custody, voucher redemption, GCash, yield, and partner settlement belong in a later phase with licensed financial and voucher partners.
 
 ## Setup
 
@@ -48,19 +68,13 @@ npm install
 cp .env.example .env
 npm run prisma:generate
 npm run prisma:migrate
+npm run prisma:seed
 npm run dev
 ```
 
-Open:
+Set `DATABASE_URL` in `.env` before running Prisma commands.
 
-```txt
-http://localhost:3000
-```
-
-
-## Quality checks
-
-Use this practical check loop while polishing the MVP:
+## QA Commands
 
 ```bash
 npm run typecheck
@@ -69,67 +83,20 @@ NEXT_TELEMETRY_DISABLED=1 npm run build:next
 npm run check
 ```
 
-`npm run build` still runs `prisma generate && next build`, which is correct for normal local development and deployment. If Prisma engine downloads are blocked by the environment, run the check loop above to verify the app code while keeping Prisma generation in the production build script.
-
-## Engineering loop report
-
-```txt
-docs/engineering-loop-report.md
-```
-
-## Demo flow
-
-1. Open the landing page.
-2. Click **Create a Commitment Vault**.
-3. Click **Use demo testnet address** or paste a Stellar public address.
-4. Move through the guided Wallet, Savings Plan, and Reward & Reason steps.
-5. Use the demo defaults: ₱10,000 target, ₱2,000 monthly top-up, 12 months.
-6. Review the summary and create the vault.
-7. On the vault detail page, mark the next top-up completed.
-8. Claim the available milestone reward.
-9. Create Stellar proof.
-
-## Testnet wallet note
-
-Only a Stellar public key is required. Never paste a private key or secret key into the app.
-
-## Health check
-
-```txt
-GET /api/health
-```
-
-## Latest Engineering Loop
-
-Loop 12 reset the UI to a simpler, safer style after screenshot review showed white text appearing on white cards. The app now uses plain light backgrounds, white cards, dark text, readable metric boxes, and fewer decorative gradients.
-
-Loop 11 fixed the main demo UX issues:
-
-- guided three-step create vault flow;
-- accessible stepper component;
-- one-click demo Stellar testnet public address for non-technical users;
-- clearer public-key safety guidance;
-- client-side step validation;
-- final review summary before vault creation;
-- contrast and autofill safety pass;
-- expanded MVP verifier to check the stepper, demo key helper, and contrast patterns.
-
-Loop 12 visual fixes:
-
-- global background reset to plain light gray;
-- shared Card component simplified to white background with dark text;
-- dark cards removed from landing, create vault, and vault summary;
-- stepper active state changed to light amber with dark text;
-- progress bars, loading states, and empty states simplified.
-
-Use this command for the current practical QA loop:
-
-```bash
-npm run check
-```
-
-Use this command for normal production/deployment environments:
+The normal production build script remains:
 
 ```bash
 npm run build
 ```
+
+That runs `prisma generate && next build`.
+
+## Documentation
+
+- `docs/project-plan.md`
+- `docs/recommended-concept-and-pitch.md`
+- `docs/demo-script.md`
+- `docs/implementation-checklist.md`
+- `docs/engineering-loop-report.md`
+- `docs/qa-report.md`
+- `docs/end-to-end-audit.md`

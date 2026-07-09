@@ -156,7 +156,7 @@ The vault detail page shows:
 - Top-up schedule
 - Milestone reward timeline
 - Mock voucher code after claim
-- Stellar proof status
+- commitment proof
 
 The MVP demonstrates a full product flow while avoiding regulated production behaviors.
 
@@ -194,7 +194,7 @@ Technical note:
 5. User sets the target amount, top-up amount, duration, reward preference, and personal reason.
 6. App creates the vault.
 7. User lands on the vault detail page.
-8. User sees progress, unlock date, next top-up, reward timeline, and Stellar proof status.
+8. User sees progress, unlock date, next top-up, reward timeline, and commitment proof.
 9. User marks one top-up as completed.
 10. The current saved amount updates.
 11. A fixed milestone reward becomes available.
