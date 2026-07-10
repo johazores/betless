@@ -36,3 +36,10 @@ export function postJson<T>(url: string, body: Record<string, unknown> = {}) {
     body: JSON.stringify(body),
   });
 }
+
+export function patchJson<T>(url: string, body: Record<string, unknown> = {}) {
+  return apiRequest<T>(url, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}

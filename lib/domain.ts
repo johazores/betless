@@ -37,6 +37,8 @@ export const AppUserVerificationStatus = {
   REJECTED: 'REJECTED',
 } as const;
 
+export type AppUserVerificationStatus = (typeof AppUserVerificationStatus)[keyof typeof AppUserVerificationStatus];
+
 export type DecimalLike = {
   toNumber?: () => number;
   toString?: () => string;

@@ -1,10 +1,9 @@
 import Link from 'next/link';
+import { HeroSection } from '@/components/marketing/hero-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PublicLayout } from '@/components/layout/public-layout';
-import { Progress } from '@/components/ui/progress';
-import { Stat } from '@/components/ui/stat';
 import { HowItWorks } from '@/components/marketing/how-it-works';
 import { formatPeso } from '@/lib/money';
 import { rewardCatalog } from '@/lib/rewards';
@@ -13,7 +12,6 @@ import {
   FLAT_FEE_PRINCIPAL_LIMIT_PHP,
   FLAT_WITHDRAWAL_FEE_PHP,
   MIN_DEPOSIT_PHP,
-  calculateMonthlyPoints,
 } from '@/lib/vault-rules';
 
 const featuredDepositAmount = 50_000;
@@ -25,55 +23,9 @@ const promises = [
 ];
 
 export default function HomePage() {
-  const monthlyPoints = calculateMonthlyPoints(featuredDepositAmount);
-
   return (
     <PublicLayout>
-      <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div>
-            <Badge>Commitment savings</Badge>
-            <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
-              Lock your savings. Earn real rewards.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-ink-muted">
-              Betless helps you commit to long-term savings. Deposit {formatPeso(MIN_DEPOSIT_PHP)} or more,
-              lock it for 12 months or longer, and earn points every month that you can spend on groceries,
-              travel, gadgets, and more. Your full deposit comes back at the end.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/create-vault"><Button className="w-full sm:w-auto">Start saving</Button></Link>
-              <a href="#how-it-works"><Button variant="secondary" className="w-full sm:w-auto">How it works</Button></a>
-            </div>
-          </div>
-
-          <Card>
-            <p className="text-sm font-black text-brand-700">12-month savings plan</p>
-            <p className="mt-1 text-xs font-semibold text-ink-muted">Based on a {formatPeso(featuredDepositAmount)} deposit</p>
-            <div className="mt-6 space-y-5">
-              <div>
-                <p className="text-sm font-semibold text-ink-muted">Locked deposit</p>
-                <p className="mt-1 text-4xl font-black text-ink">{formatPeso(featuredDepositAmount)}</p>
-              </div>
-              <div>
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold text-ink-muted">
-                  <span>Month 5 of 12</span>
-                  <span>7 months remaining</span>
-                </div>
-                <Progress value={42} />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Stat label="Lock period" value={<span className="text-2xl">12 months</span>} />
-                <Stat label="Points per month" value={<span className="text-2xl">{monthlyPoints.toLocaleString('en-PH')}</span>} />
-              </div>
-              <p className="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm font-semibold leading-6 text-brand-900">
-                {formatPeso(featuredDepositAmount)} locked for 12 months earns about {(monthlyPoints * 12).toLocaleString('en-PH')} points —
-                and the full {formatPeso(featuredDepositAmount)} is returned at maturity.
-              </p>
-            </div>
-          </Card>
-        </div>
-      </section>
+      <HeroSection featuredDepositAmount={featuredDepositAmount} />
 
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-16" id="how-it-works">
         <div className="mx-auto max-w-6xl">

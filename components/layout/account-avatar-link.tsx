@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/class-names';
 
 /**
- * White-labeled replacement for Clerk's UserButton: an avatar with the user's
- * initial that links to the in-app /account page. No Clerk UI is rendered.
+ * White-labeled replacement for Clerk's UserButton: avatar links to /account.
  */
 export function AccountAvatarLink({ className }: { className?: string }) {
   const { user } = useUser();
@@ -19,13 +19,18 @@ export function AccountAvatarLink({ className }: { className?: string }) {
   return (
     <Link
       href="/account"
-      aria-label="Your account"
+      aria-label="Your profile"
       className={cn(
-        'grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-black uppercase text-white ring-2 ring-line transition hover:ring-brand-300',
+        'relative grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-2 ring-line transition hover:ring-brand-300',
+        !user?.imageUrl && 'bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-black uppercase text-white',
         className,
       )}
     >
-      {initial}
+      {user?.imageUrl ? (
+        <Image src={user.imageUrl} alt="" width={36} height={36} className="h-full w-full object-cover" />
+      ) : (
+        initial
+      )}
     </Link>
   );
 }
