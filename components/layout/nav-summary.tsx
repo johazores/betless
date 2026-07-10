@@ -62,24 +62,24 @@ export function NavSummary() {
   if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="hidden items-center gap-2 sm:flex">
       <Link
         href="/dashboard"
-        className="flex items-center gap-1.5 rounded-full border border-line bg-surface-muted px-3 py-1.5 text-xs font-bold text-ink transition hover:border-line-strong"
+        className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-2.5 py-1.5 text-xs font-medium text-ink transition-colors hover:border-line-strong hover:bg-surface-muted"
         title="Locked balance"
       >
         <span className="text-brand-700"><LockIcon /></span>
         <span className="tabular-nums">{summary ? formatPeso(summary.lockedBalance) : '—'}</span>
-        <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-ink-muted sm:inline">Locked</span>
+        <span className="hidden text-ink-muted md:inline">locked</span>
       </Link>
       <Link
         href="/rewards"
-        className="flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-900 transition hover:border-brand-300"
+        className="flex items-center gap-1.5 rounded-xl border border-brand-200/80 bg-brand-50/80 px-2.5 py-1.5 text-xs font-medium text-brand-900 transition-colors hover:border-brand-300 hover:bg-brand-50"
         title="Available points"
       >
         <span className="text-brand-600"><StarIcon /></span>
         <span className="tabular-nums">{summary ? summary.availablePoints.toLocaleString('en-PH') : '—'}</span>
-        <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-brand-700 sm:inline">Points</span>
+        <span className="hidden text-brand-700/80 md:inline">pts</span>
       </Link>
     </div>
   );

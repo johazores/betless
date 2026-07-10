@@ -3,24 +3,22 @@
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { AccountAvatarLink } from '@/components/layout/account-avatar-link';
+import { buttonClassName } from '@/components/ui/button';
 
 export function AuthNav() {
   const { isLoaded, isSignedIn } = useUser();
 
   if (!isLoaded) {
-    return <div className="h-10 w-28 rounded-full bg-surface-sunken" aria-label="Loading account navigation" />;
+    return <div className="h-9 w-24 animate-pulse rounded-xl bg-surface-sunken" aria-label="Loading account navigation" />;
   }
 
   if (!isSignedIn) {
     return (
-      <div className="flex items-center gap-3">
-        <Link
-          href="/sign-in"
-          className="hidden rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-bold text-ink transition hover:bg-surface-muted sm:inline-flex"
-        >
+      <div className="flex items-center gap-2">
+        <Link href="/sign-in" className={`hidden sm:inline-flex ${buttonClassName({ variant: 'ghost', size: 'sm' })}`}>
           Sign in
         </Link>
-        <Link href="/sign-up" className="rounded-full bg-ink px-4 py-2 text-sm font-bold text-white transition hover:bg-ink/90">
+        <Link href="/sign-up" className={buttonClassName({ size: 'sm' })}>
           Get started
         </Link>
       </div>
@@ -28,8 +26,8 @@ export function AuthNav() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link href="/create-vault" className="hidden rounded-full bg-ink px-4 py-2 text-sm font-bold text-white transition hover:bg-ink/90 md:inline-flex">
+    <div className="flex items-center gap-2">
+      <Link href="/create-vault" className={`hidden md:inline-flex ${buttonClassName({ size: 'sm' })}`}>
         New vault
       </Link>
       <AccountAvatarLink />

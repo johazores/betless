@@ -1,41 +1,116 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AuthNav } from '@/components/layout/auth-nav';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { Logo } from '@/components/layout/logo';
 import { NavSummary } from '@/components/layout/nav-summary';
+import { cn } from '@/lib/class-names';
+
+function NavLink({ href, children }: { href: string; children: ReactNode }) {
+  const pathname = usePathname() ?? '/';
+  const isHash = href.includes('#');
+  const active = isHash
+    ? pathname === '/'
+    : href === '/'
+      ? pathname === '/'
+      : pathname.startsWith(href);
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
+        active ? 'bg-surface-sunken text-ink' : 'text-ink-muted hover:bg-surface-sunken/70 hover:text-ink',
+      )}
+      aria-current={active ? 'page' : undefined}
+    >
+      {children}
+    </Link>
+  );
+}
+
+const footerLinks = {
+  product: [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Create vault', href: '/create-vault' },
+    { label: 'Rewards', href: '/rewards' },
+    { label: 'How it works', href: '/#how-it-works' },
+  ],
+};
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <Link href="/" className="shrink-0 rounded-xl transition-opacity hover:opacity-90" aria-label="Betless home">
-            <Logo />
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-ink-muted lg:flex">
-            <Link href="/dashboard" className="transition-colors hover:text-ink">Dashboard</Link>
-            <Link href="/rewards" className="transition-colors hover:text-ink">Rewards</Link>
-          </nav>
-          <div className="flex items-center gap-3">
+    <div className="flex min-h-screen flex-col bg-surface-muted">
+      <header className="sticky top-0 z-30 border-b border-line/70 bg-surface/85 backdrop-blur-md">
+        <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-6 lg:gap-10">
+            <Link
+              href="/"
+              className="shrink-0 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+              aria-label="Betless home"
+            >
+              <Logo showTagline={false} markClassName="h-9 w-9" />
+            </Link>
+            <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
+              <NavLink href="/dashboard">Dashboard</NavLink>
+              <NavLink href="/rewards">Rewards</NavLink>
+              <NavLink href="/#how-it-works">How it works</NavLink>
+            </nav>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <NavSummary />
             <AuthNav />
           </div>
         </div>
       </header>
-      <main>{children}</main>
-      <footer className="border-t border-line bg-surface">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-28 pt-10 sm:px-6 lg:px-8 lg:pb-10">
-          <Logo showTagline={false} markClassName="h-8 w-8" />
-          <div className="flex flex-col gap-3 text-sm text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-semibold text-ink">Betless helps you commit to long-term savings and earn real-world rewards.</p>
-            <p>
-              Funds are managed through licensed custodial partners. Vault locks are independently verifiable on the
-              Stellar network. Rewards are fulfilled by partner merchants.
-            </p>
+
+      <main className="flex-1">{children}</main>
+
+      <footer className="mt-auto border-t border-line/70 bg-surface">
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-12 sm:px-6 lg:px-8 lg:pb-12">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+            <div>
+              <Logo showTagline markClassName="h-8 w-8" />
+              <p className="mt-4 max-w-sm text-sm leading-6 text-ink-muted">
+                Commitment savings with monthly rewards. Lock a deposit, earn points, and get your full balance back at maturity.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Product</p>
+              <ul className="mt-4 space-y-2.5">
+                {footerLinks.product.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Trust & compliance</p>
+              <p className="mt-4 text-sm leading-6 text-ink-muted">
+                Funds are held through licensed custodial partners. Vault locks are independently verifiable on the Stellar network. Rewards are fulfilled by partner merchants.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-2 border-t border-line/70 pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} Betless. All rights reserved.</p>
+            <p className="sm:text-right">Stellar-verified locks · Partner-fulfilled rewards</p>
           </div>
         </div>
       </footer>
+
       <BottomNav />
     </div>
   );

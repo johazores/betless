@@ -50,6 +50,29 @@ function Spinner() {
   );
 }
 
+type ButtonStyleOptions = {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  shape?: 'pill' | 'field';
+  className?: string;
+};
+
+export function buttonClassName({
+  variant = 'primary',
+  size = 'md',
+  shape = 'pill',
+  className,
+}: ButtonStyleOptions = {}) {
+  return cn(
+    'inline-flex items-center justify-center font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 active:scale-[0.98]',
+    shapes[shape],
+    shape === 'field' ? fieldSizes[size] : sizes[size],
+    variants[variant],
+    shape === 'field' && 'shadow-none',
+    className,
+  );
+}
+
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -62,14 +85,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={cn(
-        'inline-flex items-center justify-center font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100',
-        shapes[shape],
-        shape === 'field' ? fieldSizes[size] : sizes[size],
-        variants[variant],
-        shape === 'field' && 'shadow-none',
-        className,
-      )}
+      className={buttonClassName({ variant, size, shape, className })}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
       {...props}
