@@ -1,184 +1,55 @@
 # Betless Project Plan
 
-## Vision
+## Product Direction
 
-Betless is a Stellar-powered commitment savings and milestone rewards MVP. It helps users protect money from harmful spending impulses by creating a locked, goal-based savings commitment and giving small fixed food, transport, grocery, or eGift-style rewards for consistent progress.
-
-## Recommended Product Direction
-
-Betless should use a hybrid strategy:
-
-1. **Rewarded savings** as the main product category.
-2. **Recovery-supportive rewards** as the social impact angle.
-
-This direction is stronger than a pure recovery app because the MVP can verify positive savings actions instead of trying to prove private behavior. It is also safer than any chance-based or game-like product because rewards are fixed, predictable, and tied to progress milestones.
-
-Detailed rationale is documented in [`docs/recommended-concept-and-pitch.md`](./recommended-concept-and-pitch.md).
+Betless is a commitment savings app. Users create a vault, set a goal, follow a lock or top-up plan, claim fixed milestone rewards, and save a receipt.
 
 ## Positioning
 
-Betless is a commitment savings and reward layer. It is not a medical product, not a chance-based product, and not a real-money custody product in this MVP.
+Betless is a money-protection and commitment tool. It does not use chance mechanics, does not operate as a financial custodian, and does not claim to provide treatment.
 
-Approved positioning language:
+## Primary User Journey
 
-- commitment savings
-- money protection
-- goal-based savings
-- impulse-control savings
-- locked savings plan
-- milestone rewards
-- partner-powered rewards
-- Stellar proof layer
-
-Avoided product patterns:
-
-- chance-based reward mechanics
-- ticket mechanics
-- prize pools
-- gameplay loops
-- treatment or diagnosis claims
-- guaranteed returns
-- direct fund custody in the MVP
-
-## MVP Scope
-
-Included:
-
-1. Landing page
-2. Create Betless vault page
-3. Vault detail page
-4. Periodic top-up schedule
-5. Milestone reward claim
-6. Mock voucher generation
-7. Stellar testnet proof section
-8. Health endpoint
-9. README/demo instructions
-10. Master implementation checklist
-11. Recommended concept and pitch document
-
-Excluded:
-
-- real GCash integration
-- real voucher API
-- real money custody
-- real yield generation
-- auto-debit
-- KYC
-- auth system
-- admin dashboard
-- email/SMS
-- QR code
-- charts
-- medical questionnaire
-- chance mechanics
-- ticket mechanics
-- prize mechanics
+1. User selects **Create Vault**.
+2. User creates a new wallet or uses an existing Stellar public address.
+3. User sets a savings target and lock period.
+4. User selects one-time lock or recurring top-up.
+5. User selects a fixed milestone reward.
+6. System creates the vault and receipt.
+7. User can track progress immediately.
+8. User can connect an account later for dashboard history.
 
 ## Architecture
 
-Page rendering uses Next.js App Router under `/app`.
-
-Backend routes use Pages Router API routes under `/pages/api`.
-
-Business logic is isolated in `/services`. Components are focused on UI. Prisma database access is kept inside services and server utilities.
-
-## Tech Stack
-
-- Next.js
-- App Router for rendered pages
-- Pages API routes for backend endpoints
-- TypeScript
-- Prisma
-- PostgreSQL
-- Tailwind CSS
-- Stellar SDK
-
-## Main Routes
-
-Rendered pages:
-
-- `/`
-- `/create-vault`
-- `/vaults/[id]`
-
-API routes:
-
-- `POST /api/vaults`
-- `GET /api/vaults/[id]`
-- `POST /api/vaults/[id]/mark-top-up`
-- `POST /api/vaults/[id]/claim-reward`
-- `POST /api/vaults/[id]/create-stellar-proof`
-- `GET /api/health`
+- App Router renders pages.
+- Pages API routes handle backend requests.
+- Services contain business logic.
+- Prisma manages data access.
+- Clerk is optional during onboarding and required for dashboard history.
+- Stellar SDK validates wallet addresses and can attach network receipt details when configured.
 
 ## Data Model
 
-Prisma models:
+- `AppUser` maps Clerk users.
+- `Vault` stores commitment plans and guest access hash.
+- `TopUp` stores scheduled progress actions.
+- `RewardClaim` stores fixed milestone rewards.
+- `ProofReceipt` stores saved vault receipts and optional network references.
 
-- `AppConfig`
-- `Vault`
-- `TopUp`
-- `RewardClaim`
+## Completion Rules
 
-Enums:
+- A user can create a vault without signing in.
+- A guest vault can be reopened from the same browser.
+- A signed-in user can connect a guest vault to their account.
+- One-time locks require the full target amount upfront.
+- Recurring plans must be able to reach the target within the selected period.
+- Rewards are fixed and tied to progress.
+- Receipts are created without exposing recovery phrases or private keys.
 
-- `VaultMode`
-- `TopUpFrequency`
-- `VaultStatus`
-- `StellarStatus`
-- `TopUpStatus`
-- `RewardStatus`
+## Next Improvements
 
-## Service Layer
-
-- `vault-service.ts`: vault creation, unlock date, reward value, schedule generation coordination, detail views.
-- `top-up-service.ts`: schedule creation, top-up completion, duplicate prevention, progress update.
-- `reward-service.ts`: milestone reward creation, eligibility, claim, duplicate prevention.
-- `voucher-service.ts`: demo-only mock voucher code generation.
-- `stellar-proof-service.ts`: public key validation and graceful testnet proof status.
-- `config-service.ts`: reward and Stellar configuration.
-
-## Demo Flow
-
-1. User opens landing page.
-2. User clicks Create a Commitment Vault.
-3. User enters Stellar testnet public address.
-4. User chooses One-Time Lock or Periodic Top-Up.
-5. User sets target amount, top-up amount, duration, reward preference, and reason.
-6. App creates the vault.
-7. App shows vault detail page.
-8. User marks one top-up completed.
-9. App updates current saved amount.
-10. User claims a milestone reward.
-11. App generates a mock voucher code.
-12. App shows Stellar proof section.
-
-## Production Notes
-
-In production, deposits, custody, payment rails, and voucher fulfillment should be handled by licensed financial and voucher partners. Rewards can be sponsor-funded, partner-funded, or funded through approved financial partner programs. Betless should not promise yield or operate real fund custody without legal review and licensed partners.
-
-## Loop 14 Product Architecture Update — Accounts and Receipts
-
-Betless now includes a complete account-backed workflow using Clerk.
-
-### Account Flow
-
-- User signs up or logs in with Clerk.
-- Betless maps the Clerk user ID to an internal `AppUser` record.
-- New vaults are saved under the user's `AppUser` record.
-- Vault and receipt APIs require a Clerk session bearer token.
-- Users can return later to view their dashboard and receipt history.
-
-### Receipt Flow
-
-- Vault creation now triggers commitment proof receipt creation.
-- If a funded testnet proof signer is configured, the system attempts a real Stellar testnet transaction.
-- If no signer is configured, the system creates a complete demo receipt and explains that no live network transaction was submitted.
-- Receipts are visible in `/dashboard` and `/receipts/[id]`.
-- Network-confirmed receipts include a Stellar explorer link.
-
-### Security Notes
-
-- User private keys are never requested.
-- `STELLAR_PROOF_SOURCE_SECRET` is server-only.
-- API routes enforce ownership before returning vaults or receipts.
-- Clerk owns authentication and session management.
+- Partner wallet connection.
+- Voucher supplier integration.
+- Partner-managed fund custody.
+- Account recovery for lost guest vault access.
+- Email receipt delivery.

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
+import { SignInButton, useAuth } from '@clerk/nextjs';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api-client';
@@ -10,32 +10,45 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Stepper, type StepperStep } from '@/components/ui/stepper';
-import { defaultVaultForm, demoPublicKey, rewardOptions, topUpFrequencyOptions, vaultModeOptions, VAULT_MODE, type VaultFormState } from '@/lib/demo-config';
+import { defaultVaultForm, rewardOptions, topUpFrequencyOptions, vaultModeOptions, VAULT_MODE, type VaultFormState } from '@/lib/vault-options';
 import { formatPeso } from '@/lib/money';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';
+import { saveVaultToken } from '@/lib/vault-session';
+import type { VaultDetailView } from '@/types/vault';
 
 type FormState = VaultFormState;
+type WalletChoice = 'create' | 'existing';
+type CreateVaultResponse = VaultDetailView & { accessToken?: string | null };
 
 const steps: StepperStep[] = [
   {
     title: 'Wallet',
-    description: 'Use a Stellar testnet public address or demo address.',
+    description: 'Create a wallet or use an existing Stellar address.',
   },
   {
-    title: 'Savings plan',
-    description: 'Set target, starting amount, duration, and top-up schedule.',
+    title: 'Plan',
+    description: 'Set the amount, schedule, and lock period.',
   },
   {
-    title: 'Reward & reason',
-    description: 'Choose a fixed milestone reward and confirm the commitment.',
+    title: 'Reward',
+    description: 'Choose a milestone reward and confirm.',
   },
 ];
 
-function getStepError(step: number, form: FormState) {
+function getStepError(step: number, form: FormState, walletChoice: WalletChoice, generatedSecret: string, recoverySaved: boolean) {
   if (step === 0) {
-    if (!form.walletAddress.trim()) return 'Please add a Stellar testnet public address, or use the demo address button.';
-    if (!isValidStellarPublicKey(form.walletAddress.trim())) return 'The public address must be a valid Stellar public key. It starts with G and is safe to share.';
+    if (!form.walletAddress.trim()) {
+      return walletChoice === 'create' ? 'Create a wallet to continue.' : 'Add your Stellar public address to continue.';
+    }
+
+    if (!isValidStellarPublicKey(form.walletAddress.trim())) {
+      return 'Enter a valid Stellar public address. It starts with G.';
+    }
+
+    if (walletChoice === 'create' && generatedSecret && !recoverySaved) {
+      return 'Confirm that you saved your recovery key before continuing.';
+    }
   }
 
   if (step === 1) {
@@ -44,16 +57,16 @@ function getStepError(step: number, form: FormState) {
     const durationMonths = Number(form.durationMonths);
     const topUpAmount = Number(form.topUpAmount);
 
-    if (!Number.isFinite(targetAmount) || targetAmount <= 0) return 'Target amount must be greater than zero.';
+    if (!Number.isFinite(targetAmount) || targetAmount <= 0) return 'Enter a target amount greater than zero.';
     if (!Number.isFinite(currentAmount) || currentAmount < 0) return 'Starting amount cannot be negative.';
-    if (currentAmount > targetAmount) return 'Starting amount cannot be higher than the target amount.';
-    if (!Number.isFinite(durationMonths) || durationMonths < 1 || durationMonths > 36) return 'Duration must be between 1 and 36 months.';
+    if (currentAmount > targetAmount) return 'Starting amount cannot exceed the target.';
+    if (!Number.isFinite(durationMonths) || durationMonths < 1 || durationMonths > 36) return 'Choose 1 to 36 months.';
     if (form.mode === VAULT_MODE.ONE_TIME_LOCK && currentAmount !== targetAmount) {
-      return 'For one-time lock mode, the committed amount must match the target amount. Use periodic top-up if the user will add money over time.';
+      return 'One-time lock requires the full target upfront. Choose recurring top-up to build over time.';
     }
     if (form.mode === VAULT_MODE.PERIODIC_TOP_UP) {
-      if (!Number.isFinite(topUpAmount) || topUpAmount <= 0) return 'Top-up amount must be greater than zero.';
-      if (topUpAmount > targetAmount) return 'Top-up amount should not be higher than the target amount.';
+      if (!Number.isFinite(topUpAmount) || topUpAmount <= 0) return 'Enter a top-up amount greater than zero.';
+      if (topUpAmount > targetAmount) return 'Top-up amount cannot exceed the target.';
 
       const durationWeeks = Math.max(1, Math.round(durationMonths * 4));
       if (!canPeriodicPlanReachTarget({ targetAmount, currentAmount, topUpAmount, durationWeeks, frequency: form.topUpFrequency })) {
@@ -63,8 +76,8 @@ function getStepError(step: number, form: FormState) {
   }
 
   if (step === 2) {
-    if (!rewardOptions.includes(form.rewardType)) return 'Please choose a valid reward preference.';
-    if (!form.reason.trim()) return 'Please add a short reason for the commitment.';
+    if (!rewardOptions.includes(form.rewardType)) return 'Choose a reward.';
+    if (!form.reason.trim()) return 'Add a short reason.';
     if (form.reason.trim().length > 280) return 'Reason must be 280 characters or less.';
   }
 
@@ -75,10 +88,14 @@ export function CreateVaultForm() {
   const router = useRouter();
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [form, setForm] = useState<FormState>(defaultVaultForm);
+  const [walletChoice, setWalletChoice] = useState<WalletChoice>('create');
+  const [generatedSecret, setGeneratedSecret] = useState('');
+  const [recoverySaved, setRecoverySaved] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
 
   const rewardEstimate = useMemo(() => {
     const target = Number(form.targetAmount || 0);
@@ -105,14 +122,39 @@ export function CreateVaultForm() {
     setSuccessMessage('');
   }
 
-  function useDemoAddress() {
-    setForm((current) => ({ ...current, walletAddress: demoPublicKey }));
+  function chooseWalletOption(choice: WalletChoice) {
+    setWalletChoice(choice);
     setError('');
-    setSuccessMessage('Demo Stellar testnet public address added. This is safe for the MVP because it is a public key only.');
+    setSuccessMessage('');
+
+    if (choice === 'existing') {
+      setGeneratedSecret('');
+      setRecoverySaved(false);
+      setForm((current) => ({ ...current, walletAddress: '' }));
+    }
+  }
+
+  async function createWallet() {
+    setIsGeneratingWallet(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const { Keypair } = await import('@stellar/stellar-sdk');
+      const keypair = Keypair.random();
+      setGeneratedSecret(keypair.secret());
+      setRecoverySaved(false);
+      setForm((current) => ({ ...current, walletAddress: keypair.publicKey() }));
+      setSuccessMessage('Wallet created. Save the recovery key before continuing.');
+    } catch {
+      setError('Wallet could not be created. Try again or use an existing address.');
+    } finally {
+      setIsGeneratingWallet(false);
+    }
   }
 
   function goToNextStep() {
-    const stepError = getStepError(currentStep, form);
+    const stepError = getStepError(currentStep, form, walletChoice, generatedSecret, recoverySaved);
     if (stepError) {
       setError(stepError);
       setSuccessMessage('');
@@ -138,7 +180,7 @@ export function CreateVaultForm() {
       return;
     }
 
-    const stepError = getStepError(currentStep, form);
+    const stepError = getStepError(currentStep, form, walletChoice, generatedSecret, recoverySaved);
     if (stepError) {
       setError(stepError);
       setSuccessMessage('');
@@ -146,12 +188,12 @@ export function CreateVaultForm() {
     }
 
     setError('');
-    setSuccessMessage('Creating your vault and preparing the demo timeline…');
+    setSuccessMessage('Creating your vault…');
     setIsSubmitting(true);
 
     try {
-      const token = await getToken();
-      const vault = await apiRequest<{ id: string }>('/api/vaults', {
+      const token = isSignedIn ? await getToken() : null;
+      const vault = await apiRequest<CreateVaultResponse>('/api/vaults', {
         method: 'POST',
         body: JSON.stringify({
           ...form,
@@ -163,8 +205,9 @@ export function CreateVaultForm() {
           durationMonths: Number(form.durationMonths),
           reason: form.reason.trim(),
         }),
-      }, token);
+      }, { token });
 
+      saveVaultToken(vault.id, vault.accessToken);
       router.push(`/vaults/${vault.id}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Vault could not be created.');
@@ -172,20 +215,6 @@ export function CreateVaultForm() {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoaded && !isSignedIn) {
-    return (
-      <Card>
-        <p className="text-sm font-black text-amber-700">Account required</p>
-        <h2 className="mt-2 text-2xl font-black text-slate-950">Sign in to save your vault and receipt history.</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Vaults, receipts, and Stellar proof references are attached to your account so you can return later and review them.</p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
-          <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
-        </div>
-      </Card>
-    );
   }
 
   return (
@@ -201,7 +230,7 @@ export function CreateVaultForm() {
               <p className="mt-1 text-sm leading-6 text-slate-600">{steps[currentStep].description}</p>
             </div>
             <span className="w-fit rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
-              Guided setup
+              Quick setup
             </span>
           </div>
 
@@ -210,31 +239,74 @@ export function CreateVaultForm() {
 
           {currentStep === 0 ? (
             <div className="space-y-5">
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950">
-                <p className="font-black">Not technical? Use the demo address.</p>
-                <p className="mt-2 text-sm font-semibold leading-6">
-                  A Stellar public address is like a wallet username. It starts with <span className="font-black">G</span> and is safe to share. Never paste a secret key or private key.
-                </p>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={useDemoAddress}
-                  className="mt-4 rounded-full bg-blue-900 px-4 py-2 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-200"
+                  onClick={() => chooseWalletOption('create')}
+                  className={`rounded-2xl border p-4 text-left transition ${walletChoice === 'create' ? 'border-amber-500 bg-amber-50 ring-4 ring-amber-100' : 'border-slate-200 bg-white hover:border-slate-300'}`}
                 >
-                  Use demo testnet address
+                  <span className="block text-sm font-black text-slate-950">Create new wallet</span>
+                  <span className="mt-1 block text-sm font-semibold leading-6 text-slate-600">Generate a new Stellar wallet in this browser.</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => chooseWalletOption('existing')}
+                  className={`rounded-2xl border p-4 text-left transition ${walletChoice === 'existing' ? 'border-amber-500 bg-amber-50 ring-4 ring-amber-100' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                >
+                  <span className="block text-sm font-black text-slate-950">Use existing wallet</span>
+                  <span className="mt-1 block text-sm font-semibold leading-6 text-slate-600">Paste your Stellar public address.</span>
                 </button>
               </div>
 
-              <Input
-                label="Stellar testnet public address"
-                hint="Public keys start with G. Secret keys start with S and must never be entered here."
-                value={form.walletAddress}
-                onChange={(event) => updateField('walletAddress', event.target.value)}
-                placeholder="Example: GCON...L4W4"
-                autoComplete="off"
-              />
+              {walletChoice === 'create' ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-black text-slate-950">New wallet</p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">Your recovery key stays in this browser. Betless never sends it to the server.</p>
+                    </div>
+                    <Button type="button" onClick={createWallet} isLoading={isGeneratingWallet} variant="secondary">
+                      {form.walletAddress ? 'Create another' : 'Create wallet'}
+                    </Button>
+                  </div>
 
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                <span className="font-black">For the demo:</span> the app validates the public key format only. It does not ask for wallet seed words, private keys, GCash details, or real deposits.
+                  {form.walletAddress ? (
+                    <div className="mt-5 space-y-3">
+                      <div className="rounded-xl border border-slate-200 bg-white p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Public address</p>
+                        <p className="mt-2 break-all font-mono text-sm font-black text-slate-950">{form.walletAddress}</p>
+                      </div>
+                      {generatedSecret ? (
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-950">
+                          <p className="text-xs font-black uppercase tracking-wide text-red-700">Recovery key</p>
+                          <p className="mt-2 break-all font-mono text-sm font-black">{generatedSecret}</p>
+                          <label className="mt-4 flex items-start gap-3 text-sm font-bold leading-6">
+                            <input
+                              type="checkbox"
+                              checked={recoverySaved}
+                              onChange={(event) => setRecoverySaved(event.target.checked)}
+                              className="mt-1 h-4 w-4 rounded border-red-300"
+                            />
+                            <span>I saved my recovery key.</span>
+                          </label>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <Input
+                  label="Stellar public address"
+                  hint="Open your wallet and copy the public address that starts with G."
+                  value={form.walletAddress}
+                  onChange={(event) => updateField('walletAddress', event.target.value)}
+                  placeholder="G..."
+                  autoComplete="off"
+                />
+              )}
+
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold leading-6 text-blue-950">
+                Never enter your recovery phrase or private key. Already have an account? <SignInButton mode="modal"><button type="button" className="font-black underline decoration-2 underline-offset-4">Sign in</button></SignInButton>. You can also continue now and connect your account later.
               </div>
             </div>
           ) : null}
@@ -243,19 +315,20 @@ export function CreateVaultForm() {
             <div className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Select
-                  label="Vault mode"
+                  label="Vault type"
                   options={vaultModeOptions}
                   value={form.mode}
                   onChange={(event) => updateField('mode', event.target.value)}
-                  hint="Periodic top-up is best for the 2-minute demo."
+                  hint="Recurring top-up is best for building a goal over time."
                 />
                 <Input
-                  label="Duration months"
+                  label="Lock period"
                   type="number"
                   min="1"
                   max="36"
                   value={form.durationMonths}
                   onChange={(event) => updateField('durationMonths', event.target.value)}
+                  hint="Months"
                 />
               </div>
 
@@ -268,13 +341,13 @@ export function CreateVaultForm() {
                   onChange={(event) => updateField('targetAmount', event.target.value)}
                 />
                 <Input
-                  label={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'Committed amount' : 'Starting amount'}
+                  label={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'Amount to lock' : 'Starting amount'}
                   type="number"
                   min="0"
                   value={form.mode === VAULT_MODE.ONE_TIME_LOCK ? form.targetAmount : form.currentAmount}
                   onChange={(event) => updateField('currentAmount', event.target.value)}
                   disabled={form.mode === VAULT_MODE.ONE_TIME_LOCK}
-                  hint={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'One-time lock commits the full target upfront in demo mode.' : 'Use 0 if the user is starting fresh.'}
+                  hint={form.mode === VAULT_MODE.ONE_TIME_LOCK ? 'Full target is locked upfront.' : 'Use 0 if starting fresh.'}
                 />
               </div>
 
@@ -296,7 +369,7 @@ export function CreateVaultForm() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
-                  One-time lock mode commits the full target upfront and skips recurring top-ups. Use periodic top-up when the user wants to build the target over time.
+                  One-time lock commits the full target upfront and skips recurring top-ups.
                 </div>
               )}
             </div>
@@ -305,31 +378,31 @@ export function CreateVaultForm() {
           {currentStep === 2 ? (
             <div className="space-y-5">
               <Select
-                label="Reward preference"
+                label="Reward"
                 options={rewardOptions.map((reward) => ({ label: reward, value: reward }))}
                 value={form.rewardType}
                 onChange={(event) => updateField('rewardType', event.target.value)}
-                hint="Rewards are fixed demo milestones, not random prizes."
+                hint="Rewards are fixed milestones."
               />
 
               <label className="block">
-                <span className="text-sm font-black text-slate-800">Reason for commitment</span>
+                <span className="text-sm font-black text-slate-800">Reason</span>
                 <textarea
                   className="mt-2 min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base font-semibold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
                   value={form.reason}
                   onChange={(event) => updateField('reason', event.target.value)}
-                  placeholder="Example: I want to protect my savings and stay committed to my goal."
+                  placeholder="Protect my savings and stay focused."
                   maxLength={280}
                 />
                 <span className="mt-2 block text-xs font-semibold leading-5 text-slate-500">{reasonCharactersLeft} characters left.</span>
               </label>
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                <span className="font-black">Estimated milestone reward:</span> {formatPeso(rewardEstimate)} demo value. Rewards are fixed positive reinforcement for completed progress milestones.
+                <span className="font-black">Estimated reward:</span> {formatPeso(rewardEstimate)} per milestone.
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm font-black text-slate-950">Review before creating</p>
+                <p className="text-sm font-black text-slate-950">Review</p>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="font-semibold text-slate-500">Target</dt>
@@ -340,7 +413,7 @@ export function CreateVaultForm() {
                     <dd className="font-black text-slate-950">{form.mode === VAULT_MODE.PERIODIC_TOP_UP ? formatPeso(Number(form.topUpAmount || 0)) : 'Not required'}</dd>
                   </div>
                   <div>
-                    <dt className="font-semibold text-slate-500">Duration</dt>
+                    <dt className="font-semibold text-slate-500">Lock period</dt>
                     <dd className="font-black text-slate-950">{form.durationMonths} months</dd>
                   </div>
                   <div>
@@ -357,7 +430,7 @@ export function CreateVaultForm() {
               Back
             </Button>
             <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
-              {isFinalStep ? 'Create my vault' : 'Continue'}
+              {isFinalStep ? 'Create Vault' : 'Continue'}
             </Button>
           </div>
         </form>

@@ -54,7 +54,7 @@ export function DashboardClient() {
             <Card>
               <p className="text-sm font-black text-amber-700">Account required</p>
               <h1 className="mt-2 text-3xl font-black text-slate-950">Log in to view your dashboard.</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Your vaults, receipts, and proof history are saved under your Clerk account.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Your vaults and receipts are saved under your account.</p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
                 <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
@@ -107,7 +107,7 @@ export function DashboardClient() {
           {vaults.length === 0 ? (
             <Card>
               <h2 className="text-2xl font-black text-slate-950">No vaults yet</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Create your first vault to generate a receipt and start the demo flow.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Create your first vault to start tracking your plan.</p>
               <Link href="/create-vault" className="mt-5 inline-flex"><Button>Create my first vault</Button></Link>
             </Card>
           ) : (
@@ -136,14 +136,14 @@ export function DashboardClient() {
 
           <Card>
             <h2 className="text-2xl font-black text-slate-950">Receipt history</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Every saved proof appears here so users can return later and verify or export it.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Every receipt appears here so you can return later, verify, or export it.</p>
             <div className="mt-5 space-y-3">
               {receipts.length === 0 ? (
                 <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">No receipts yet. Create a vault to generate the first receipt.</p>
               ) : receipts.map((receipt) => (
                 <div key={receipt.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-black text-slate-950">{receipt.status === 'NETWORK_CONFIRMED' ? 'Stellar network receipt' : 'Demo receipt'}</p>
+                    <p className="font-black text-slate-950">{receipt.status === 'NETWORK_CONFIRMED' ? 'Network receipt' : 'Saved receipt'}</p>
                     <p className="mt-1 break-all text-sm font-semibold text-slate-600">{formatShortDate(receipt.createdAt)} · {receipt.proofReference}</p>
                   </div>
                   <Link href={`/receipts/${receipt.id}`} className="text-sm font-black text-orange-800 hover:text-orange-900">Open receipt →</Link>

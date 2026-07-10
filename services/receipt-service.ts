@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import type { ProofReceiptView } from '@/types/vault';
+import type { VaultAccess } from '@/services/vault-access-service';
+import { requireVaultAccess } from '@/services/vault-access-service';
 
 function toReceiptView(receipt: any): ProofReceiptView {
   return {
@@ -19,10 +21,32 @@ function toReceiptView(receipt: any): ProofReceiptView {
   };
 }
 
+function buildReceiptAccessWhere(access: VaultAccess) {
+  requireVaultAccess(access);
+
+  const conditions: Array<Record<string, unknown>> = [];
+
+  if (access.clerkUserId) {
+    conditions.push({ appUser: { clerkUserId: access.clerkUserId } });
+    conditions.push({ vault: { appUser: { clerkUserId: access.clerkUserId } } });
+  }
+
+  if (access.vaultAccessTokenHash) {
+    conditions.push({ vault: { guestAccessTokenHash: access.vaultAccessTokenHash } });
+  }
+
+  return conditions;
+}
+
 export class ReceiptService {
   static async listReceipts(clerkUserId: string) {
     const receipts = await prisma.proofReceipt.findMany({
-      where: { appUser: { clerkUserId } },
+      where: {
+        OR: [
+          { appUser: { clerkUserId } },
+          { vault: { appUser: { clerkUserId } } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       include: { vault: true },
     });
@@ -30,9 +54,9 @@ export class ReceiptService {
     return receipts.map(toReceiptView);
   }
 
-  static async getReceipt(id: string, clerkUserId: string) {
+  static async getReceipt(id: string, access: VaultAccess) {
     const receipt = await prisma.proofReceipt.findFirst({
-      where: { id, appUser: { clerkUserId } },
+      where: { id, OR: buildReceiptAccessWhere(access) },
       include: { vault: true },
     });
 

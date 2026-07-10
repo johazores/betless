@@ -6,17 +6,17 @@ import { PublicLayout } from '@/components/layout/public-layout';
 import { Progress } from '@/components/ui/progress';
 
 const steps = [
-  ['Create a commitment vault', 'Choose a one-time lock or periodic top-up, then set the amount, duration, reward preference, and personal reason.'],
-  ['Follow the savings plan', 'Track top-ups and progress using a clear schedule that is easy to explain during the demo.'],
-  ['Claim fixed rewards', 'Receive a small demo food, transport, grocery, or eGift-style voucher after eligible milestones.'],
+  ['Create a vault', 'Choose a wallet, set a goal, and pick a lock period.'],
+  ['Follow the plan', 'Complete scheduled top-ups and track progress.'],
+  ['Claim rewards', 'Receive fixed milestone rewards for staying on track.'],
 ];
 
-const rewardExamples = ['Jollibee meal voucher', 'Transport voucher', 'Grocery voucher', 'SM eGift-style voucher'];
+const rewardExamples = ['Jollibee meal voucher', 'Transport voucher', 'Grocery voucher', 'SM eGift voucher'];
 
 const proofPoints = [
-  ['Commitment proof', 'The vault records the selected goal, schedule, unlock date, and reward milestones.'],
-  ['Reward proof', 'Reward claims are fixed milestone events, not random outcomes.'],
-  ['Partner-ready path', 'Production custody, payment rails, and voucher fulfillment are reserved for licensed partners.'],
+  ['Vault receipt', 'Records the goal, schedule, unlock date, and reward milestones.'],
+  ['Reward receipt', 'Records claimed milestones with clear references.'],
+  ['Partner-ready', 'Built for licensed wallet, savings, and reward partners.'],
 ];
 
 export default function HomePage() {
@@ -25,21 +25,21 @@ export default function HomePage() {
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
-            <Badge>Stellar-powered commitment vault</Badge>
+            <Badge>Stellar-powered commitment savings</Badge>
             <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
               Bet less. Save more. Stay in control.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700">
-              Betless helps people protect money from harmful spending impulses by turning savings into a simple commitment plan with fixed everyday rewards.
+              Betless helps people protect money from harmful spending impulses with simple savings vaults and fixed everyday rewards.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/create-vault"><Button className="w-full sm:w-auto">Create a Commitment Vault</Button></Link>
-              <a href="#demo-flow"><Button variant="secondary" className="w-full sm:w-auto">View demo flow</Button></a>
+              <Link href="/create-vault"><Button className="w-full sm:w-auto">Create Vault</Button></Link>
+              <a href="#how-it-works"><Button variant="secondary" className="w-full sm:w-auto">How it works</Button></a>
             </div>
           </div>
 
           <Card>
-            <p className="text-sm font-black text-amber-700">Demo commitment vault</p>
+            <p className="text-sm font-black text-amber-700">Commitment vault</p>
             <div className="mt-6 space-y-5">
               <div>
                 <p className="text-sm font-semibold text-slate-600">Target amount</p>
@@ -52,21 +52,21 @@ export default function HomePage() {
                   <p className="mt-1 text-2xl font-black text-slate-950">₱2,000</p>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-semibold text-slate-600">Reward design</p>
+                  <p className="text-sm font-semibold text-slate-600">Reward type</p>
                   <p className="mt-1 text-2xl font-black text-slate-950">Fixed</p>
                 </div>
               </div>
               <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
-                This MVP uses demo-only rewards and a commitment proof linked to a Stellar testnet public address. It does not process real funds, real vouchers, or regulated financial products.
+                Create a vault, complete top-ups, claim rewards, and save a receipt.
               </p>
             </div>
           </Card>
         </div>
       </section>
 
-      <section className="px-4 py-10 sm:px-6 lg:px-8" id="demo-flow">
+      <section className="px-4 py-10 sm:px-6 lg:px-8" id="how-it-works">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-5 lg:grid-cols-3" id="how-it-works">
+          <div className="grid gap-5 lg:grid-cols-3">
             {steps.map(([title, body]) => (
               <Card key={title}>
                 <p className="text-xl font-black text-slate-950">{title}</p>
@@ -81,16 +81,16 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
           <Card>
             <p className="text-sm font-black text-amber-700">Problem</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Impulse moments can drain money before a person reaches their goal.</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Impulse moments can drain money before goals are reached.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Betless creates practical friction: a clear savings target, a visible unlock date, scheduled top-ups, and a reason the user can return to when discipline gets difficult.
+              Betless adds structure: a clear target, visible unlock date, planned top-ups, and a reason to stay committed.
             </p>
           </Card>
           <Card>
-            <p className="text-sm font-black text-amber-700">Safer product design</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Fixed rewards, no chance mechanics, no treatment claims.</h2>
+            <p className="text-sm font-black text-amber-700">Product design</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Fixed rewards. Clear milestones. No chance mechanics.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Betless verifies positive actions such as creating a vault, completing a top-up, and reaching a reward milestone. It does not try to diagnose users or prove private behavior.
+              Betless tracks positive actions: creating a vault, completing top-ups, claiming rewards, and saving receipts.
             </p>
           </Card>
         </div>
@@ -100,9 +100,9 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <Badge>Why Stellar</Badge>
-            <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-950">A transparent proof layer for commitments and rewards.</h2>
+            <h2 className="mt-5 text-4xl font-black tracking-tight text-slate-950">A transparent receipt layer for commitments and rewards.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              The MVP validates a Stellar public key and saves a clear commitment proof for the demo. Future versions can use Stellar for partner-funded reward distribution, tokenized vouchers, and auditable milestone claims.
+              Betless links each vault to a Stellar address and stores a receipt that can support future network verification and partner-funded rewards.
             </p>
           </div>
           <Card>
@@ -124,7 +124,7 @@ export default function HomePage() {
             {rewardExamples.map((reward) => (
               <div key={reward} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="font-black text-slate-950">{reward}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Demo-only milestone reward for the MVP.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Fixed milestone reward.</p>
               </div>
             ))}
           </div>
@@ -134,12 +134,12 @@ export default function HomePage() {
       <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
           <div className="max-w-3xl">
-            <p className="text-sm font-black text-amber-700">Ready for the workshop demo</p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Create a Betless vault in under two minutes.</h2>
+            <p className="text-sm font-black text-amber-700">Start fast</p>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Create a Betless vault in minutes.</h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Show the core flow: create vault, view progress, mark a top-up completed, claim a fixed demo voucher, and save the commitment proof.
+              Create a wallet, set a goal, track progress, claim rewards, and save your receipt.
             </p>
-            <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create a Commitment Vault</Button></Link>
+            <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create Vault</Button></Link>
           </div>
         </div>
       </section>

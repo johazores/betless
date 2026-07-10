@@ -20,7 +20,7 @@ CREATE TYPE "TopUpStatus" AS ENUM ('PENDING', 'COMPLETED', 'MISSED');
 CREATE TYPE "RewardStatus" AS ENUM ('LOCKED', 'AVAILABLE', 'CLAIMED');
 
 -- CreateEnum
-CREATE TYPE "ProofReceiptStatus" AS ENUM ('DEMO_RECEIPT', 'NETWORK_CONFIRMED', 'FAILED');
+CREATE TYPE "ProofReceiptStatus" AS ENUM ('LOCAL_RECEIPT', 'NETWORK_CONFIRMED', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "AppConfig" (
@@ -49,7 +49,8 @@ CREATE TABLE "AppUser" (
 -- CreateTable
 CREATE TABLE "Vault" (
     "id" TEXT NOT NULL,
-    "appUserId" TEXT NOT NULL,
+    "appUserId" TEXT,
+    "guestAccessTokenHash" TEXT,
     "walletAddress" TEXT NOT NULL,
     "displayName" TEXT,
     "mode" "VaultMode" NOT NULL DEFAULT 'ONE_TIME_LOCK',
@@ -102,10 +103,10 @@ CREATE TABLE "RewardClaim" (
 -- CreateTable
 CREATE TABLE "ProofReceipt" (
     "id" TEXT NOT NULL,
-    "appUserId" TEXT NOT NULL,
+    "appUserId" TEXT,
     "vaultId" TEXT NOT NULL,
-    "status" "ProofReceiptStatus" NOT NULL DEFAULT 'DEMO_RECEIPT',
-    "network" TEXT NOT NULL DEFAULT 'Stellar Testnet',
+    "status" "ProofReceiptStatus" NOT NULL DEFAULT 'LOCAL_RECEIPT',
+    "network" TEXT NOT NULL DEFAULT 'Stellar',
     "publicAddress" TEXT NOT NULL,
     "proofReference" TEXT NOT NULL,
     "transactionHash" TEXT,
@@ -132,6 +133,12 @@ CREATE INDEX "AppUser_createdAt_idx" ON "AppUser"("createdAt");
 CREATE INDEX "Vault_appUserId_status_createdAt_idx" ON "Vault"("appUserId", "status", "createdAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Vault_guestAccessTokenHash_key" ON "Vault"("guestAccessTokenHash");
+
+-- CreateIndex
+CREATE INDEX "Vault_guestAccessTokenHash_idx" ON "Vault"("guestAccessTokenHash");
+
+-- CreateIndex
 CREATE INDEX "Vault_walletAddress_idx" ON "Vault"("walletAddress");
 
 -- CreateIndex
@@ -156,7 +163,7 @@ CREATE INDEX "ProofReceipt_vaultId_createdAt_idx" ON "ProofReceipt"("vaultId", "
 CREATE INDEX "ProofReceipt_transactionHash_idx" ON "ProofReceipt"("transactionHash");
 
 -- AddForeignKey
-ALTER TABLE "Vault" ADD CONSTRAINT "Vault_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Vault" ADD CONSTRAINT "Vault_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "TopUp" ADD CONSTRAINT "TopUp_vaultId_fkey" FOREIGN KEY ("vaultId") REFERENCES "Vault"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -165,7 +172,7 @@ ALTER TABLE "TopUp" ADD CONSTRAINT "TopUp_vaultId_fkey" FOREIGN KEY ("vaultId") 
 ALTER TABLE "RewardClaim" ADD CONSTRAINT "RewardClaim_vaultId_fkey" FOREIGN KEY ("vaultId") REFERENCES "Vault"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProofReceipt" ADD CONSTRAINT "ProofReceipt_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ProofReceipt" ADD CONSTRAINT "ProofReceipt_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProofReceipt" ADD CONSTRAINT "ProofReceipt_vaultId_fkey" FOREIGN KEY ("vaultId") REFERENCES "Vault"("id") ON DELETE CASCADE ON UPDATE CASCADE;

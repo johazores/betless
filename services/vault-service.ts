@@ -4,6 +4,7 @@ import { getPlannedTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
 import type { CreateVaultInput } from '@/lib/validators';
 import { ConfigService } from '@/services/config-service';
+import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 import { RewardService } from '@/services/reward-service';
 import { TopUpService } from '@/services/top-up-service';
 import { UserService } from '@/services/user-service';
@@ -45,7 +46,8 @@ type ProofReceiptRecord = {
 
 type VaultWithRelations = {
   id: string;
-  appUserId: string;
+  appUserId: string | null;
+  guestAccessTokenHash: string | null;
   walletAddress: string;
   displayName: string | null;
   mode: VaultDetailView['mode'];
@@ -77,8 +79,12 @@ export class VaultService {
     return addWeeks(new Date(), durationWeeks);
   }
 
-  static async createVault(input: CreateVaultInput, clerkUserId: string) {
-    const appUser = await UserService.ensureAppUser({ clerkUserId });
+  static async createVault(input: CreateVaultInput, access: VaultAccess) {
+    const appUser = access.clerkUserId ? await UserService.ensureAppUser({ clerkUserId: access.clerkUserId }) : null;
+
+    if (!appUser && !access.vaultAccessTokenHash) {
+      throw new Error('Create an account or keep this browser open to save the vault.');
+    }
     const rewardRate = ConfigService.getRewardRate();
     const durationWeeks = this.calculateDurationWeeks(input.durationMonths);
     const rewardValue = RewardService.calculateRewardValue(input.targetAmount, rewardRate);
@@ -97,7 +103,8 @@ export class VaultService {
     const vault = await prisma.$transaction(async (tx: any) => {
       const createdVault = await tx.vault.create({
         data: {
-          appUserId: appUser.id,
+          appUserId: appUser?.id ?? null,
+          guestAccessTokenHash: appUser ? null : access.vaultAccessTokenHash,
           walletAddress: input.walletAddress,
           mode: input.mode,
           targetAmount: input.targetAmount,
@@ -133,7 +140,7 @@ export class VaultService {
       return createdVault;
     });
 
-    return this.getVaultDetail(vault.id, clerkUserId);
+    return this.getVaultDetail(vault.id, access);
   }
 
   static async listVaults(clerkUserId: string): Promise<DashboardVaultView[]> {
@@ -164,9 +171,9 @@ export class VaultService {
     });
   }
 
-  static async getVaultDetail(id: string, clerkUserId: string) {
+  static async getVaultDetail(id: string, access: VaultAccess) {
     const vault = await prisma.vault.findFirst({
-      where: { id, appUser: { clerkUserId } },
+      where: buildVaultAccessWhere(id, access),
       include: {
         topUps: { orderBy: { dueAt: 'asc' } },
         rewards: { orderBy: { weekNumber: 'asc' } },
@@ -181,8 +188,40 @@ export class VaultService {
     return this.toVaultDetailView(vault);
   }
 
-  static async refreshVaultDetail(id: string, clerkUserId: string) {
-    return this.getVaultDetail(id, clerkUserId);
+  static async refreshVaultDetail(id: string, access: VaultAccess) {
+    return this.getVaultDetail(id, access);
+  }
+
+  static async connectVaultToUser(id: string, clerkUserId: string, vaultAccessTokenHash?: string | null) {
+    const appUser = await UserService.ensureAppUser({ clerkUserId });
+
+    const vault = await prisma.vault.findFirst({
+      where: {
+        id,
+        OR: [
+          { appUser: { clerkUserId } },
+          ...(vaultAccessTokenHash ? [{ guestAccessTokenHash: vaultAccessTokenHash }] : []),
+        ],
+      },
+    });
+
+    if (!vault) {
+      throw new Error('Vault not found.');
+    }
+
+    await prisma.$transaction(async (tx: any) => {
+      await tx.vault.update({
+        where: { id },
+        data: { appUserId: appUser.id, guestAccessTokenHash: null },
+      });
+
+      await tx.proofReceipt.updateMany({
+        where: { vaultId: id },
+        data: { appUserId: appUser.id },
+      });
+    });
+
+    return this.getVaultDetail(id, { clerkUserId });
   }
 
   private static toTopUpView(topUp: VaultWithRelations['topUps'][number]): TopUpView {

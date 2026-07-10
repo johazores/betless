@@ -2,12 +2,22 @@ import type { ApiFailure, ApiSuccess } from '@/lib/api-response';
 
 type ApiPayload<T> = ApiSuccess<T> | ApiFailure;
 
-export async function apiRequest<T>(url: string, init?: RequestInit, token?: string | null): Promise<T> {
+type ApiRequestOptions = {
+  token?: string | null;
+  vaultAccessToken?: string | null;
+};
+
+export async function apiRequest<T>(url: string, init?: RequestInit, options?: ApiRequestOptions | string | null): Promise<T> {
+  const normalizedOptions: ApiRequestOptions = typeof options === 'string' || options === null
+    ? { token: options }
+    : options ?? {};
+
   const response = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(normalizedOptions.token ? { Authorization: `Bearer ${normalizedOptions.token}` } : {}),
+      ...(normalizedOptions.vaultAccessToken ? { 'x-vault-token': normalizedOptions.vaultAccessToken } : {}),
       ...init?.headers,
     },
   });
@@ -27,9 +37,9 @@ export async function apiRequest<T>(url: string, init?: RequestInit, token?: str
   return payload.data;
 }
 
-export function postJson<T>(url: string, body: Record<string, unknown>, token?: string | null) {
+export function postJson<T>(url: string, body: Record<string, unknown>, options?: ApiRequestOptions | string | null) {
   return apiRequest<T>(url, {
     method: 'POST',
     body: JSON.stringify(body),
-  }, token);
+  }, options);
 }

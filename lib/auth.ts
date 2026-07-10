@@ -1,5 +1,11 @@
+import crypto from 'node:crypto';
 import type { NextApiRequest } from 'next';
 import { verifyToken } from '@clerk/backend';
+
+export type ApiVaultAccess = {
+  clerkUserId?: string | null;
+  vaultAccessTokenHash?: string | null;
+};
 
 function getBearerToken(req: NextApiRequest) {
   const authorization = req.headers.authorization;
@@ -11,28 +17,59 @@ function getBearerToken(req: NextApiRequest) {
   return authorization.slice('Bearer '.length).trim();
 }
 
-export async function requireApiUserId(req: NextApiRequest) {
+function getHeaderValue(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+export function createVaultAccessToken() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+export function hashVaultAccessToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+export function getVaultAccessToken(req: NextApiRequest) {
+  const token = getHeaderValue(req.headers['x-vault-token']);
+  return typeof token === 'string' && token.trim().length > 0 ? token.trim() : null;
+}
+
+export async function getOptionalApiUserId(req: NextApiRequest) {
   const token = getBearerToken(req);
 
-  if (!token) {
-    throw new Error('Please sign in to continue.');
-  }
+  if (!token) return null;
 
   const secretKey = process.env.CLERK_SECRET_KEY;
 
   if (!secretKey) {
-    throw new Error('Clerk server key is missing. Add CLERK_SECRET_KEY to enable protected API access.');
+    throw new Error('Account verification is not configured. Add CLERK_SECRET_KEY to enable saved accounts.');
   }
 
   try {
     const payload = await verifyToken(token, { secretKey });
-
-    if (!payload.sub) {
-      throw new Error('Session token is missing a user ID.');
-    }
-
-    return payload.sub;
+    return payload.sub ?? null;
   } catch {
     throw new Error('Please sign in again. Your session could not be verified.');
   }
+}
+
+export async function requireApiUserId(req: NextApiRequest) {
+  const clerkUserId = await getOptionalApiUserId(req);
+
+  if (!clerkUserId) {
+    throw new Error('Please sign in to continue.');
+  }
+
+  return clerkUserId;
+}
+
+export async function getApiVaultAccess(req: NextApiRequest): Promise<ApiVaultAccess> {
+  const clerkUserId = await getOptionalApiUserId(req);
+  const vaultAccessToken = getVaultAccessToken(req);
+
+  return {
+    clerkUserId,
+    vaultAccessTokenHash: vaultAccessToken ? hashVaultAccessToken(vaultAccessToken) : null,
+  };
 }

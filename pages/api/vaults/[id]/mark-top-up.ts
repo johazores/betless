@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { requireApiUserId } from '@/lib/auth';
+import { getApiVaultAccess } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { getSingleQueryValue } from '@/lib/validators';
@@ -16,13 +16,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const clerkUserId = await requireApiUserId(req);
+    const access = await getApiVaultAccess(req);
     const topUpId = typeof req.body?.topUpId === 'string' ? req.body.topUpId : undefined;
-    await TopUpService.markTopUpCompleted(id, clerkUserId, topUpId);
-    const vault = await VaultService.refreshVaultDetail(id, clerkUserId);
+    await TopUpService.markTopUpCompleted(id, access, topUpId);
+    const vault = await VaultService.refreshVaultDetail(id, access);
     return sendSuccess(res, vault);
   } catch (error) {
     const message = getApiErrorMessage(error);
-    return sendError(res, message, message === 'Please sign in to continue.' ? 401 : 400);
+    return sendError(res, message, 400);
   }
 }

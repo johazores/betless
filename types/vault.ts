@@ -67,7 +67,6 @@ export type VoucherResult = {
   code: string;
   name: string;
   value: number;
-  demoOnlyMessage: string;
 };
 
 export type DashboardVaultView = {

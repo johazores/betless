@@ -8,22 +8,30 @@ const requiredFiles = [
   'app/create-vault/page.tsx',
   'app/vaults/[id]/page.tsx',
   'app/vaults/[id]/vault-detail-client.tsx',
+  'app/receipts/[id]/receipt-client.tsx',
   'pages/api/health.ts',
   'pages/api/vaults/index.ts',
   'pages/api/vaults/[id].ts',
+  'pages/api/vaults/[id]/connect-account.ts',
   'pages/api/vaults/[id]/mark-top-up.ts',
   'pages/api/vaults/[id]/claim-reward.ts',
   'pages/api/vaults/[id]/create-stellar-proof.ts',
+  'pages/api/receipts/index.ts',
+  'pages/api/receipts/[id].ts',
   'services/vault-service.ts',
+  'services/vault-access-service.ts',
   'services/top-up-service.ts',
   'services/reward-service.ts',
   'services/voucher-service.ts',
   'services/stellar-proof-service.ts',
+  'services/receipt-service.ts',
   'services/config-service.ts',
   'lib/api-client.ts',
   'lib/api-methods.ts',
   'lib/domain.ts',
   'lib/status-labels.ts',
+  'lib/vault-options.ts',
+  'lib/vault-session.ts',
   'components/ui/stepper.tsx',
   'prisma/schema.prisma',
   'prisma/seed.ts',
@@ -31,10 +39,8 @@ const requiredFiles = [
   'prisma/migrations/20260710000000_fresh_schema/migration.sql',
   'docs/project-plan.md',
   'docs/implementation-checklist.md',
-  'docs/demo-script.md',
-  'docs/recommended-concept-and-pitch.md',
-  'docs/engineering-loop-report.md',
-  'docs/qa-report.md',
+  'docs/production-ux-refinement.md',
+  'docs/auth-and-stellar-workflow.md',
   'README.md',
 ];
 
@@ -42,7 +48,12 @@ const uiFilesToScan = [
   'app/page.tsx',
   'app/create-vault/page.tsx',
   'app/vaults/[id]/vault-detail-client.tsx',
+  'app/receipts/[id]/receipt-client.tsx',
+  'app/dashboard/dashboard-client.tsx',
   'components/layout/public-layout.tsx',
+  'components/layout/auth-nav.tsx',
+  'components/ui/empty-state.tsx',
+  'components/ui/loading-state.tsx',
   'components/ui/stepper.tsx',
   'components/vault/create-vault-form.tsx',
   'components/vault/reward-card.tsx',
@@ -50,6 +61,7 @@ const uiFilesToScan = [
   'components/vault/stellar-proof-card.tsx',
   'components/vault/top-up-schedule.tsx',
   'components/vault/unlock-card.tsx',
+  'components/vault/vault-next-step-card.tsx',
   'components/vault/vault-summary-card.tsx',
 ];
 
@@ -73,6 +85,10 @@ const bannedUiPatterns = [
   /guaranteed yield/i,
   /investment product/i,
   /lorem ipsum/i,
+  /\bdemo\b/i,
+  /\bsample\b/i,
+  /mock/i,
+  /\bMVP\b/,
 ];
 
 const failures = [];
@@ -91,7 +107,7 @@ for (const file of uiFilesToScan) {
   const content = readFileSync(path, 'utf8');
   for (const pattern of bannedUiPatterns) {
     if (pattern.test(content)) {
-      failures.push(`Banned or unsafe UI wording found in ${file}: ${pattern}`);
+      failures.push(`Banned or unfinished UI wording found in ${file}: ${pattern}`);
     }
   }
 
@@ -102,15 +118,15 @@ for (const file of uiFilesToScan) {
   }
 }
 
-const demoConfig = readFileSync(join(root, 'lib/demo-config.ts'), 'utf8');
-if (!demoConfig.includes('demoPublicKey')) {
-  failures.push('Missing non-technical demo public key helper in lib/demo-config.ts');
+const vaultOptions = readFileSync(join(root, 'lib/vault-options.ts'), 'utf8');
+if (!vaultOptions.includes('starterPublicAddress')) {
+  failures.push('Missing non-technical starter public address helper in lib/vault-options.ts');
 }
 
 const createVaultForm = readFileSync(join(root, 'components/vault/create-vault-form.tsx'), 'utf8');
-for (const requiredCopy of ['Use demo testnet address', 'Guided setup', 'Step {progressLabel}', 'Never paste a secret key']) {
+for (const requiredCopy of ['Create new wallet', 'Use existing wallet', 'Create Vault', 'Never enter your recovery phrase']) {
   if (!createVaultForm.includes(requiredCopy)) {
-    failures.push(`Create vault form is missing UX helper copy: ${requiredCopy}`);
+    failures.push(`Create vault form is missing required production UX copy: ${requiredCopy}`);
   }
 }
 
@@ -135,7 +151,6 @@ for (const model of ['model AppConfig', 'model AppUser', 'model Vault', 'model T
   }
 }
 
-
 const migrationSql = readFileSync(join(root, 'prisma/migrations/20260710000000_fresh_schema/migration.sql'), 'utf8');
 for (const requiredTable of ['"AppUser"', '"Vault"', '"TopUp"', '"RewardClaim"', '"ProofReceipt"']) {
   if (!migrationSql.includes(`CREATE TABLE ${requiredTable}`)) {
@@ -151,11 +166,11 @@ for (const script of ['verify:mvp', 'check', 'build:next', 'db:reset:force']) {
 }
 
 if (failures.length > 0) {
-  console.error('MVP verification failed:');
+  console.error('Product verification failed:');
   for (const failure of failures) {
     console.error(`- ${failure}`);
   }
   process.exit(1);
 }
 
-console.log('MVP verification passed. Required files exist and UI wording scan is clean.');
+console.log('Product verification passed. Required files exist and user-facing wording is clean.');

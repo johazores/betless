@@ -1,5 +1,6 @@
 import { Keypair } from '@stellar/stellar-sdk';
 import { TopUpFrequency, VaultMode } from '../lib/domain';
+import { createVaultAccessToken, hashVaultAccessToken } from '../lib/auth';
 import { prisma } from '../lib/prisma';
 import { VaultService } from '../services/vault-service';
 
@@ -17,9 +18,9 @@ async function main() {
 
   await prisma.appUser.create({
     data: {
-      clerkUserId: 'demo-clerk-user',
-      email: 'demo@betless.local',
-      displayName: 'Demo User',
+      clerkUserId: 'seed-clerk-user',
+      email: 'user@betless.local',
+      displayName: 'Betless User',
     },
   });
 
@@ -32,8 +33,21 @@ async function main() {
     topUpFrequency: TopUpFrequency.MONTHLY,
     durationMonths: 12,
     rewardType: 'Jollibee meal voucher',
-    reason: 'I want to protect my savings and stay committed to my goal.',
-  }, 'demo-clerk-user');
+    reason: 'Protect my savings and stay committed to my goal.',
+  }, { clerkUserId: 'seed-clerk-user', vaultAccessTokenHash: null });
+
+  const guestToken = createVaultAccessToken();
+  await VaultService.createVault({
+    walletAddress: Keypair.random().publicKey(),
+    mode: VaultMode.ONE_TIME_LOCK,
+    targetAmount: 5000,
+    currentAmount: 5000,
+    durationMonths: 6,
+    rewardType: 'Transport voucher',
+    reason: 'Keep this money safe for an important goal.',
+  }, { clerkUserId: null, vaultAccessTokenHash: hashVaultAccessToken(guestToken) });
+
+  console.log('Seed complete. Guest recovery token is intentionally not printed.');
 }
 
 main()

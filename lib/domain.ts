@@ -63,7 +63,7 @@ export function decimalToNumber(value: unknown) {
 }
 
 export const ProofReceiptStatus = {
-  DEMO_RECEIPT: 'DEMO_RECEIPT',
+  LOCAL_RECEIPT: 'LOCAL_RECEIPT',
   NETWORK_CONFIRMED: 'NETWORK_CONFIRMED',
   FAILED: 'FAILED',
 } as const;

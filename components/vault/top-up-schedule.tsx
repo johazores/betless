@@ -27,7 +27,7 @@ function getTopUpEmptyMessage(vault: VaultDetailView) {
   }
 
   if (!vault.nextTopUp) {
-    return 'All planned demo top-ups are complete. Claim any available reward, then save the commitment proof.';
+    return 'All planned top-ups are complete. Claim any available reward, then save your receipt.';
   }
 
   return 'No scheduled top-ups are available yet.';

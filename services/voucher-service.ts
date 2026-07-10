@@ -1,5 +1,5 @@
 export class VoucherService {
-  static generateMockVoucherCode(rewardName: string) {
+  static generateVoucherCode(rewardName: string) {
     const prefix = rewardName
       .split(/\s+/)
       .map((part) => part[0])
@@ -15,10 +15,9 @@ export class VoucherService {
 
   static createVoucher(rewardName: string, value: number) {
     return {
-      code: this.generateMockVoucherCode(rewardName),
+      code: this.generateVoucherCode(rewardName),
       name: rewardName,
       value,
-      demoOnlyMessage: 'Demo-only voucher. No real voucher supplier or redemption value is connected in this MVP.',
     };
   }
 }

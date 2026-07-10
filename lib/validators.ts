@@ -1,5 +1,5 @@
 import { TopUpFrequency, VaultMode } from '@/lib/domain';
-import { rewardOptions } from '@/lib/demo-config';
+import { rewardOptions } from '@/lib/vault-options';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { toNumber } from '@/lib/money';
 import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';

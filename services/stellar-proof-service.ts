@@ -3,6 +3,7 @@ import { ProofReceiptStatus, StellarStatus } from '@/lib/domain';
 import { ConfigService } from '@/services/config-service';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { prisma } from '@/lib/prisma';
+import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 
 function buildLocalProofReference(vaultId: string) {
   return `betless-receipt-${vaultId.slice(0, 8)}-${Date.now().toString(36)}`;
@@ -17,7 +18,7 @@ function getExplorerUrl(transactionHash: string) {
 }
 
 type ProofAttempt = {
-  status: typeof ProofReceiptStatus.DEMO_RECEIPT | typeof ProofReceiptStatus.NETWORK_CONFIRMED;
+  status: typeof ProofReceiptStatus.LOCAL_RECEIPT | typeof ProofReceiptStatus.NETWORK_CONFIRMED;
   proofReference: string;
   transactionHash?: string | null;
   operationId?: string | null;
@@ -30,7 +31,7 @@ type ProofAttempt = {
 export class StellarProofService {
   static validatePublicKey(walletAddress: string) {
     if (!isValidStellarPublicKey(walletAddress)) {
-      throw new Error('This vault does not have a valid Stellar public address. Add a valid public address that starts with G.');
+      throw new Error('Add a valid Stellar public address that starts with G.');
     }
   }
 
@@ -40,10 +41,10 @@ export class StellarProofService {
 
     if (!sourceSecret) {
       return {
-        status: ProofReceiptStatus.DEMO_RECEIPT,
+        status: ProofReceiptStatus.LOCAL_RECEIPT,
         proofReference: buildLocalProofReference(vault.id),
         memo,
-        message: 'Receipt saved in demo mode. Configure STELLAR_PROOF_SOURCE_SECRET to create a live Stellar testnet transaction for this proof.',
+        message: 'Receipt saved. Network verification will be attached when a funded Stellar signer is connected.',
       };
     }
 
@@ -88,21 +89,21 @@ export class StellarProofService {
         ledger: result.ledger ?? null,
         explorerUrl: getExplorerUrl(result.hash),
         memo,
-        message: 'Network proof created on Stellar testnet and linked to this account.',
+        message: 'Network receipt created and linked to this vault.',
       };
-    } catch (error) {
+    } catch {
       return {
-        status: ProofReceiptStatus.DEMO_RECEIPT,
+        status: ProofReceiptStatus.LOCAL_RECEIPT,
         proofReference: buildLocalProofReference(vault.id),
         memo,
-        message: 'Receipt saved in demo mode because a live Stellar testnet transaction could not be completed. In production, Betless will use a funded proof signer and partner wallets to create verifiable network receipts.',
+        message: 'Receipt saved. Network verification can be attached when Stellar submission is available.',
       };
     }
   }
 
-  static async createOrUpdateCommitmentProof(vaultId: string, clerkUserId: string) {
+  static async createOrUpdateCommitmentProof(vaultId: string, access: VaultAccess) {
     const vault = await prisma.vault.findFirst({
-      where: { id: vaultId, appUser: { clerkUserId } },
+      where: buildVaultAccessWhere(vaultId, access),
       include: { appUser: true, receipts: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
 
@@ -130,7 +131,7 @@ export class StellarProofService {
           appUserId: vault.appUserId,
           vaultId: vault.id,
           status: proof.status,
-          network: 'Stellar Testnet',
+          network: 'Stellar',
           publicAddress: vault.walletAddress,
           proofReference: proof.proofReference,
           transactionHash: proof.transactionHash ?? null,

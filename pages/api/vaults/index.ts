@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { requireApiUserId } from '@/lib/auth';
+import { createVaultAccessToken, getApiVaultAccess, hashVaultAccessToken, requireApiUserId } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { validateCreateVaultRequest } from '@/lib/validators';
@@ -8,9 +8,8 @@ import { VaultService } from '@/services/vault-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const clerkUserId = await requireApiUserId(req);
-
     if (req.method === 'GET') {
+      const clerkUserId = await requireApiUserId(req);
       const vaults = await VaultService.listVaults(clerkUserId);
       return sendSuccess(res, vaults);
     }
@@ -18,12 +17,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!requireMethod(req, res, 'POST')) return;
 
     const input = validateCreateVaultRequest(req.body);
-    const createdVault = await VaultService.createVault(input, clerkUserId);
-    await StellarProofService.createOrUpdateCommitmentProof(createdVault.id, clerkUserId);
-    const vault = await VaultService.refreshVaultDetail(createdVault.id, clerkUserId);
-    return sendSuccess(res, vault, 201);
+    const requestAccess = await getApiVaultAccess(req);
+    const guestAccessToken = requestAccess.clerkUserId ? null : createVaultAccessToken();
+    const access = {
+      clerkUserId: requestAccess.clerkUserId,
+      vaultAccessTokenHash: guestAccessToken ? hashVaultAccessToken(guestAccessToken) : null,
+    };
+
+    const createdVault = await VaultService.createVault(input, access);
+    await StellarProofService.createOrUpdateCommitmentProof(createdVault.id, access);
+    const vault = await VaultService.refreshVaultDetail(createdVault.id, access);
+    return sendSuccess(res, { ...vault, accessToken: guestAccessToken }, 201);
   } catch (error) {
     const message = getApiErrorMessage(error);
-    return sendError(res, message, message === 'Please sign in to continue.' ? 401 : 400);
+    return sendError(res, message, message.includes('sign in') ? 401 : 400);
   }
 }

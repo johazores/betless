@@ -36,7 +36,7 @@ export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimeli
         <div>
           <p className="text-sm font-black text-orange-700">Milestone reward timeline</p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">{getRewardHeading(vault)}</h2>
-          <p className="mt-2 text-sm text-slate-600">Rewards are fixed progress incentives worth around 1% of the savings target in demo mode.</p>
+          <p className="mt-2 text-sm text-slate-600">Rewards are fixed progress incentives based on the savings target.</p>
         </div>
         <Button
           onClick={() => onClaimReward(vault.availableReward?.id)}
@@ -52,7 +52,7 @@ export function RewardTimeline({ vault, onClaimReward, isLoading }: RewardTimeli
           <div key={reward.id} className="flex flex-col gap-3 rounded-2xl border border-orange-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-black text-slate-950">Milestone {reward.weekNumber}: {reward.rewardName}</p>
-              <p className="text-sm text-slate-600">{formatPeso(reward.rewardValue)} demo value {reward.voucherCode ? `• ${reward.voucherCode}` : ''}</p>
+              <p className="text-sm text-slate-600">{formatPeso(reward.rewardValue)} value {reward.voucherCode ? `• ${reward.voucherCode}` : ''}</p>
             </div>
             <RewardStatusPill reward={reward} />
           </div>

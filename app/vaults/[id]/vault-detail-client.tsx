@@ -16,6 +16,7 @@ import { UnlockCard } from '@/components/vault/unlock-card';
 import { VaultSummaryCard } from '@/components/vault/vault-summary-card';
 import { VaultNextStepCard } from '@/components/vault/vault-next-step-card';
 import { Card } from '@/components/ui/card';
+import { clearVaultToken, getVaultToken } from '@/lib/vault-session';
 import type { VaultDetailView, VoucherResult } from '@/types/vault';
 
 type VaultDetailClientProps = {
@@ -31,34 +32,62 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
   const [topUpLoading, setTopUpLoading] = useState(false);
   const [rewardLoading, setRewardLoading] = useState(false);
   const [proofLoading, setProofLoading] = useState(false);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   const loadVault = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
     try {
-      const token = await getToken();
-      const loadedVault = await apiRequest<VaultDetailView>(`/api/vaults/${id}`, undefined, token);
+      const token = isSignedIn ? await getToken() : null;
+      const vaultAccessToken = getVaultToken(id);
+      const loadedVault = await apiRequest<VaultDetailView>(`/api/vaults/${id}`, undefined, { token, vaultAccessToken });
       setVault(loadedVault);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Vault could not be loaded.');
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, id]);
+  }, [getToken, id, isSignedIn]);
+
+  async function connectVaultToAccount() {
+    setConnectLoading(true);
+    setError('');
+
+    try {
+      const token = await getToken();
+      const vaultAccessToken = getVaultToken(id);
+      const updatedVault = await postJson<VaultDetailView>(`/api/vaults/${id}/connect-account`, {}, { token, vaultAccessToken });
+      clearVaultToken(id);
+      setVault(updatedVault);
+      setIsConnected(true);
+    } catch (connectError) {
+      setError(connectError instanceof Error ? connectError.message : 'Vault could not be connected to your account.');
+    } finally {
+      setConnectLoading(false);
+    }
+  }
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) void loadVault();
-    if (isLoaded && !isSignedIn) setIsLoading(false);
-  }, [isLoaded, isSignedIn, loadVault]);
+    if (isLoaded) void loadVault();
+  }, [isLoaded, loadVault]);
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn && getVaultToken(id) && !isConnected) {
+      void connectVaultToAccount();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, id, isConnected]);
 
   async function runMutation<T>(url: string, body: Record<string, unknown>, onSuccess: (data: T) => void, setPending: (pending: boolean) => void) {
     setPending(true);
     setError('');
 
     try {
-      const token = await getToken();
-      const data = await postJson<T>(url, body, token);
+      const token = isSignedIn ? await getToken() : null;
+      const vaultAccessToken = getVaultToken(id);
+      const data = await postJson<T>(url, body, { token, vaultAccessToken });
       onSuccess(data);
     } catch (mutationError) {
       setError(mutationError instanceof Error ? mutationError.message : 'Request failed.');
@@ -97,26 +126,23 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     );
   }
 
-  if (isLoaded && !isSignedIn) {
-    return (
-      <Card>
-        <p className="text-sm font-black text-amber-700">Account required</p>
-        <h2 className="mt-2 text-2xl font-black text-slate-950">Sign in to view this vault.</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Vault details and receipts are private to the account that created them.</p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
-          <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
-        </div>
-      </Card>
-    );
-  }
-
   if (isLoading) {
     return <LoadingState />;
   }
 
   if (!vault && error) {
-    return <EmptyState title="Vault could not be loaded" message={error} />;
+    return (
+      <Card>
+        <p className="text-sm font-black text-amber-700">Access needed</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">Open this vault from the same browser or sign in.</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Vaults can be opened from the browser that created them. Signing in saves vaults to your dashboard.</p>
+        <p className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-800">{error}</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <SignInButton mode="modal"><Button type="button" variant="secondary">Sign in</Button></SignInButton>
+          <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
+        </div>
+      </Card>
+    );
   }
 
   if (!vault) {
@@ -126,9 +152,26 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/dashboard" className="text-sm font-bold text-orange-800 hover:text-orange-900">← Back to dashboard</Link>
+        <Link href={isSignedIn ? '/dashboard' : '/'} className="text-sm font-bold text-orange-800 hover:text-orange-900">← Back</Link>
         <Link href="/create-vault" className="text-sm font-bold text-slate-600 hover:text-slate-950">Create another vault</Link>
       </div>
+
+      {isSignedIn && connectLoading ? <Alert title="Saving vault" tone="success">Connecting this vault to your account…</Alert> : null}
+      {!isSignedIn ? (
+        <Card className="border-blue-200 bg-blue-50">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-blue-800">Save this vault</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Connect an account to access it later.</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">Your vault works now. Sign in when you want dashboard and receipt history.</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <SignInButton mode="modal"><Button type="button" variant="secondary">Sign in</Button></SignInButton>
+              <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       {error ? <Alert title="Action could not be completed" tone="error">{error}</Alert> : null}
       {voucher ? <RewardCard voucher={voucher} /> : null}

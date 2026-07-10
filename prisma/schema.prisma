@@ -32,7 +32,8 @@ model AppUser {
 
 model Vault {
   id               String          @id @default(cuid())
-  appUserId        String
+  appUserId        String?
+  guestAccessTokenHash String?  @unique
   walletAddress    String
   displayName      String?
   mode             VaultMode       @default(ONE_TIME_LOCK)
@@ -55,12 +56,13 @@ model Vault {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  appUser          AppUser         @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  appUser          AppUser?        @relation(fields: [appUserId], references: [id], onDelete: SetNull)
   rewards          RewardClaim[]
   topUps           TopUp[]
   receipts         ProofReceipt[]
 
   @@index([appUserId, status, createdAt])
+  @@index([guestAccessTokenHash])
   @@index([walletAddress])
 }
 
@@ -133,10 +135,10 @@ enum RewardStatus {
 
 model ProofReceipt {
   id              String             @id @default(cuid())
-  appUserId       String
+  appUserId       String?
   vaultId         String
-  status          ProofReceiptStatus @default(DEMO_RECEIPT)
-  network         String             @default("Stellar Testnet")
+  status          ProofReceiptStatus @default(LOCAL_RECEIPT)
+  network         String             @default("Stellar")
   publicAddress   String
   proofReference  String             @unique
   transactionHash String?
@@ -147,7 +149,7 @@ model ProofReceipt {
   message         String
   createdAt       DateTime           @default(now())
 
-  appUser         AppUser            @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  appUser         AppUser?           @relation(fields: [appUserId], references: [id], onDelete: SetNull)
   vault           Vault              @relation(fields: [vaultId], references: [id], onDelete: Cascade)
 
   @@index([appUserId, createdAt])
@@ -156,7 +158,7 @@ model ProofReceipt {
 }
 
 enum ProofReceiptStatus {
-  DEMO_RECEIPT
+  LOCAL_RECEIPT
   NETWORK_CONFIRMED
   FAILED
 }

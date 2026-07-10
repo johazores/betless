@@ -2,6 +2,7 @@ import { RewardStatus, TopUpFrequency, TopUpStatus, VaultStatus } from '@/lib/do
 import { addMonths, addWeeks } from '@/lib/dates';
 import { getMaxTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
+import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 
 type DbClient = any;
 
@@ -49,7 +50,7 @@ export class TopUpService {
     await client.topUp.createMany({ data: schedule });
   }
 
-  static async markTopUpCompleted(vaultId: string, clerkUserId: string, topUpId?: string) {
+  static async markTopUpCompleted(vaultId: string, access: VaultAccess, topUpId?: string) {
     await prisma.$transaction(async (tx: any) => {
       const topUp = topUpId
         ? await tx.topUp.findFirst({ where: { id: topUpId, vaultId } })
@@ -63,14 +64,14 @@ export class TopUpService {
         throw new Error('This top-up has already been completed.');
       }
 
-      const vault = await tx.vault.findFirst({ where: { id: vaultId, appUser: { clerkUserId } } });
+      const vault = await tx.vault.findFirst({ where: buildVaultAccessWhere(vaultId, access) });
 
       if (!vault) {
         throw new Error('Vault not found.');
       }
 
       if (vault.status === VaultStatus.UNLOCK_READY || vault.status === VaultStatus.COMPLETED || vault.currentAmount.greaterThanOrEqualTo(vault.targetAmount)) {
-        throw new Error('Savings target is already reached. The next step is to claim any available reward and save the commitment proof.');
+        throw new Error('Savings target is already reached. Claim any available reward and save the receipt next.');
       }
 
       const rawNextAmount = vault.currentAmount.add(topUp.amount);

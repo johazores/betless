@@ -49,7 +49,7 @@ export function VaultNextStepCard({
             <p className="text-sm font-black text-blue-800">Next step</p>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Claim the milestone reward</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-              {vault.availableReward.rewardName} is ready. Claim it to generate the demo voucher code.
+              {vault.availableReward.rewardName} is ready. Claim it to generate your voucher code.
             </p>
           </div>
           <Button onClick={() => onClaimReward(vault.availableReward?.id)} isLoading={isRewardLoading} className="w-full sm:w-auto">
@@ -65,7 +65,7 @@ export function VaultNextStepCard({
       <Card className="border-slate-200 bg-slate-50">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-slate-700">Final demo step</p>
+            <p className="text-sm font-black text-slate-700">Final step</p>
             <h2 className="mt-1 text-2xl font-black text-slate-950">Create the receipt</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
               Create an account-linked receipt so this vault can be viewed later from the dashboard.
@@ -81,10 +81,10 @@ export function VaultNextStepCard({
 
   return (
     <Card className="border-emerald-200 bg-emerald-50">
-      <p className="text-sm font-black text-emerald-800">Demo flow complete</p>
-      <h2 className="mt-1 text-2xl font-black text-slate-950">This vault has a completed end-to-end demo path.</h2>
+      <p className="text-sm font-black text-emerald-800">Vault ready</p>
+      <h2 className="mt-1 text-2xl font-black text-slate-950">This vault is ready to review anytime.</h2>
       <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-        The vault is created, progress is tracked, available rewards can be claimed, and the receipt is saved in the account dashboard. Users can return later to review or verify the proof history.
+        The vault is created, progress is tracked, rewards can be claimed, and the receipt is saved for review.
       </p>
     </Card>
   );

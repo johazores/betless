@@ -1,5 +1,6 @@
 import { RewardStatus, decimalToNumber } from '@/lib/domain';
 import { prisma } from '@/lib/prisma';
+import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 import { VoucherService } from '@/services/voucher-service';
 
 type DbClient = any;
@@ -41,9 +42,9 @@ export class RewardService {
     await client.rewardClaim.createMany({ data: rewards });
   }
 
-  static async claimReward(vaultId: string, clerkUserId: string, rewardId?: string) {
+  static async claimReward(vaultId: string, access: VaultAccess, rewardId?: string) {
     return prisma.$transaction(async (tx: any) => {
-      const vault = await tx.vault.findFirst({ where: { id: vaultId, appUser: { clerkUserId } } });
+      const vault = await tx.vault.findFirst({ where: buildVaultAccessWhere(vaultId, access) });
 
       if (!vault) {
         throw new Error('Vault not found.');

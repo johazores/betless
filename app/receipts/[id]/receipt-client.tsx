@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { SignInButton, useAuth } from '@clerk/nextjs';
+import { useEffect, useMemo, useState } from 'react';
 import { PrintReceiptButton } from '@/components/receipt/print-receipt-button';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { apiRequest } from '@/lib/api-client';
 import { formatShortDate } from '@/lib/dates';
+import { getVaultToken } from '@/lib/vault-session';
 import type { ProofReceiptView } from '@/types/vault';
 
 export function ReceiptClient({ id }: { id: string }) {
@@ -20,14 +21,20 @@ export function ReceiptClient({ id }: { id: string }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  const vaultIdFromUrl = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('vault');
+  }, []);
+
   useEffect(() => {
     async function loadReceipt() {
       setIsLoading(true);
       setError('');
 
       try {
-        const token = await getToken();
-        const loadedReceipt = await apiRequest<ProofReceiptView>(`/api/receipts/${id}`, undefined, token);
+        const token = isSignedIn ? await getToken() : null;
+        const vaultAccessToken = vaultIdFromUrl ? getVaultToken(vaultIdFromUrl) : null;
+        const loadedReceipt = await apiRequest<ProofReceiptView>(`/api/receipts/${id}`, undefined, { token, vaultAccessToken });
         setReceipt(loadedReceipt);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : 'Receipt could not be loaded.');
@@ -36,22 +43,26 @@ export function ReceiptClient({ id }: { id: string }) {
       }
     }
 
-    if (isLoaded && isSignedIn) void loadReceipt();
-    if (isLoaded && !isSignedIn) setIsLoading(false);
-  }, [getToken, id, isLoaded, isSignedIn]);
+    if (isLoaded) void loadReceipt();
+  }, [getToken, id, isLoaded, isSignedIn, vaultIdFromUrl]);
 
-  if (isLoaded && !isSignedIn) {
+  if (isLoading) {
+    return <PublicLayout><section className="px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-4xl"><LoadingState /></div></section></PublicLayout>;
+  }
+
+  if (!receipt) {
     return (
       <PublicLayout>
         <section className="px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl">
             <Card>
-              <p className="text-sm font-black text-amber-700">Account required</p>
-              <h1 className="mt-2 text-3xl font-black text-slate-950">Log in to view this receipt.</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Receipts are private to the account that created the vault.</p>
+              <p className="text-sm font-black text-amber-700">Receipt access</p>
+              <h1 className="mt-2 text-3xl font-black text-slate-950">Open the saved vault link or sign in.</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Receipts stay private to the vault owner. Open it from the same browser or connect the vault to an account.</p>
+              {error ? <p className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-800">{error}</p> : null}
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
-                <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
+                <SignInButton mode="modal"><Button type="button" variant="secondary">Sign in</Button></SignInButton>
+                <Link href="/create-vault"><Button type="button">Create Vault</Button></Link>
               </div>
             </Card>
           </div>
@@ -60,26 +71,21 @@ export function ReceiptClient({ id }: { id: string }) {
     );
   }
 
-  if (isLoading) {
-    return <PublicLayout><section className="px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-4xl"><LoadingState /></div></section></PublicLayout>;
-  }
-
-  if (!receipt) {
-    return <PublicLayout><section className="px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-4xl"><EmptyState title="Receipt could not be loaded" message={error || 'This receipt was not found.'} /></div></section></PublicLayout>;
-  }
+  const receiptLabel = receipt.status === 'NETWORK_CONFIRMED' ? 'Network receipt' : 'Saved receipt';
+  const vaultHref = vaultIdFromUrl ? `/vaults/${receipt.vaultId}` : `/vaults/${receipt.vaultId}`;
 
   return (
     <PublicLayout>
       <section className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/dashboard" className="text-sm font-bold text-orange-800 hover:text-orange-900">← Back to dashboard</Link>
-            <Link href={`/vaults/${receipt.vaultId}`} className="text-sm font-bold text-slate-600 hover:text-slate-950">Open vault</Link>
+            <Link href={isSignedIn ? '/dashboard' : vaultHref} className="text-sm font-bold text-orange-800 hover:text-orange-900">← Back</Link>
+            <Link href={vaultHref} className="text-sm font-bold text-slate-600 hover:text-slate-950">Open vault</Link>
           </div>
 
           <Card>
-            <Badge>{receipt.status === 'NETWORK_CONFIRMED' ? 'Stellar network receipt' : 'Demo receipt'}</Badge>
-            <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950">Commitment proof receipt</h1>
+            <Badge>{receiptLabel}</Badge>
+            <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950">Vault receipt</h1>
             <p className="mt-3 text-sm leading-7 text-slate-600">{receipt.message}</p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -88,15 +94,15 @@ export function ReceiptClient({ id }: { id: string }) {
                 <p className="mt-1 font-black text-slate-950">{formatShortDate(receipt.createdAt)}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold text-slate-500">Network</p>
-                <p className="mt-1 font-black text-slate-950">{receipt.network}</p>
+                <p className="text-sm font-bold text-slate-500">Receipt type</p>
+                <p className="mt-1 font-black text-slate-950">{receiptLabel}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                <p className="text-sm font-bold text-slate-500">Public address</p>
+                <p className="text-sm font-bold text-slate-500">Wallet address</p>
                 <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.publicAddress}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                <p className="text-sm font-bold text-slate-500">Proof reference</p>
+                <p className="text-sm font-bold text-slate-500">Receipt reference</p>
                 <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.proofReference}</p>
               </div>
               {receipt.transactionHash ? (
@@ -121,9 +127,9 @@ export function ReceiptClient({ id }: { id: string }) {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {receipt.explorerUrl ? (
-                <a href={receipt.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar explorer</Button></a>
+                <a href={receipt.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar</Button></a>
               ) : (
-                <Button disabled>Explorer link available after network proof</Button>
+                <Button disabled>Network verification pending</Button>
               )}
               <PrintReceiptButton />
             </div>
