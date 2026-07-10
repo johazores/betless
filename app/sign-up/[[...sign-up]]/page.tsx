@@ -5,6 +5,7 @@ const highlights: Array<[string, string]> = [
   ['Takes under a minute', 'Create your account, open your first vault, and start earning points after your first full month.'],
   ['Your money comes back', '100% of your deposit is returned at maturity — and the lock is verifiable on the Stellar network.'],
   ['Real-world rewards', 'Points are worth ₱1 each and redeemable for groceries, travel, gadgets, and more.'],
+  ['Invited by a friend?', 'Sign up through their invite link and you both earn ₱100 in points automatically.'],
 ];
 
 export default function SignUpPage() {

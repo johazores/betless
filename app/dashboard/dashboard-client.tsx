@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { VaultCard } from '@/components/vault/vault-card';
 import { HowItWorks } from '@/components/marketing/how-it-works';
+import { ReferralCard } from '@/components/referral/referral-card';
 import { apiRequest } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -105,6 +106,8 @@ export function DashboardClient() {
               helper="Monthly rewards across all vaults"
             />
           </div>
+
+          <ReferralCard variant="compact" onChanged={() => void loadDashboard()} />
 
           {vaults.length === 0 ? (
             <div className="space-y-5">

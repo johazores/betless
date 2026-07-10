@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { PublicLayout } from '@/components/layout/public-layout';
+import { ReferralCard } from '@/components/referral/referral-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -69,6 +70,8 @@ export function AccountClient() {
               <Link href="/create-vault"><Button variant="secondary" className="w-full">New vault</Button></Link>
             </div>
           </Card>
+
+          <ReferralCard variant="compact" />
 
           <Card>
             <h2 className="text-2xl font-black text-ink">Session</h2>

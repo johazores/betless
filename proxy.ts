@@ -12,7 +12,11 @@ const isProtectedPage = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedPage(req)) {
-    await auth.protect();
+    // Always send signed-out visitors to our own /sign-in page (never the
+    // Clerk-hosted accounts.dev one), and bring them back where they were going.
+    const signInUrl = new URL('/sign-in', req.url);
+    signInUrl.searchParams.set('redirect_url', req.nextUrl.pathname + req.nextUrl.search);
+    await auth.protect({ unauthenticatedUrl: signInUrl.toString() });
   }
 });
 
