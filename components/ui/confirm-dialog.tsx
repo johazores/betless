@@ -59,7 +59,7 @@ export function ConfirmDialog({
     <dialog
       ref={dialogRef}
       className={cn(
-        'fixed inset-0 z-50 m-auto w-full max-w-md rounded-2xl border border-line bg-surface p-0 text-ink shadow-elevated backdrop:bg-ink/40',
+        'fixed inset-0 z-[60] m-auto w-full max-w-md rounded-2xl border border-line bg-surface p-0 text-ink shadow-elevated backdrop:bg-ink/40',
       )}
       onClose={onCancel}
     >

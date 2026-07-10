@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
 import { SectionHeader } from '@/components/admin/section-header';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 
 type AuditLog = {
@@ -37,7 +38,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
   const [adminUserId, setAdminUserId] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -61,6 +62,11 @@ export function AuditSection({ onError }: AuditSectionProps) {
     void load();
   }, [load]);
 
+  const selectedLog = useMemo(
+    () => logs.find((entry) => entry.id === selectedLogId) ?? null,
+    [logs, selectedLogId],
+  );
+
   return (
     <div className="space-y-6">
       <SectionHeader
@@ -71,7 +77,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
 
       <Card padding="lg">
         <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 lg:items-end"
           onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }}
         >
           <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="POINTS_ADJUSTED" />
@@ -92,26 +98,53 @@ export function AuditSection({ onError }: AuditSectionProps) {
               log.action,
               `${log.targetType ?? ''} ${log.targetId ?? ''}`.trim() || '—',
               log.reason ?? '—',
-              <Button key={log.id} size="sm" variant="ghost" onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
-                {expandedId === log.id ? 'Hide' : 'Show'}
+              <Button key={log.id} size="sm" variant="ghost" onClick={() => setSelectedLogId(log.id)}>
+                View
               </Button>,
             ])}
           />
-          {expandedId ? (
-            <Card padding="md">
-              {(() => {
-                const log = logs.find((entry) => entry.id === expandedId);
-                if (!log) return null;
-                return (
-                  <div className="space-y-2 text-sm">
-                    <p><span className="font-semibold">IP:</span> {log.ipAddress ?? '—'}</p>
-                    <p><span className="font-semibold">User agent:</span> {log.userAgent ?? '—'}</p>
-                    <pre className="overflow-x-auto rounded-xl bg-surface-muted p-3 text-xs">{JSON.stringify(log.metadata, null, 2)}</pre>
-                  </div>
-                );
-              })()}
-            </Card>
-          ) : null}
+
+          <Modal
+            open={selectedLog !== null}
+            onClose={() => setSelectedLogId(null)}
+            title={selectedLog?.action ?? 'Audit entry'}
+            description={selectedLog ? new Date(selectedLog.createdAt).toLocaleString() : undefined}
+            size="lg"
+          >
+            {selectedLog ? (
+              <dl className="space-y-4 text-sm">
+                <div>
+                  <dt className="font-semibold text-ink-muted">Admin</dt>
+                  <dd className="mt-1 text-ink">{selectedLog.adminEmail ?? 'System'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-ink-muted">Target</dt>
+                  <dd className="mt-1 text-ink">{`${selectedLog.targetType ?? ''} ${selectedLog.targetId ?? ''}`.trim() || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-ink-muted">Reason</dt>
+                  <dd className="mt-1 text-ink">{selectedLog.reason ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-ink-muted">IP address</dt>
+                  <dd className="mt-1 text-ink">{selectedLog.ipAddress ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-ink-muted">User agent</dt>
+                  <dd className="mt-1 break-all text-ink">{selectedLog.userAgent ?? '—'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-ink-muted">Metadata</dt>
+                  <dd className="mt-2">
+                    <pre className="overflow-x-auto rounded-xl border border-line bg-surface-muted p-3 text-xs leading-5 text-ink">
+                      {JSON.stringify(selectedLog.metadata, null, 2)}
+                    </pre>
+                  </dd>
+                </div>
+              </dl>
+            ) : null}
+          </Modal>
+
           <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </>
       )}

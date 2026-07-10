@@ -46,7 +46,7 @@ export function DashboardSection() {
         description="Platform metrics, user growth, and environment health at a glance."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         <MetricCard label="Total users" value={formatNumber(data.metrics.totalUsers)} />
         <MetricCard label="Active users" value={formatNumber(data.metrics.activeUsers)} />
         <MetricCard label="Locked balance" value={formatPeso(data.metrics.lockedBalance)} />

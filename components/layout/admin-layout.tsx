@@ -86,7 +86,7 @@ export function AdminLayout({
             ))}
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+          <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
             <aside className="hidden lg:block">
               <nav className="sticky top-[4.5rem] space-y-1 rounded-2xl border border-line bg-surface p-2 shadow-card">
                 <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Workspace</p>
@@ -120,7 +120,7 @@ export function AdminLayout({
         <div className={cn(adminContainerClass, 'py-8')}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <Logo showTagline={false} markClassName="h-8 w-8" />
-            <p className="max-w-xl text-sm leading-6 text-ink-muted">
+            <p className="text-sm leading-6 text-ink-muted sm:text-right">
               Betless admin console. All actions are logged and attributed to your administrator account.
             </p>
           </div>

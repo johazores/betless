@@ -114,15 +114,14 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
         </>
       )}
 
-      {selectedUserId ? (
-        <UserDetailPanel
+      <UserDetailPanel
+          open={selectedUserId !== null}
           userId={selectedUserId}
           canManage={can(AdminPermission.MANAGE_USERS)}
           onClose={() => setSelectedUserId(null)}
           onUpdated={() => { void load(); onSuccess('User updated'); }}
           onError={onError}
         />
-      ) : null}
     </div>
   );
 }

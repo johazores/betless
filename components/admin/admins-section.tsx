@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 
 type AdminUser = {
@@ -161,31 +162,42 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
         </form>
       </Card>
 
-      {editAdmin ? (
-        <Card padding="lg" className="space-y-4">
-          <h3 className="text-lg font-black text-ink">Edit {editAdmin.email}</h3>
+      <Modal
+        open={editAdmin !== null}
+        onClose={() => setEditAdmin(null)}
+        title={editAdmin ? `Edit ${editAdmin.email}` : 'Edit administrator'}
+        size="md"
+        footer={(
+          <FormActions className="pt-0">
+            <Button variant="ghost" onClick={() => setEditAdmin(null)}>Cancel</Button>
+            <Button onClick={() => void saveEdit()} isLoading={isSubmitting}>Save changes</Button>
+          </FormActions>
+        )}
+      >
+        <div className="space-y-4">
           <FormFieldGrid columns={2}>
             <Select label="Role" value={editRole} onChange={(e) => setEditRole(e.target.value)} options={roleOptions} />
             <Input label="Display name" value={editDisplayName} onChange={(e) => setEditDisplayName(e.target.value)} />
           </FormFieldGrid>
           <p className="text-xs leading-5 text-ink-muted">{adminRoleDescriptions[editRole]}</p>
-          <FormActions>
-            <Button variant="ghost" onClick={() => setEditAdmin(null)}>Cancel</Button>
-            <Button onClick={() => void saveEdit()} isLoading={isSubmitting}>Save changes</Button>
-          </FormActions>
-        </Card>
-      ) : null}
+        </div>
+      </Modal>
 
-      {resetAdmin ? (
-        <Card padding="lg" className="space-y-4">
-          <h3 className="text-lg font-black text-ink">Reset password for {resetAdmin.email}</h3>
-          <Input label="New password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} hint="Minimum 8 characters" required />
-          <FormActions>
+      <Modal
+        open={resetAdmin !== null}
+        onClose={() => { setResetAdmin(null); setNewPassword(''); }}
+        title={resetAdmin ? `Reset password` : 'Reset password'}
+        description={resetAdmin ? `Set a new password for ${resetAdmin.email}. All active sessions will be revoked.` : undefined}
+        size="md"
+        footer={(
+          <FormActions className="pt-0">
             <Button variant="ghost" onClick={() => { setResetAdmin(null); setNewPassword(''); }}>Cancel</Button>
             <Button onClick={() => void confirmReset()} isLoading={isSubmitting} disabled={newPassword.length < 8}>Reset password</Button>
           </FormActions>
-        </Card>
-      ) : null}
+        )}
+      >
+        <Input label="New password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} hint="Minimum 8 characters" required />
+      </Modal>
 
       <DataTable
         headers={['Email', 'Name', 'Role', 'Active', 'Last login', 'Actions']}
