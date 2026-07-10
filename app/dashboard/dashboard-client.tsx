@@ -111,7 +111,7 @@ export function DashboardClient() {
           <ReferralCard variant="compact" onChanged={() => void loadDashboard()} />
 
           {vaults.length === 0 ? (
-            <div className="space-y-5">
+            <div className="space-y-8">
               <Card>
                 <h2 className="text-2xl font-black text-ink">Open your first vault</h2>
                 <p className="mt-2 text-sm leading-6 text-ink-muted">
@@ -119,7 +119,14 @@ export function DashboardClient() {
                 </p>
                 <Link href="/create-vault" className="mt-5 inline-flex"><Button>Create a vault</Button></Link>
               </Card>
-              <HowItWorks />
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-brand-700">How it works</p>
+                  <h3 className="mt-1 text-xl font-black text-ink">Five steps to start saving</h3>
+                </div>
+                <HowItWorks compact />
+              </div>
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
