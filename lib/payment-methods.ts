@@ -2,9 +2,11 @@ export type PaymentMethod = {
   id: string;
   name: string;
   description: string;
-  /** Short initial(s) rendered as the method's logo mark. */
+  /** Brand logo under `/public/payment-methods`. */
+  logoSrc?: string;
+  /** Fallback initial(s) when no logo is available. */
   mark: string;
-  /** Brand background for the logo mark. */
+  /** Brand background for the fallback mark. */
   markClassName: string;
 };
 
@@ -17,15 +19,17 @@ export const paymentMethods: PaymentMethod[] = [
     id: 'gcash',
     name: 'GCash',
     description: 'Instant · No fees',
+    logoSrc: '/payment-methods/gcash.png',
     mark: 'G',
-    markClassName: 'bg-[#0066e4]',
+    markClassName: 'bg-[#007CFF]',
   },
   {
     id: 'maya',
     name: 'Maya',
     description: 'Instant · No fees',
+    logoSrc: '/payment-methods/maya.svg',
     mark: 'M',
-    markClassName: 'bg-[#0a9830]',
+    markClassName: 'bg-[#0A0A0A]',
   },
   {
     id: 'instapay',

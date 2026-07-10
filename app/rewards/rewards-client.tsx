@@ -6,12 +6,20 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
 import { apiRequest, postJson } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/dates';
+import { buildReferralInviteMessage } from '@/lib/referrals';
 import { rewardCatalog } from '@/lib/rewards';
 import { refreshSummary } from '@/lib/summary-events';
-import type { PointsTransactionView, RedemptionResult, SummaryView } from '@/types/vault';
+import type {
+  ClaimReferralResult,
+  PointsTransactionView,
+  RedemptionResult,
+  ReferralInfoView,
+  SummaryView,
+} from '@/types/vault';
 
 export function RewardsClient() {
   const [summary, setSummary] = useState<SummaryView | null>(null);
@@ -20,16 +28,24 @@ export function RewardsClient() {
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [redemption, setRedemption] = useState<RedemptionResult | null>(null);
   const [error, setError] = useState('');
+  const [referral, setReferral] = useState<ReferralInfoView | null>(null);
+  const [claimCode, setClaimCode] = useState('');
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimResult, setClaimResult] = useState<ClaimReferralResult | null>(null);
+  const [claimError, setClaimError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [loadedSummary, loadedTransactions] = await Promise.all([
+      const [loadedSummary, loadedTransactions, loadedReferral] = await Promise.all([
         apiRequest<SummaryView>('/api/summary'),
         apiRequest<PointsTransactionView[]>('/api/points'),
+        apiRequest<ReferralInfoView>('/api/referrals'),
       ]);
       setSummary(loadedSummary);
       setTransactions(loadedTransactions);
+      setReferral(loadedReferral);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Rewards could not be loaded.');
     } finally {
@@ -55,6 +71,34 @@ export function RewardsClient() {
       setError(redeemError instanceof Error ? redeemError.message : 'Reward could not be redeemed.');
     } finally {
       setRedeemingId(null);
+    }
+  }
+
+  async function handleCopyInvite() {
+    if (!referral) return;
+    try {
+      await navigator.clipboard.writeText(buildReferralInviteMessage(referral.referralCode, window.location.origin));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (e.g. insecure context) — the code is still visible to copy manually.
+    }
+  }
+
+  async function handleClaimCode() {
+    setIsClaiming(true);
+    setClaimError('');
+
+    try {
+      const result = await postJson<ClaimReferralResult>('/api/referrals/claim', { code: claimCode });
+      setClaimResult(result);
+      setClaimCode('');
+      refreshSummary();
+      await load();
+    } catch (claimCodeError) {
+      setClaimError(claimCodeError instanceof Error ? claimCodeError.message : 'Referral code could not be applied.');
+    } finally {
+      setIsClaiming(false);
     }
   }
 
@@ -89,6 +133,69 @@ export function RewardsClient() {
           <span className="font-mono font-black">{redemption.voucherCode}</span>. You have{' '}
           {redemption.remainingPoints.toLocaleString('en-PH')} points left.
         </Alert>
+      ) : null}
+
+      {referral ? (
+        <Card>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wide text-brand-700">Referrals</p>
+              <h2 className="mt-2 text-2xl font-black text-ink">
+                Invite friends, earn ₱{referral.bonusPoints.toLocaleString('en-PH')} each
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-ink-muted">
+                Share your code below. When a friend signs up and enters it here, you both get{' '}
+                {referral.bonusPoints.toLocaleString('en-PH')} points.
+                {referral.referralCount > 0
+                  ? ` You have referred ${referral.referralCount} ${referral.referralCount === 1 ? 'friend' : 'friends'} so far.`
+                  : ''}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <span className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 font-mono text-lg font-black tracking-widest text-brand-900">
+                  {referral.referralCode}
+                </span>
+                <Button variant="secondary" size="sm" onClick={handleCopyInvite}>
+                  {copied ? 'Copied!' : 'Copy invite'}
+                </Button>
+              </div>
+            </div>
+
+            {!referral.hasClaimedCode ? (
+              <div className="w-full shrink-0 rounded-2xl border border-line bg-surface-muted p-5 lg:max-w-sm">
+                <h3 className="text-sm font-black text-ink">Have a friend&apos;s code?</h3>
+                <div className="mt-3 space-y-3">
+                  <Input
+                    label="Referral code"
+                    name="referral-code"
+                    placeholder="e.g. AB2CD3EF"
+                    value={claimCode}
+                    onChange={(event) => setClaimCode(event.target.value.toUpperCase())}
+                    error={claimError || undefined}
+                  />
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    isLoading={isClaiming}
+                    disabled={claimCode.trim().length === 0}
+                    onClick={handleClaimCode}
+                  >
+                    Apply code
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {claimResult ? (
+            <div className="mt-5">
+              <Alert title="Referral bonus earned" tone="success">
+                You earned {claimResult.bonusPoints.toLocaleString('en-PH')} points
+                {claimResult.referrerName ? ` thanks to ${claimResult.referrerName}` : ''} — and your friend got the
+                same.
+              </Alert>
+            </div>
+          ) : null}
+        </Card>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

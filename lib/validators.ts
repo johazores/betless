@@ -46,6 +46,20 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
   };
 }
 
+export function validateClaimReferralRequest(body: unknown) {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Request body is required.');
+  }
+
+  const code = (body as Record<string, unknown>).code;
+
+  if (typeof code !== 'string' || code.trim().length === 0) {
+    throw new Error('Enter a referral code.');
+  }
+
+  return code.trim().toUpperCase();
+}
+
 export function validateRedeemRequest(body: unknown) {
   if (!body || typeof body !== 'object') {
     throw new Error('Request body is required.');

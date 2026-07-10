@@ -335,8 +335,17 @@ export function CreateVaultForm() {
                         : 'border-line bg-surface hover:border-line-strong',
                     )}
                   >
-                    <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-black text-white', option.markClassName)}>
-                      {option.mark}
+                    <span
+                      className={cn(
+                        'grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-lg font-black text-white',
+                        option.logoSrc ? 'bg-transparent' : option.markClassName,
+                      )}
+                    >
+                      {option.logoSrc ? (
+                        <img src={option.logoSrc} alt="" className="h-full w-full object-contain" />
+                      ) : (
+                        option.mark
+                      )}
                     </span>
                     <span className="flex-1">
                       <span className="block font-black text-ink">{option.name}</span>

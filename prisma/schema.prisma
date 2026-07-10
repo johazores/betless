@@ -12,8 +12,15 @@ model AppUser {
   clerkUserId String   @unique
   email       String?
   displayName String?
+  // Shareable invite code, assigned the first time the user opens the referral card.
+  referralCode String? @unique
+  // Set once when the user claims a friend's code; enforces the one-claim-per-user rule.
+  referredById String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  referredBy AppUser?  @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals  AppUser[] @relation("Referrals")
 
   vaults             Vault[]
   pointsTransactions PointsTransaction[]
@@ -115,4 +122,5 @@ model PointsTransaction {
 enum PointsTransactionType {
   MONTHLY_REWARD
   REDEMPTION
+  REFERRAL_BONUS
 }

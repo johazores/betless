@@ -9,6 +9,7 @@ export type VaultStatus = (typeof VaultStatus)[keyof typeof VaultStatus];
 export const PointsTransactionType = {
   MONTHLY_REWARD: 'MONTHLY_REWARD',
   REDEMPTION: 'REDEMPTION',
+  REFERRAL_BONUS: 'REFERRAL_BONUS',
 } as const;
 
 export type PointsTransactionType = (typeof PointsTransactionType)[keyof typeof PointsTransactionType];

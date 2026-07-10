@@ -59,3 +59,15 @@ export type RedemptionResult = {
   voucherCode: string;
   remainingPoints: number;
 };
+
+export type ReferralInfoView = {
+  referralCode: string;
+  referralCount: number;
+  bonusPoints: number;
+  hasClaimedCode: boolean;
+};
+
+export type ClaimReferralResult = {
+  bonusPoints: number;
+  referrerName: string | null;
+};
