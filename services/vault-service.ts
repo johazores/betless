@@ -6,7 +6,8 @@ import type { CreateVaultInput } from '@/lib/validators';
 import { ConfigService } from '@/services/config-service';
 import { RewardService } from '@/services/reward-service';
 import { TopUpService } from '@/services/top-up-service';
-import type { RewardClaimView, TopUpView, VaultDetailView } from '@/types/vault';
+import { UserService } from '@/services/user-service';
+import type { DashboardVaultView, ProofReceiptView, RewardClaimView, TopUpView, VaultDetailView } from '@/types/vault';
 
 type TopUpRecord = {
   id: string;
@@ -26,8 +27,25 @@ type RewardClaimRecord = {
   claimedAt: Date | null;
 };
 
+type ProofReceiptRecord = {
+  id: string;
+  vaultId: string;
+  status: ProofReceiptView['status'];
+  network: string;
+  publicAddress: string;
+  proofReference: string;
+  transactionHash: string | null;
+  operationId: string | null;
+  ledger: number | null;
+  memo: string | null;
+  explorerUrl: string | null;
+  message: string;
+  createdAt: Date;
+};
+
 type VaultWithRelations = {
   id: string;
+  appUserId: string;
   walletAddress: string;
   displayName: string | null;
   mode: VaultDetailView['mode'];
@@ -47,6 +65,7 @@ type VaultWithRelations = {
   updatedAt: Date;
   topUps: TopUpRecord[];
   rewards: RewardClaimRecord[];
+  receipts: ProofReceiptRecord[];
 };
 
 export class VaultService {
@@ -58,7 +77,8 @@ export class VaultService {
     return addWeeks(new Date(), durationWeeks);
   }
 
-  static async createVault(input: CreateVaultInput) {
+  static async createVault(input: CreateVaultInput, clerkUserId: string) {
+    const appUser = await UserService.ensureAppUser({ clerkUserId });
     const rewardRate = ConfigService.getRewardRate();
     const durationWeeks = this.calculateDurationWeeks(input.durationMonths);
     const rewardValue = RewardService.calculateRewardValue(input.targetAmount, rewardRate);
@@ -77,6 +97,7 @@ export class VaultService {
     const vault = await prisma.$transaction(async (tx: any) => {
       const createdVault = await tx.vault.create({
         data: {
+          appUserId: appUser.id,
           walletAddress: input.walletAddress,
           mode: input.mode,
           targetAmount: input.targetAmount,
@@ -112,15 +133,44 @@ export class VaultService {
       return createdVault;
     });
 
-    return this.getVaultDetail(vault.id);
+    return this.getVaultDetail(vault.id, clerkUserId);
   }
 
-  static async getVaultDetail(id: string) {
-    const vault = await prisma.vault.findUnique({
-      where: { id },
+  static async listVaults(clerkUserId: string): Promise<DashboardVaultView[]> {
+    const vaults = await prisma.vault.findMany({
+      where: { appUser: { clerkUserId } },
+      include: { receipts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return vaults.map((vault: VaultWithRelations) => {
+      const currentAmount = decimalToNumber(vault.currentAmount);
+      const targetAmount = decimalToNumber(vault.targetAmount);
+      const progressPercent = targetAmount > 0 ? Math.min(100, Math.round((currentAmount / targetAmount) * 100)) : 0;
+
+      return {
+        id: vault.id,
+        status: vault.status,
+        mode: vault.mode,
+        targetAmount,
+        currentAmount,
+        progressPercent,
+        rewardType: vault.rewardType,
+        unlockAt: vault.unlockAt.toISOString(),
+        createdAt: vault.createdAt.toISOString(),
+        stellarStatus: vault.stellarStatus,
+        latestReceipt: vault.receipts?.[0] ? this.toProofReceiptView(vault.receipts[0]) : null,
+      };
+    });
+  }
+
+  static async getVaultDetail(id: string, clerkUserId: string) {
+    const vault = await prisma.vault.findFirst({
+      where: { id, appUser: { clerkUserId } },
       include: {
         topUps: { orderBy: { dueAt: 'asc' } },
         rewards: { orderBy: { weekNumber: 'asc' } },
+        receipts: { orderBy: { createdAt: 'desc' } },
       },
     });
 
@@ -131,8 +181,8 @@ export class VaultService {
     return this.toVaultDetailView(vault);
   }
 
-  static async refreshVaultDetail(id: string) {
-    return this.getVaultDetail(id);
+  static async refreshVaultDetail(id: string, clerkUserId: string) {
+    return this.getVaultDetail(id, clerkUserId);
   }
 
   private static toTopUpView(topUp: VaultWithRelations['topUps'][number]): TopUpView {
@@ -157,12 +207,31 @@ export class VaultService {
     };
   }
 
+  private static toProofReceiptView(receipt: VaultWithRelations['receipts'][number]): ProofReceiptView {
+    return {
+      id: receipt.id,
+      vaultId: receipt.vaultId,
+      status: receipt.status,
+      network: receipt.network,
+      publicAddress: receipt.publicAddress,
+      proofReference: receipt.proofReference,
+      transactionHash: receipt.transactionHash,
+      operationId: receipt.operationId,
+      ledger: receipt.ledger,
+      memo: receipt.memo,
+      explorerUrl: receipt.explorerUrl,
+      message: receipt.message,
+      createdAt: receipt.createdAt.toISOString(),
+    };
+  }
+
   private static toVaultDetailView(vault: VaultWithRelations): VaultDetailView {
     const currentAmount = decimalToNumber(vault.currentAmount);
     const targetAmount = decimalToNumber(vault.targetAmount);
     const progressPercent = targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
     const topUps = vault.topUps.map((topUp) => this.toTopUpView(topUp));
     const rewards = vault.rewards.map((reward) => this.toRewardClaimView(reward));
+    const receipts = vault.receipts.map((receipt) => this.toProofReceiptView(receipt));
     const goalReached = currentAmount >= targetAmount;
 
     return {
@@ -189,6 +258,8 @@ export class VaultService {
       availableReward: rewards.find((reward) => reward.status === 'AVAILABLE') ?? null,
       topUps,
       rewards,
+      receipts,
+      latestReceipt: receipts[0] ?? null,
     };
   }
 }

@@ -144,3 +144,25 @@ All checks passed.
 - Vault detail page now has a clear next-step card.
 - Commitment proof no longer exposes `testnet-proof-unavailable` as a user-facing dead end.
 - Demo proof workflow completes with a saved proof reference when the public address is valid.
+
+## Loop 14 QA — Clerk Auth and Stellar Receipt Workflow
+
+Commands run:
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=true NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_replace_me CLERK_SECRET_KEY=sk_test_replace_me NEXT_TELEMETRY_DISABLED=1 npm run build:next
+```
+
+Results:
+
+- TypeScript passed.
+- MVP verifier passed.
+- Next production build passed when run directly with Clerk environment placeholders.
+
+Notes:
+
+- Clerk requires real `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for local runtime.
+- Live Stellar network receipts require `STELLAR_PROOF_SOURCE_SECRET` to be set to a funded testnet source account.
+- If the Stellar signer is not configured, the app creates a clearly labeled demo receipt instead of blocking the user.

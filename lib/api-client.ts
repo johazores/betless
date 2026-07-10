@@ -2,11 +2,12 @@ import type { ApiFailure, ApiSuccess } from '@/lib/api-response';
 
 type ApiPayload<T> = ApiSuccess<T> | ApiFailure;
 
-export async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(url: string, init?: RequestInit, token?: string | null): Promise<T> {
   const response = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
@@ -26,9 +27,9 @@ export async function apiRequest<T>(url: string, init?: RequestInit): Promise<T>
   return payload.data;
 }
 
-export function postJson<T>(url: string, body: Record<string, unknown>) {
+export function postJson<T>(url: string, body: Record<string, unknown>, token?: string | null) {
   return apiRequest<T>(url, {
     method: 'POST',
     body: JSON.stringify(body),
-  });
+  }, token);
 }

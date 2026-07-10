@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { apiRequest, postJson } from '@/lib/api-client';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -13,6 +15,7 @@ import { TopUpSchedule } from '@/components/vault/top-up-schedule';
 import { UnlockCard } from '@/components/vault/unlock-card';
 import { VaultSummaryCard } from '@/components/vault/vault-summary-card';
 import { VaultNextStepCard } from '@/components/vault/vault-next-step-card';
+import { Card } from '@/components/ui/card';
 import type { VaultDetailView, VoucherResult } from '@/types/vault';
 
 type VaultDetailClientProps = {
@@ -20,6 +23,7 @@ type VaultDetailClientProps = {
 };
 
 export function VaultDetailClient({ id }: VaultDetailClientProps) {
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [vault, setVault] = useState<VaultDetailView | null>(null);
   const [voucher, setVoucher] = useState<VoucherResult | null>(null);
   const [error, setError] = useState('');
@@ -33,25 +37,28 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     setError('');
 
     try {
-      const loadedVault = await apiRequest<VaultDetailView>(`/api/vaults/${id}`);
+      const token = await getToken();
+      const loadedVault = await apiRequest<VaultDetailView>(`/api/vaults/${id}`, undefined, token);
       setVault(loadedVault);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Vault could not be loaded.');
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [getToken, id]);
 
   useEffect(() => {
-    void loadVault();
-  }, [loadVault]);
+    if (isLoaded && isSignedIn) void loadVault();
+    if (isLoaded && !isSignedIn) setIsLoading(false);
+  }, [isLoaded, isSignedIn, loadVault]);
 
   async function runMutation<T>(url: string, body: Record<string, unknown>, onSuccess: (data: T) => void, setPending: (pending: boolean) => void) {
     setPending(true);
     setError('');
 
     try {
-      const data = await postJson<T>(url, body);
+      const token = await getToken();
+      const data = await postJson<T>(url, body, token);
       onSuccess(data);
     } catch (mutationError) {
       setError(mutationError instanceof Error ? mutationError.message : 'Request failed.');
@@ -90,6 +97,20 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     );
   }
 
+  if (isLoaded && !isSignedIn) {
+    return (
+      <Card>
+        <p className="text-sm font-black text-amber-700">Account required</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">Sign in to view this vault.</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Vault details and receipts are private to the account that created them.</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
+          <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
+        </div>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -105,8 +126,8 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/create-vault" className="text-sm font-bold text-orange-800 hover:text-orange-900">← Create another vault</Link>
-        <Link href="/" className="text-sm font-bold text-slate-600 hover:text-slate-950">Back to landing</Link>
+        <Link href="/dashboard" className="text-sm font-bold text-orange-800 hover:text-orange-900">← Back to dashboard</Link>
+        <Link href="/create-vault" className="text-sm font-bold text-slate-600 hover:text-slate-950">Create another vault</Link>
       </div>
 
       {error ? <Alert title="Action could not be completed" tone="error">{error}</Alert> : null}

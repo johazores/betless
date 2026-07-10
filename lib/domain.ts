@@ -61,3 +61,11 @@ export function decimalToNumber(value: unknown) {
 
   return 0;
 }
+
+export const ProofReceiptStatus = {
+  DEMO_RECEIPT: 'DEMO_RECEIPT',
+  NETWORK_CONFIRMED: 'NETWORK_CONFIRMED',
+  FAILED: 'FAILED',
+} as const;
+
+export type ProofReceiptStatus = (typeof ProofReceiptStatus)[keyof typeof ProofReceiptStatus];

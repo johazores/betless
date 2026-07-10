@@ -155,3 +155,30 @@ Enums:
 ## Production Notes
 
 In production, deposits, custody, payment rails, and voucher fulfillment should be handled by licensed financial and voucher partners. Rewards can be sponsor-funded, partner-funded, or funded through approved financial partner programs. Betless should not promise yield or operate real fund custody without legal review and licensed partners.
+
+## Loop 14 Product Architecture Update — Accounts and Receipts
+
+Betless now includes a complete account-backed workflow using Clerk.
+
+### Account Flow
+
+- User signs up or logs in with Clerk.
+- Betless maps the Clerk user ID to an internal `AppUser` record.
+- New vaults are saved under the user's `AppUser` record.
+- Vault and receipt APIs require a Clerk session bearer token.
+- Users can return later to view their dashboard and receipt history.
+
+### Receipt Flow
+
+- Vault creation now triggers commitment proof receipt creation.
+- If a funded testnet proof signer is configured, the system attempts a real Stellar testnet transaction.
+- If no signer is configured, the system creates a complete demo receipt and explains that no live network transaction was submitted.
+- Receipts are visible in `/dashboard` and `/receipts/[id]`.
+- Network-confirmed receipts include a Stellar explorer link.
+
+### Security Notes
+
+- User private keys are never requested.
+- `STELLAR_PROOF_SOURCE_SECRET` is server-only.
+- API routes enforce ownership before returning vaults or receipts.
+- Clerk owns authentication and session management.

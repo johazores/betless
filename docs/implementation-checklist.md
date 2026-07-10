@@ -159,3 +159,31 @@
 - [x] MVP verification passed
 - [x] Next production build passed
 - [x] Combined check passed
+
+## Loop 14 — Clerk Accounts, Dashboard, Receipts, and Proof History
+- [x] Clerk dependency added
+- [x] Clerk provider added through client wrapper
+- [x] Sign-in page added
+- [x] Sign-up page added
+- [x] Header account navigation added
+- [x] Account-required states added for protected product screens
+- [x] API requests now send Clerk session bearer token
+- [x] Pages API routes verify Clerk session tokens with `@clerk/backend`
+- [x] `AppUser` model added
+- [x] Vault ownership added through `appUserId`
+- [x] `ProofReceipt` model added
+- [x] Receipt service added
+- [x] User service added
+- [x] Dashboard page added
+- [x] Receipt detail page added
+- [x] Receipt history added
+- [x] Vault creation automatically creates a proof receipt
+- [x] Demo receipt fallback added when no Stellar proof signer is configured
+- [x] Optional live Stellar testnet transaction proof added when server signer is configured
+- [x] Explorer link stored for network-confirmed receipts
+- [x] Print/export receipt action added
+- [x] Auth and Stellar workflow documentation added
+- [x] README updated
+- [x] TypeScript check passed
+- [x] MVP verification passed
+- [x] Next production build passed with Clerk env placeholders

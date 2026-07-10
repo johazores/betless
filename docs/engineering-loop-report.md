@@ -229,3 +229,36 @@ npm run check
 ```
 
 All checks passed.
+
+## Loop 14 — Clerk Accounts, Dashboard, Receipts, and Proof History
+
+### Root Issue
+
+The prior MVP created vaults anonymously. That made the Stellar proof and receipt flow incomplete because users had no account, no dashboard, no history, and no way to return later to view previous vaults or proofs.
+
+### Fixes Completed
+
+- Added Clerk sign-in and sign-up screens.
+- Added account navigation and user menu.
+- Added account-required states for product flows.
+- Added bearer-token API authentication using Clerk session tokens.
+- Added `AppUser` to map Clerk users to Betless records.
+- Added vault ownership.
+- Added `ProofReceipt` records.
+- Added dashboard with vault and receipt history.
+- Added receipt detail page with proof reference, transaction hash fields, ledger, memo, explorer link, and print/export support.
+- Updated Stellar proof service so receipt creation happens during vault creation.
+- Added optional live Stellar testnet proof transaction when `STELLAR_PROOF_SOURCE_SECRET` is configured.
+- Kept safe demo receipt behavior when the proof signer is not configured.
+
+### QA
+
+Passed:
+
+```bash
+npm run typecheck
+npm run verify:mvp
+NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=true NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_replace_me CLERK_SECRET_KEY=sk_test_replace_me NEXT_TELEMETRY_DISABLED=1 npm run build:next
+```
+
+`npm run check` now runs the deterministic code checks only: TypeScript and MVP verification. The Next production build was run separately because the sandbox has previously been unstable when chaining Next build after TypeScript in one command.

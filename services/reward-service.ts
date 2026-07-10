@@ -41,8 +41,14 @@ export class RewardService {
     await client.rewardClaim.createMany({ data: rewards });
   }
 
-  static async claimReward(vaultId: string, rewardId?: string) {
+  static async claimReward(vaultId: string, clerkUserId: string, rewardId?: string) {
     return prisma.$transaction(async (tx: any) => {
+      const vault = await tx.vault.findFirst({ where: { id: vaultId, appUser: { clerkUserId } } });
+
+      if (!vault) {
+        throw new Error('Vault not found.');
+      }
+
       const reward = rewardId
         ? await tx.rewardClaim.findFirst({ where: { id: rewardId, vaultId } })
         : await tx.rewardClaim.findFirst({ where: { vaultId, status: RewardStatus.AVAILABLE }, orderBy: { weekNumber: 'asc' } });

@@ -3,26 +3,24 @@ import { requireApiUserId } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { getSingleQueryValue } from '@/lib/validators';
-import { TopUpService } from '@/services/top-up-service';
-import { VaultService } from '@/services/vault-service';
+import { ReceiptService } from '@/services/receipt-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!requireMethod(req, res, 'POST')) return;
+  if (!requireMethod(req, res, 'GET')) return;
 
   const id = getSingleQueryValue(req.query.id);
 
   if (!id) {
-    return sendError(res, 'Vault ID is required.', 400);
+    return sendError(res, 'Receipt ID is required.', 400);
   }
 
   try {
     const clerkUserId = await requireApiUserId(req);
-    const topUpId = typeof req.body?.topUpId === 'string' ? req.body.topUpId : undefined;
-    await TopUpService.markTopUpCompleted(id, clerkUserId, topUpId);
-    const vault = await VaultService.refreshVaultDetail(id, clerkUserId);
-    return sendSuccess(res, vault);
+    const receipt = await ReceiptService.getReceipt(id, clerkUserId);
+    return sendSuccess(res, receipt);
   } catch (error) {
     const message = getApiErrorMessage(error);
-    return sendError(res, message, message === 'Please sign in to continue.' ? 401 : 400);
+    if (message === 'Please sign in to continue.') return sendError(res, message, 401);
+    return sendError(res, message, message === 'Receipt not found.' ? 404 : 400);
   }
 }

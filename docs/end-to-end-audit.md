@@ -149,9 +149,18 @@ These support the main product reads without changing the MVP data model.
 
 ### Authentication Scope
 
-Clerk authentication, Root System User authentication, role permissions, protected routes, and authorization enforcement are intentionally not implemented because the Betless MVP specification explicitly excludes an auth system.
+Clerk authentication is now implemented for the MVP account workflow.
 
-For a production pilot, authentication should be added before storing real user accounts, sensitive recovery data, custody records, voucher inventory, or partner dashboards.
+Completed:
+
+- Sign-up and login screens are available through Clerk.
+- The header shows account navigation and user controls.
+- Vault creation, vault detail, dashboard, and receipt screens require a signed-in user from the product UX perspective.
+- Client API requests attach a Clerk session bearer token.
+- Pages API routes verify the Clerk token server-side before reading or mutating vault and receipt data.
+- Vaults and receipts are scoped to the signed-in Clerk user through the local `AppUser` model.
+
+Root System User authentication and role permissions are still not needed for this MVP because there is no admin dashboard or multi-role workflow yet. They should be added only if Betless introduces admin operations, partner dashboards, or internal support tooling.
 
 ## Architecture Audit
 

@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { requireApiUserId } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { getSingleQueryValue } from '@/lib/validators';
@@ -14,10 +15,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const vault = await VaultService.getVaultDetail(id);
+    const clerkUserId = await requireApiUserId(req);
+    const vault = await VaultService.getVaultDetail(id, clerkUserId);
     return sendSuccess(res, vault);
   } catch (error) {
     const message = getApiErrorMessage(error);
+    if (message === 'Please sign in to continue.') return sendError(res, message, 401);
     return sendError(res, message, message === 'Vault not found.' ? 404 : 400);
   }
 }

@@ -49,7 +49,7 @@ export class TopUpService {
     await client.topUp.createMany({ data: schedule });
   }
 
-  static async markTopUpCompleted(vaultId: string, topUpId?: string) {
+  static async markTopUpCompleted(vaultId: string, clerkUserId: string, topUpId?: string) {
     await prisma.$transaction(async (tx: any) => {
       const topUp = topUpId
         ? await tx.topUp.findFirst({ where: { id: topUpId, vaultId } })
@@ -63,7 +63,7 @@ export class TopUpService {
         throw new Error('This top-up has already been completed.');
       }
 
-      const vault = await tx.vault.findUnique({ where: { id: vaultId } });
+      const vault = await tx.vault.findFirst({ where: { id: vaultId, appUser: { clerkUserId } } });
 
       if (!vault) {
         throw new Error('Vault not found.');

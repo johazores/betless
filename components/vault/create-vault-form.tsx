@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SignInButton, SignUpButton, useAuth } from '@clerk/nextjs';
 import { Alert } from '@/components/ui/alert';
-import { apiRequest } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -72,6 +73,7 @@ function getStepError(step: number, form: FormState) {
 
 export function CreateVaultForm() {
   const router = useRouter();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [form, setForm] = useState<FormState>(defaultVaultForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState('');
@@ -148,6 +150,7 @@ export function CreateVaultForm() {
     setIsSubmitting(true);
 
     try {
+      const token = await getToken();
       const vault = await apiRequest<{ id: string }>('/api/vaults', {
         method: 'POST',
         body: JSON.stringify({
@@ -160,7 +163,7 @@ export function CreateVaultForm() {
           durationMonths: Number(form.durationMonths),
           reason: form.reason.trim(),
         }),
-      });
+      }, token);
 
       router.push(`/vaults/${vault.id}`);
     } catch (submitError) {
@@ -169,6 +172,20 @@ export function CreateVaultForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isLoaded && !isSignedIn) {
+    return (
+      <Card>
+        <p className="text-sm font-black text-amber-700">Account required</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">Sign in to save your vault and receipt history.</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Vaults, receipts, and Stellar proof references are attached to your account so you can return later and review them.</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <SignInButton mode="modal"><Button type="button" variant="secondary">Log in</Button></SignInButton>
+          <SignUpButton mode="modal"><Button type="button">Create account</Button></SignUpButton>
+        </div>
+      </Card>
+    );
   }
 
   return (

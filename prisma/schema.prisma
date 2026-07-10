@@ -16,8 +16,23 @@ model AppConfig {
   updatedAt DateTime @updatedAt
 }
 
+model AppUser {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  email       String?
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vaults      Vault[]
+  receipts    ProofReceipt[]
+
+  @@index([createdAt])
+}
+
 model Vault {
   id               String          @id @default(cuid())
+  appUserId        String
   walletAddress    String
   displayName      String?
   mode             VaultMode       @default(ONE_TIME_LOCK)
@@ -40,10 +55,12 @@ model Vault {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  appUser          AppUser         @relation(fields: [appUserId], references: [id], onDelete: Cascade)
   rewards          RewardClaim[]
   topUps           TopUp[]
+  receipts         ProofReceipt[]
 
-  @@index([status, createdAt])
+  @@index([appUserId, status, createdAt])
   @@index([walletAddress])
 }
 
@@ -112,4 +129,34 @@ enum RewardStatus {
   LOCKED
   AVAILABLE
   CLAIMED
+}
+
+model ProofReceipt {
+  id              String             @id @default(cuid())
+  appUserId       String
+  vaultId         String
+  status          ProofReceiptStatus @default(DEMO_RECEIPT)
+  network         String             @default("Stellar Testnet")
+  publicAddress   String
+  proofReference  String             @unique
+  transactionHash String?
+  operationId     String?
+  ledger          Int?
+  memo            String?
+  explorerUrl     String?
+  message         String
+  createdAt       DateTime           @default(now())
+
+  appUser         AppUser            @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  vault           Vault              @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@index([appUserId, createdAt])
+  @@index([vaultId, createdAt])
+  @@index([transactionHash])
+}
+
+enum ProofReceiptStatus {
+  DEMO_RECEIPT
+  NETWORK_CONFIRMED
+  FAILED
 }

@@ -1,11 +1,31 @@
-import { StellarStatus } from '@/lib/domain';
+import { Asset, BASE_FEE, Horizon, Keypair, Memo, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import { ProofReceiptStatus, StellarStatus } from '@/lib/domain';
 import { ConfigService } from '@/services/config-service';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { prisma } from '@/lib/prisma';
 
 function buildLocalProofReference(vaultId: string) {
-  return `betless-proof-${vaultId.slice(0, 8)}-${Date.now().toString(36)}`;
+  return `betless-receipt-${vaultId.slice(0, 8)}-${Date.now().toString(36)}`;
 }
+
+function buildMemo(vaultId: string) {
+  return `BTLS-${vaultId.slice(0, 20)}`;
+}
+
+function getExplorerUrl(transactionHash: string) {
+  return `https://stellar.expert/explorer/testnet/tx/${transactionHash}`;
+}
+
+type ProofAttempt = {
+  status: typeof ProofReceiptStatus.DEMO_RECEIPT | typeof ProofReceiptStatus.NETWORK_CONFIRMED;
+  proofReference: string;
+  transactionHash?: string | null;
+  operationId?: string | null;
+  ledger?: number | null;
+  explorerUrl?: string | null;
+  memo: string;
+  message: string;
+};
 
 export class StellarProofService {
   static validatePublicKey(walletAddress: string) {
@@ -14,8 +34,77 @@ export class StellarProofService {
     }
   }
 
-  static async createOrUpdateCommitmentProof(vaultId: string) {
-    const vault = await prisma.vault.findUnique({ where: { id: vaultId } });
+  private static async attemptNetworkProof(vault: { id: string; walletAddress: string }): Promise<ProofAttempt> {
+    const sourceSecret = process.env.STELLAR_PROOF_SOURCE_SECRET;
+    const memo = buildMemo(vault.id);
+
+    if (!sourceSecret) {
+      return {
+        status: ProofReceiptStatus.DEMO_RECEIPT,
+        proofReference: buildLocalProofReference(vault.id),
+        memo,
+        message: 'Receipt saved in demo mode. Configure STELLAR_PROOF_SOURCE_SECRET to create a live Stellar testnet transaction for this proof.',
+      };
+    }
+
+    try {
+      const sourceKeypair = Keypair.fromSecret(sourceSecret);
+      const server = new Horizon.Server(ConfigService.getStellarHorizonUrl());
+
+      await server.loadAccount(vault.walletAddress);
+      const sourceAccount = await server.loadAccount(sourceKeypair.publicKey());
+      const fee = await server.fetchBaseFee().catch(() => Number(BASE_FEE));
+
+      const transaction = new TransactionBuilder(sourceAccount, {
+        fee: String(fee),
+        networkPassphrase: Networks.TESTNET,
+      })
+        .addOperation(Operation.payment({
+          destination: vault.walletAddress,
+          asset: Asset.native(),
+          amount: '0.0000001',
+        }))
+        .addMemo(Memo.text(memo))
+        .setTimeout(60)
+        .build();
+
+      transaction.sign(sourceKeypair);
+      const result = await server.submitTransaction(transaction) as {
+        hash?: string;
+        ledger?: number;
+        successful?: boolean;
+        _links?: { transaction?: { href?: string } };
+      };
+
+      if (!result.hash) {
+        throw new Error('Stellar did not return a transaction hash.');
+      }
+
+      return {
+        status: ProofReceiptStatus.NETWORK_CONFIRMED,
+        proofReference: result.hash,
+        transactionHash: result.hash,
+        operationId: null,
+        ledger: result.ledger ?? null,
+        explorerUrl: getExplorerUrl(result.hash),
+        memo,
+        message: 'Network proof created on Stellar testnet and linked to this account.',
+      };
+    } catch (error) {
+      return {
+        status: ProofReceiptStatus.DEMO_RECEIPT,
+        proofReference: buildLocalProofReference(vault.id),
+        memo,
+        message: 'Receipt saved in demo mode because a live Stellar testnet transaction could not be completed. In production, Betless will use a funded proof signer and partner wallets to create verifiable network receipts.',
+      };
+    }
+  }
+
+  static async createOrUpdateCommitmentProof(vaultId: string, clerkUserId: string) {
+    const vault = await prisma.vault.findFirst({
+      where: { id: vaultId, appUser: { clerkUserId } },
+      include: { appUser: true, receipts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
 
     if (!vault) {
       throw new Error('Vault not found.');
@@ -23,8 +112,9 @@ export class StellarProofService {
 
     this.validatePublicKey(vault.walletAddress);
 
-    if (vault.stellarStatus === StellarStatus.CREATED && vault.stellarBalanceId) {
-      return;
+    const existingReceipt = vault.receipts?.[0];
+    if (existingReceipt && vault.stellarStatus === StellarStatus.CREATED) {
+      return existingReceipt;
     }
 
     await prisma.vault.update({
@@ -32,26 +122,35 @@ export class StellarProofService {
       data: { stellarStatus: StellarStatus.PENDING },
     });
 
-    let proofReference = buildLocalProofReference(vaultId);
+    const proof = await this.attemptNetworkProof({ id: vault.id, walletAddress: vault.walletAddress });
 
-    try {
-      const horizonUrl = ConfigService.getStellarHorizonUrl().replace(/\/$/, '');
-      const response = await fetch(`${horizonUrl}/accounts/${vault.walletAddress}`, { cache: 'no-store' });
+    return prisma.$transaction(async (tx: any) => {
+      const receipt = await tx.proofReceipt.create({
+        data: {
+          appUserId: vault.appUserId,
+          vaultId: vault.id,
+          status: proof.status,
+          network: 'Stellar Testnet',
+          publicAddress: vault.walletAddress,
+          proofReference: proof.proofReference,
+          transactionHash: proof.transactionHash ?? null,
+          operationId: proof.operationId ?? null,
+          ledger: proof.ledger ?? null,
+          memo: proof.memo,
+          explorerUrl: proof.explorerUrl ?? null,
+          message: proof.message,
+        },
+      });
 
-      if (response.ok) {
-        const account = (await response.json()) as { sequence?: string; last_modified_ledger?: number };
-        proofReference = `betless-testnet-${account.last_modified_ledger ?? account.sequence ?? Date.now()}`;
-      }
-    } catch {
-      // Network lookup is optional in the MVP. A local demo proof still completes the user flow.
-    }
+      await tx.vault.update({
+        where: { id: vaultId },
+        data: {
+          stellarStatus: StellarStatus.CREATED,
+          stellarBalanceId: proof.proofReference,
+        },
+      });
 
-    await prisma.vault.update({
-      where: { id: vaultId },
-      data: {
-        stellarStatus: StellarStatus.CREATED,
-        stellarBalanceId: proofReference,
-      },
+      return receipt;
     });
   }
 }

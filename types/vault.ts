@@ -1,4 +1,4 @@
-import type { RewardStatus, StellarStatus, TopUpFrequency, TopUpStatus, VaultMode, VaultStatus } from '@/lib/domain';
+import type { ProofReceiptStatus, RewardStatus, StellarStatus, TopUpFrequency, TopUpStatus, VaultMode, VaultStatus } from '@/lib/domain';
 
 export type TopUpView = {
   id: string;
@@ -16,6 +16,23 @@ export type RewardClaimView = {
   voucherCode: string | null;
   status: RewardStatus;
   claimedAt: string | null;
+};
+
+
+export type ProofReceiptView = {
+  id: string;
+  vaultId: string;
+  status: ProofReceiptStatus;
+  network: string;
+  publicAddress: string;
+  proofReference: string;
+  transactionHash: string | null;
+  operationId: string | null;
+  ledger: number | null;
+  memo: string | null;
+  explorerUrl: string | null;
+  message: string;
+  createdAt: string;
 };
 
 export type VaultDetailView = {
@@ -42,6 +59,8 @@ export type VaultDetailView = {
   availableReward: RewardClaimView | null;
   topUps: TopUpView[];
   rewards: RewardClaimView[];
+  receipts: ProofReceiptView[];
+  latestReceipt: ProofReceiptView | null;
 };
 
 export type VoucherResult = {
@@ -49,4 +68,18 @@ export type VoucherResult = {
   name: string;
   value: number;
   demoOnlyMessage: string;
+};
+
+export type DashboardVaultView = {
+  id: string;
+  status: VaultStatus;
+  mode: VaultMode;
+  targetAmount: number;
+  currentAmount: number;
+  progressPercent: number;
+  rewardType: string;
+  unlockAt: string;
+  createdAt: string;
+  stellarStatus: StellarStatus;
+  latestReceipt: ProofReceiptView | null;
 };

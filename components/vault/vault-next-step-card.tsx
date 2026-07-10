@@ -60,19 +60,19 @@ export function VaultNextStepCard({
     );
   }
 
-  if (vault.stellarStatus !== 'CREATED') {
+  if (!vault.latestReceipt) {
     return (
       <Card className="border-slate-200 bg-slate-50">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-black text-slate-700">Final demo step</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-950">Save the commitment proof</h2>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">Create the receipt</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-              Save a proof reference so the vault has a clear completion point for the Stellar demo.
+              Create an account-linked receipt so this vault can be viewed later from the dashboard.
             </p>
           </div>
           <Button onClick={onCreateProof} isLoading={isProofLoading} className="w-full sm:w-auto">
-            Save proof
+            Create receipt
           </Button>
         </div>
       </Card>
@@ -84,7 +84,7 @@ export function VaultNextStepCard({
       <p className="text-sm font-black text-emerald-800">Demo flow complete</p>
       <h2 className="mt-1 text-2xl font-black text-slate-950">This vault has a completed end-to-end demo path.</h2>
       <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-        The vault is created, progress is tracked, available rewards can be claimed, and the commitment proof is saved. The next product phase is partner integration for real custody and voucher fulfillment.
+        The vault is created, progress is tracked, available rewards can be claimed, and the receipt is saved in the account dashboard. Users can return later to review or verify the proof history.
       </p>
     </Card>
   );
