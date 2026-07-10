@@ -41,7 +41,7 @@ export function DashboardSection() {
       <SectionHeader
         badge="Overview"
         title="Dashboard"
-        description="Platform metrics, user growth, and environment health at a glance."
+        description="Platform metrics, user growth, and system health at a glance."
       />
 
       <section className="space-y-3">
@@ -86,15 +86,16 @@ export function DashboardSection() {
       </Card>
 
       <Card padding="lg" className="shadow-sm">
-        <h3 className="text-base font-semibold text-ink">Environment</h3>
-        <p className="mt-1 text-sm text-ink-muted">Runtime configuration visible to administrators</p>
+        <h3 className="text-base font-semibold text-ink">System status</h3>
+        <p className="mt-1 text-sm text-ink-muted">Deployment and integration health for operators</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(data.environment).map(([key, value]) => (
+          {Object.entries(data.environment)
+            .filter(([key]) => key !== 'horizonUrl')
+            .map(([key, value]) => (
             <Stat
               key={key}
               label={getDisplayLabel(key, 'environmentKey')}
               value={formatDisplayValue(value, key)}
-              mono={typeof value === 'string' && key === 'horizonUrl'}
             />
           ))}
         </div>

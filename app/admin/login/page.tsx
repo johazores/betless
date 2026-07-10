@@ -41,13 +41,13 @@ export default function AdminLoginPage() {
 
   return (
     <AdminAuthShell
-      badge="Betless internal"
+      badge="Operations console"
       title="Admin sign in"
-      subtitle="Separate JWT access for platform operations. Use your assigned administrator credentials."
+      subtitle="Sign in with your assigned administrator credentials to manage users, vaults, and platform settings."
       highlights={[
         ['Role-based access', 'Each administrator sees only the tabs and actions their role permits.'],
         ['Full audit trail', 'Every change is logged with reason, IP, and operator identity.'],
-        ['Secure sessions', 'Short-lived access tokens with HttpOnly refresh cookie rotation.'],
+        ['Secure sessions', 'Short-lived access tokens with automatic refresh and full session audit logging.'],
       ]}
     >
       <Card padding="lg">

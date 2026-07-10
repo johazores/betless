@@ -16,7 +16,7 @@ import {
   calculateMonthlyPoints,
 } from '@/lib/vault-rules';
 
-const exampleDeposit = 50_000;
+const featuredDepositAmount = 50_000;
 
 const promises = [
   ['Your money comes back', 'When the lock period ends, 100% of your deposit is returned automatically. Every vault lock is independently verifiable on the Stellar network — not just a promise in our database.'],
@@ -25,7 +25,7 @@ const promises = [
 ];
 
 export default function HomePage() {
-  const monthlyPoints = calculateMonthlyPoints(exampleDeposit);
+  const monthlyPoints = calculateMonthlyPoints(featuredDepositAmount);
 
   return (
     <PublicLayout>
@@ -48,20 +48,27 @@ export default function HomePage() {
           </div>
 
           <Card>
-            <p className="text-sm font-black text-brand-700">Example vault</p>
+            <p className="text-sm font-black text-brand-700">12-month savings plan</p>
+            <p className="mt-1 text-xs font-semibold text-ink-muted">Based on a {formatPeso(featuredDepositAmount)} deposit</p>
             <div className="mt-6 space-y-5">
               <div>
                 <p className="text-sm font-semibold text-ink-muted">Locked deposit</p>
-                <p className="mt-1 text-4xl font-black text-ink">{formatPeso(exampleDeposit)}</p>
+                <p className="mt-1 text-4xl font-black text-ink">{formatPeso(featuredDepositAmount)}</p>
               </div>
-              <Progress value={40} />
+              <div>
+                <div className="mb-2 flex items-center justify-between text-xs font-semibold text-ink-muted">
+                  <span>Month 5 of 12</span>
+                  <span>7 months remaining</span>
+                </div>
+                <Progress value={42} />
+              </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Stat label="Lock period" value={<span className="text-2xl">12 months</span>} />
                 <Stat label="Points per month" value={<span className="text-2xl">{monthlyPoints.toLocaleString('en-PH')}</span>} />
               </div>
               <p className="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm font-semibold leading-6 text-brand-900">
-                {formatPeso(exampleDeposit)} locked for 12 months earns about {(monthlyPoints * 12).toLocaleString('en-PH')} points —
-                and the full {formatPeso(exampleDeposit)} is returned at maturity.
+                {formatPeso(featuredDepositAmount)} locked for 12 months earns about {(monthlyPoints * 12).toLocaleString('en-PH')} points —
+                and the full {formatPeso(featuredDepositAmount)} is returned at maturity.
               </p>
             </div>
           </Card>

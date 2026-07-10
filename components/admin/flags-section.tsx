@@ -200,7 +200,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
               label="Flag key"
               value={form.key}
               onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
-              placeholder="user_profile"
+              placeholder="monthly_rewards"
               hint="Internal identifier — shown as a readable label in the UI"
               readOnly={formMode === 'edit'}
               required

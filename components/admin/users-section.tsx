@@ -72,7 +72,7 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
           label="Search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Email, name, or Clerk id"
+          placeholder="Search by email, name, or user ID"
         />
         <Select
           label="Status"

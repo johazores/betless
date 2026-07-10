@@ -116,11 +116,11 @@ const configSourceLabels: Record<string, string> = {
 };
 
 const environmentKeyLabels: Record<string, string> = {
-  nodeEnv: 'Node environment',
-  vercelEnv: 'Vercel environment',
+  nodeEnv: 'Application environment',
+  vercelEnv: 'Deployment',
   stellarNetwork: 'Stellar network',
   stellarEnabled: 'Stellar integration',
-  horizonUrl: 'Horizon URL',
+  horizonUrl: 'Horizon endpoint',
 };
 
 const metricKeyLabels: Record<string, string> = {
@@ -187,13 +187,18 @@ export function formatDisplayValue(value: unknown, key?: string): string {
   if (value == null || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Enabled' : 'Disabled';
   if (typeof value === 'string' && key === 'nodeEnv') {
-    if (value === 'development') return 'Development';
+    if (value === 'development') return 'Local';
     if (value === 'production') return 'Production';
-    if (value === 'test') return 'Test';
+    if (value === 'test') return 'Quality assurance';
+  }
+  if (typeof value === 'string' && key === 'vercelEnv') {
+    if (value === 'production') return 'Production';
+    if (value === 'preview') return 'Preview';
+    if (value === 'development') return 'Local';
   }
   if (typeof value === 'string' && key === 'stellarNetwork') {
-    if (value === 'testnet') return 'Testnet';
-    if (value === 'public') return 'Mainnet';
+    if (value === 'testnet' || value === 'TESTNET') return 'Staging network';
+    if (value === 'public' || value === 'PUBLIC') return 'Live network';
   }
   return String(value);
 }

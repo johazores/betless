@@ -430,12 +430,6 @@ export function CreateVaultForm() {
 
             {otpError ? <p className="text-sm font-semibold text-danger">{otpError}</p> : null}
 
-            {process.env.NODE_ENV !== 'production' ? (
-              <p className="rounded-xl border border-dashed border-line-strong bg-surface-muted p-3 text-xs font-semibold text-ink-muted">
-                Preview build: use code <span className="font-mono font-black text-ink">123456</span>.
-              </p>
-            ) : null}
-
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm font-semibold text-ink-muted">
                 {resendSeconds > 0 ? (

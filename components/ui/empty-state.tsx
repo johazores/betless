@@ -10,8 +10,8 @@ type EmptyStateProps = {
 };
 
 export function EmptyState({
-  title = 'Nothing to show yet',
-  message = 'Create a Betless vault to start your plan.',
+  title = 'No results',
+  message = 'There is nothing to display here right now.',
   icon,
   action,
   className,

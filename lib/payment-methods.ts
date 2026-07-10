@@ -11,7 +11,7 @@ export type PaymentMethod = {
 };
 
 /**
- * Simulated cash-in rails. In production these map to the SEP-24 anchor's
+ * Cash-in rails for vault deposits. In production these map to the SEP-24 anchor's
  * deposit options (GCash, Maya, InstaPay); the flow and UI stay the same.
  */
 export const paymentMethods: PaymentMethod[] = [

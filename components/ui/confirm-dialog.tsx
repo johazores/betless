@@ -91,7 +91,7 @@ export function ConfirmDialog({
               label={reasonLabel ?? 'Reason'}
               value={reason}
               onChange={(event) => onReasonChange(event.target.value)}
-              placeholder="Required reason for audit log"
+              placeholder="Reason for this action"
             />
           </div>
         ) : null}

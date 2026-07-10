@@ -59,7 +59,7 @@ export function DashboardClient() {
   }, [loadDashboard]);
 
   if (isLoading) {
-    return <PublicLayout><section className="px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-6xl"><LoadingState /></div></section></PublicLayout>;
+    return <PublicLayout><section className="px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-6xl"><LoadingState label="Loading your dashboard…" /></div></section></PublicLayout>;
   }
 
   if (error) {

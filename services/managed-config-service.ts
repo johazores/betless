@@ -5,7 +5,7 @@ import type { NextApiRequest } from 'next';
 
 export const managedConfigDefinitions = [
   { key: 'APP_ENV_LABEL', secret: false, bootCritical: false, description: 'Displayed environment label for admin operators.' },
-  { key: 'STELLAR_NETWORK', secret: false, bootCritical: false, description: 'Stellar network: testnet or public.' },
+  { key: 'STELLAR_NETWORK', secret: false, bootCritical: false, description: 'Stellar network: staging or live.' },
   { key: 'STELLAR_ASSET_CODE', secret: false, bootCritical: false, description: 'Settlement asset code.' },
   { key: 'STELLAR_ASSET_ISSUER', secret: false, bootCritical: false, description: 'Settlement asset issuer public key.' },
   { key: 'STELLAR_HORIZON_URL', secret: false, bootCritical: false, description: 'Optional Horizon URL override.' },

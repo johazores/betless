@@ -25,7 +25,7 @@ export function MiniBarChart({
   data,
   height = 144,
   className,
-  emptyMessage = 'No data for this period',
+  emptyMessage = 'No activity in this period',
   valueLabel = 'registrations',
 }: MiniBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

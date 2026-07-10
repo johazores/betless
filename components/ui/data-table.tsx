@@ -14,7 +14,7 @@ type DataTableProps = {
 export function DataTable({
   headers,
   rows,
-  emptyMessage = 'No records',
+  emptyMessage = 'No results found',
   className,
   stickyHeader = true,
   compact = false,
@@ -23,7 +23,7 @@ export function DataTable({
     return (
       <EmptyState
         title={emptyMessage}
-        message="Try adjusting your filters or check back later."
+        message="Adjust your filters or search, or check back later."
         className={className}
       />
     );

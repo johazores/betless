@@ -60,7 +60,7 @@ export function VaultDetailClient({ id }: { id: string }) {
   }
 
   if (isLoading) {
-    return <LoadingState />;
+    return <LoadingState label="Loading vault…" />;
   }
 
   if (!vault) {

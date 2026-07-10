@@ -151,7 +151,7 @@ export function ReferralCard({ variant = 'full', onChanged }: ReferralCardProps)
               <Input
                 label="Referral code"
                 name="referral-code"
-                placeholder="e.g. AB2CD3EF"
+                placeholder="Enter referral code"
                 value={claimCode}
                 onChange={(event) => setClaimCode(event.target.value.toUpperCase())}
                 error={claimError || undefined}

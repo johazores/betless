@@ -80,7 +80,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
         layout="wide"
         onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }}
       >
-        <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Points adjusted" />
+        <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Points adjusted" />
         <Input label="Admin user id" value={adminUserId} onChange={(e) => setAdminUserId(e.target.value)} />
         <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
