@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/layout/bottom-nav';
 import { Logo } from '@/components/layout/logo';
 import { NavSummary } from '@/components/layout/nav-summary';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { PageContainer, pageGutterClass } from '@/components/layout/page-container';
 import { cn } from '@/lib/class-names';
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
@@ -46,70 +47,74 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface-muted">
       <header className="sticky top-0 z-30 overflow-visible border-b border-line/70 bg-surface/85 backdrop-blur-md">
-        <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-6 lg:gap-10">
-            <Link
-              href="/"
-              className="shrink-0 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
-              aria-label="Betless home"
-            >
-              <Logo showTagline={false} markClassName="h-9 w-9" />
-            </Link>
-            <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
-              <NavLink href="/dashboard">Dashboard</NavLink>
-              <NavLink href="/rewards">Rewards</NavLink>
-              <NavLink href="/#how-it-works">How it works</NavLink>
-            </nav>
-          </div>
+        <div className={pageGutterClass}>
+          <PageContainer className="flex h-[4.25rem] items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-6 lg:gap-10">
+              <Link
+                href="/"
+                className="shrink-0 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+                aria-label="Betless home"
+              >
+                <Logo showTagline={false} markClassName="h-9 w-9" />
+              </Link>
+              <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
+                <NavLink href="/dashboard">Dashboard</NavLink>
+                <NavLink href="/rewards">Rewards</NavLink>
+                <NavLink href="/#how-it-works">How it works</NavLink>
+              </nav>
+            </div>
 
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <NavSummary />
-            <NotificationBell />
-            <AuthNav />
-          </div>
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+              <NavSummary />
+              <NotificationBell />
+              <AuthNav />
+            </div>
+          </PageContainer>
         </div>
       </header>
 
       <main className="flex-1">{children}</main>
 
       <footer className="mt-auto border-t border-line/70 bg-surface">
-        <div className="mx-auto max-w-6xl px-4 pb-28 pt-12 sm:px-6 lg:px-8 lg:pb-12">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
-            <div>
-              <Logo showTagline markClassName="h-8 w-8" />
-              <p className="mt-4 max-w-sm text-sm leading-6 text-ink-muted">
-                Commitment savings with monthly rewards. Lock a deposit, earn points, and get your full balance back at maturity.
-              </p>
+        <div className={cn(pageGutterClass, 'pb-28 pt-12 lg:pb-12')}>
+          <PageContainer>
+            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
+              <div>
+                <Logo showTagline markClassName="h-8 w-8" />
+                <p className="mt-4 max-w-sm text-sm leading-6 text-ink-muted">
+                  Commitment savings with monthly rewards. Lock a deposit, earn points, and get your full balance back at maturity.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Product</p>
+                <ul className="mt-4 space-y-2.5">
+                  {footerLinks.product.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Trust & compliance</p>
+                <p className="mt-4 text-sm leading-6 text-ink-muted">
+                  Funds are held through licensed custodial partners. Vault locks are independently verifiable on the Stellar network. Rewards are fulfilled by partner merchants.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Product</p>
-              <ul className="mt-4 space-y-2.5">
-                {footerLinks.product.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-10 flex flex-col gap-2 border-t border-line/70 pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+              <p>© {new Date().getFullYear()} Betless. All rights reserved.</p>
+              <p className="sm:text-right">Stellar-verified locks · Partner-fulfilled rewards</p>
             </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Trust & compliance</p>
-              <p className="mt-4 text-sm leading-6 text-ink-muted">
-                Funds are held through licensed custodial partners. Vault locks are independently verifiable on the Stellar network. Rewards are fulfilled by partner merchants.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-col gap-2 border-t border-line/70 pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-            <p>© {new Date().getFullYear()} Betless. All rights reserved.</p>
-            <p className="sm:text-right">Stellar-verified locks · Partner-fulfilled rewards</p>
-          </div>
+          </PageContainer>
         </div>
       </footer>
 

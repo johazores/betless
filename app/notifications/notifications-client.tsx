@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PublicLayout } from '@/components/layout/public-layout';
+import { PageSection } from '@/components/layout/page-container';
 import { NotificationRow } from '@/components/notifications/notification-bell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,18 +56,18 @@ export function NotificationsClient() {
 
   return (
     <PublicLayout>
-      <section className="px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl space-y-6">
+      <PageSection>
+        <div className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <Badge>Activity</Badge>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-ink">Notifications</h1>
-              <p className="mt-2 text-sm leading-6 text-ink-muted">
+              <h1 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">Notifications</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-muted">
                 Account activity, vault updates, points, and on-chain events.
               </p>
             </div>
             {data && data.unreadCount > 0 ? (
-              <Button variant="secondary" size="sm" onClick={() => void markAllRead()}>
+              <Button variant="secondary" size="sm" className="shrink-0 self-start sm:self-auto" onClick={() => void markAllRead()}>
                 Mark all read
               </Button>
             ) : null}
@@ -108,27 +109,29 @@ export function NotificationsClient() {
                         <NotificationRow item={item} />
                       </button>
                       {expandedId === item.id ? (
-                        <div className="border-t border-line/60 bg-surface-muted/40 px-4 py-3 pl-[4.25rem] text-sm leading-6 text-ink-muted">
-                          <p>{item.body}</p>
-                          <p className="mt-2 text-xs font-medium text-ink-muted">
-                            {formatDateTime(item.createdAt)} · {notificationCategoryLabels[item.category]}
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-center gap-3">
-                            {item.actionUrl ? (
-                              <Link href={item.actionUrl} className="text-xs font-bold text-brand-700">
-                                Open related page →
-                              </Link>
-                            ) : null}
-                            <button
-                              type="button"
-                              className="text-xs font-bold text-ink-muted hover:text-ink"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void setRead(item.id, !item.readAt);
-                              }}
-                            >
-                              {item.readAt ? 'Mark as unread' : 'Mark as read'}
-                            </button>
+                        <div className="border-t border-line/60 bg-surface-muted/40 px-4 py-4 sm:px-6 sm:py-5">
+                          <div className="pl-[3.25rem] sm:pl-[3.75rem]">
+                            <p className="text-sm leading-6 text-ink-muted">{item.body}</p>
+                            <p className="mt-2 text-xs font-medium text-ink-muted">
+                              {formatDateTime(item.createdAt)} · {notificationCategoryLabels[item.category]}
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              {item.actionUrl ? (
+                                <Link href={item.actionUrl} className="text-xs font-bold text-brand-700">
+                                  Open related page →
+                                </Link>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="text-xs font-bold text-ink-muted hover:text-ink"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  void setRead(item.id, !item.readAt);
+                                }}
+                              >
+                                {item.readAt ? 'Mark as unread' : 'Mark as read'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : null}
@@ -139,7 +142,7 @@ export function NotificationsClient() {
             </Card>
           )}
         </div>
-      </section>
+      </PageSection>
     </PublicLayout>
   );
 }
