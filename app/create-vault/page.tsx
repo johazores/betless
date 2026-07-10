@@ -23,7 +23,8 @@ export default function CreateVaultPage() {
               <Badge>Create a vault</Badge>
               <h1 className="mt-5 text-4xl font-black tracking-tight text-ink sm:text-5xl">Commit to your savings.</h1>
               <p className="mt-5 text-lg leading-8 text-ink-muted">
-                Two choices — how much and how long. You&apos;ll see exactly what you earn before you confirm.
+                Choose an amount and a lock period, pay with your favorite cash-in method, and confirm with a
+                verification code. You&apos;ll see exactly what you earn before any money moves.
               </p>
             </div>
 

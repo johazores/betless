@@ -32,6 +32,8 @@ npm run stellar:smoke        # optional: proves lock+release round-trip on testn
 
 `demo:seed` gives you a dashboard that looks alive: an active ₱50,000 vault at month 5 with ~835 points and a verified on-chain lock, plus a ₱25,000 vault that **matures live on your first dashboard load** — its principal is claimed on-chain at that moment, which is a great story beat.
 
+The deposit flow's security verification is a placeholder: the code is always **123456** (a hint is shown in dev builds, hidden in production builds).
+
 Keep two browser tabs ready:
 
 1. The app (`localhost:3000`).
@@ -75,13 +77,13 @@ Point at the small **"Lock verified"** badge on the active vault card:
 
 ### Step 4 — Create a vault (`/create-vault`)
 
-Do: enter ₱25,000 / 12 months. Read the live preview aloud (points per month, maturity date, early-exit fee). Submit.
+Do: walk the four-step cash-in flow — enter ₱25,000 / 12 months (read the live preview aloud: points per month, maturity date, early-exit fee) → pick GCash → review the transfer summary → enter the verification code **123456** → land on the receipt.
 
 Say:
 
-> "One screen. Amount, lock period, and a preview computed from the same rule module the server uses — what you see is exactly what's applied. Note the early withdrawal fee is disclosed **before** you commit, not buried in terms."
+> "The deposit feels exactly like cashing in with GCash or your bank: choose a method, review a transfer summary with the fee disclosed **before** you commit, confirm with a one-time code, get a receipt with a reference number. Familiar rails, zero crypto vocabulary. The verification step is a placeholder authenticator today — the flow is shaped so a real SMS or TOTP provider drops in without UI changes."
 
-After it lands on the vault page:
+Click "View my vault" on the receipt:
 
 > "In those two seconds, the deposit was locked in a claimable balance on Stellar — a native ledger entry with a time predicate. The network itself will refuse to release it to the treasury before the maturity date. That's not our code enforcing the lock; it's the protocol."
 
