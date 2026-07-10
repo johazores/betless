@@ -15,13 +15,17 @@ const steps = [
   },
   {
     title: 'Redeem real rewards',
-    body: 'Spend points on groceries, travel, apparel, gadgets, and partner merchant rewards. Your full deposit comes back at maturity.',
+    body: 'Spend points on groceries, travel, apparel, gadgets, and partner merchant rewards.',
+  },
+  {
+    title: 'Automatically receive your locked funds in full',
+    body: 'When the lock period ends, your full deposit is returned to you automatically.',
   },
 ];
 
 export function HowItWorks({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={compact ? 'grid gap-3 sm:grid-cols-2' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-4'}>
+    <div className={compact ? 'grid gap-3 sm:grid-cols-2' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-5'}>
       {steps.map((step, index) => (
         <Card key={step.title}>
           <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-sm font-black text-white">

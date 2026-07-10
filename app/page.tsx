@@ -72,7 +72,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-6 max-w-2xl">
             <Badge>How it works</Badge>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink">Four simple steps.</h2>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink">Five simple steps.</h2>
             <p className="mt-3 text-sm leading-7 text-ink-muted">Everything Betless does, in plain language.</p>
           </div>
           <HowItWorks />
