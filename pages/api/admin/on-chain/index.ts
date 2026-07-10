@@ -9,7 +9,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await AdminAuthService.requireAdmin(req, AdminPermission.VIEW_ON_CHAIN);
-    return sendSuccess(res, await AdminPlatformService.listOnChainOperations());
+    const state = typeof req.query.state === 'string' && req.query.state !== 'ALL' ? req.query.state : undefined;
+    const kind = typeof req.query.kind === 'string' && req.query.kind !== 'ALL' ? req.query.kind : undefined;
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+    const page = typeof req.query.page === 'string' ? Number(req.query.page) : 1;
+    return sendSuccess(res, await AdminPlatformService.listOnChainOperations({ state, kind, q, page }));
   } catch (error) {
     return sendError(res, getApiErrorMessage(error), 401);
   }

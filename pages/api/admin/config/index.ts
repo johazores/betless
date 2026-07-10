@@ -19,6 +19,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return sendSuccess(res, await ManagedConfigService.list());
     }
 
+    if (req.method === 'DELETE') {
+      const admin = await AdminAuthService.requireAdmin(req, AdminPermission.MANAGE_CONFIG);
+      const key = typeof req.query.key === 'string' ? req.query.key : req.body?.key;
+      if (typeof key !== 'string') throw new Error('Config key is required.');
+      await ManagedConfigService.reset({ key, adminUserId: admin.id, req });
+      return sendSuccess(res, await ManagedConfigService.list());
+    }
+
     return sendError(res, 'Method not allowed.', 405);
   } catch (error) {
     return sendError(res, getApiErrorMessage(error), 400);

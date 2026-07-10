@@ -1,4 +1,4 @@
-import { PointsTransactionType, VaultStatus, decimalToNumber } from '@/lib/domain';
+import { AppUserStatus, AppUserVerificationStatus, PointsTransactionType, VaultStatus, decimalToNumber } from '@/lib/domain';
 import { prisma } from '@/lib/prisma';
 import { buildTransactionExplorerUrl, getHorizonUrl, getStellarNetwork, isStellarEnabled } from '@/lib/stellar-config';
 import { PointsService } from '@/services/points-service';
@@ -231,6 +231,174 @@ export class AdminPlatformService {
     return result;
   }
 
+  static async updateAppUser(input: {
+    adminUserId: string;
+    appUserId: string;
+    status?: string;
+    verificationStatus?: string;
+    req?: NextApiRequest;
+  }) {
+    const user = await prisma.appUser.findUnique({ where: { id: input.appUserId } });
+    if (!user) throw new Error('User not found.');
+
+    const data: Record<string, string> = {};
+    if (input.status !== undefined) {
+      if (!Object.values(AppUserStatus).includes(input.status as (typeof AppUserStatus)[keyof typeof AppUserStatus])) {
+        throw new Error('Invalid user status.');
+      }
+      data.status = input.status;
+    }
+    if (input.verificationStatus !== undefined) {
+      if (!Object.values(AppUserVerificationStatus).includes(input.verificationStatus as (typeof AppUserVerificationStatus)[keyof typeof AppUserVerificationStatus])) {
+        throw new Error('Invalid verification status.');
+      }
+      data.verificationStatus = input.verificationStatus;
+    }
+    if (Object.keys(data).length === 0) throw new Error('No updates provided.');
+
+    const updated = await prisma.appUser.update({ where: { id: input.appUserId }, data });
+
+    await AdminAuditService.record({
+      adminUserId: input.adminUserId,
+      action: 'USER_STATUS_UPDATED',
+      targetType: 'AppUser',
+      targetId: input.appUserId,
+      metadata: { ...data, email: updated.email },
+      req: input.req,
+    });
+
+    return updated;
+  }
+
+  static async listPointsHistory(query: { page?: number; q?: string; type?: string }) {
+    const page = Math.max(1, query.page ?? 1);
+    const where: Record<string, unknown> = {};
+    if (query.type) where.type = query.type;
+    if (query.q) {
+      where.appUser = {
+        OR: [
+          { email: { contains: query.q, mode: 'insensitive' } },
+          { displayName: { contains: query.q, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const [rows, total] = await Promise.all([
+      prisma.pointsTransaction.findMany({
+        where,
+        include: { appUser: { select: { email: true, displayName: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.pointsTransaction.count({ where }),
+    ]);
+
+    return {
+      transactions: rows.map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        points: row.points,
+        description: row.description,
+        userEmail: row.appUser.email,
+        userDisplayName: row.appUser.displayName,
+        createdAt: row.createdAt.toISOString(),
+      })),
+      total,
+      page,
+      pageSize: PAGE_SIZE,
+    };
+  }
+
+  static async listOnChainOperations(query: { page?: number; state?: string; kind?: string; q?: string } = {}) {
+    const page = Math.max(1, query.page ?? 1);
+    const where: Record<string, unknown> = {};
+    if (query.state) where.state = query.state;
+    if (query.kind) where.kind = query.kind;
+    if (query.q) {
+      where.vault = {
+        appUser: {
+          OR: [
+            { email: { contains: query.q, mode: 'insensitive' } },
+            { displayName: { contains: query.q, mode: 'insensitive' } },
+          ],
+        },
+      };
+    }
+
+    const [rows, total] = await Promise.all([
+      prisma.stellarOperation.findMany({
+        where,
+        include: { vault: { include: { appUser: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.stellarOperation.count({ where }),
+    ]);
+
+    return {
+      health: {
+        stellarEnabled: isStellarEnabled(),
+        network: getStellarNetwork(),
+        horizonUrl: getHorizonUrl(),
+      },
+      operations: rows.map(toStellarOperationView),
+      total,
+      page,
+      pageSize: PAGE_SIZE,
+    };
+  }
+
+  static async listAuditLogs(query: {
+    page?: number;
+    action?: string;
+    adminUserId?: string;
+    from?: string;
+    to?: string;
+  } = {}) {
+    const page = Math.max(1, query.page ?? 1);
+    const where: Record<string, unknown> = {};
+    if (query.action) where.action = query.action;
+    if (query.adminUserId) where.adminUserId = query.adminUserId;
+    if (query.from || query.to) {
+      where.createdAt = {
+        ...(query.from ? { gte: new Date(query.from) } : {}),
+        ...(query.to ? { lte: new Date(query.to) } : {}),
+      };
+    }
+
+    const [logs, total] = await Promise.all([
+      prisma.adminAuditLog.findMany({
+        where,
+        include: { adminUser: { select: { email: true, role: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.adminAuditLog.count({ where }),
+    ]);
+
+    return {
+      logs: logs.map((log: any) => ({
+        id: log.id,
+        action: log.action,
+        targetType: log.targetType,
+        targetId: log.targetId,
+        reason: log.reason,
+        metadata: log.metadata,
+        ipAddress: log.ipAddress,
+        userAgent: log.userAgent,
+        adminEmail: log.adminUser?.email ?? null,
+        adminUserId: log.adminUserId,
+        createdAt: log.createdAt.toISOString(),
+      })),
+      total,
+      page,
+      pageSize: PAGE_SIZE,
+    };
+  }
+
   static async bulkAdjustPoints(input: {
     adminUserId: string;
     emails: string[];
@@ -265,42 +433,6 @@ export class AdminPlatformService {
     });
 
     return { adjusted: adjusted.length, missing };
-  }
-
-  static async listOnChainOperations() {
-    const rows = await prisma.stellarOperation.findMany({
-      include: { vault: { include: { appUser: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-    return {
-      health: {
-        stellarEnabled: isStellarEnabled(),
-        network: getStellarNetwork(),
-        horizonUrl: getHorizonUrl(),
-      },
-      operations: rows.map(toStellarOperationView),
-    };
-  }
-
-  static async listAuditLogs() {
-    const logs = await prisma.adminAuditLog.findMany({
-      include: { adminUser: { select: { email: true, role: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-    return logs.map((log: any) => ({
-      id: log.id,
-      action: log.action,
-      targetType: log.targetType,
-      targetId: log.targetId,
-      reason: log.reason,
-      metadata: log.metadata,
-      ipAddress: log.ipAddress,
-      userAgent: log.userAgent,
-      adminEmail: log.adminUser?.email ?? null,
-      createdAt: log.createdAt.toISOString(),
-    }));
   }
 }
 

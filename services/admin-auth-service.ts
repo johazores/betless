@@ -210,4 +210,137 @@ export class AdminAuthService {
       permissions: getAdminPermissions(admin.role),
     };
   }
+
+  static async revokeAdminSessions(adminUserId: string) {
+    await prisma.adminRefreshToken.updateMany({
+      where: { adminUserId, revokedAt: null },
+      data: { revokedAt: new Date(), lastUsedAt: new Date() },
+    });
+  }
+
+  static async createAdmin(input: {
+    actorId: string;
+    email: string;
+    password: string;
+    role: string;
+    displayName?: string | null;
+    req?: NextApiRequest;
+  }) {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    if (!normalizedEmail.includes('@')) throw new Error('A valid email is required.');
+    if (input.password.length < 8) throw new Error('Password must be at least 8 characters.');
+
+    const roleValues = Object.values(AdminRole);
+    if (!roleValues.includes(input.role as (typeof AdminRole)[keyof typeof AdminRole])) {
+      throw new Error('Invalid admin role.');
+    }
+
+    const existing = await prisma.adminUser.findUnique({ where: { email: normalizedEmail } });
+    if (existing) throw new Error('An administrator with this email already exists.');
+
+    const admin = await prisma.adminUser.create({
+      data: {
+        email: normalizedEmail,
+        displayName: input.displayName?.trim() || null,
+        passwordHash: await hashPassword(input.password),
+        role: input.role as (typeof AdminRole)[keyof typeof AdminRole],
+      },
+    });
+
+    await AdminAuditService.record({
+      adminUserId: input.actorId,
+      action: 'ADMIN_CREATED',
+      targetType: 'AdminUser',
+      targetId: admin.id,
+      metadata: { email: admin.email, role: admin.role },
+      req: input.req,
+    });
+
+    return admin;
+  }
+
+  static async updateAdmin(input: {
+    actorId: string;
+    adminId: string;
+    displayName?: string | null;
+    role?: string;
+    isActive?: boolean;
+    req?: NextApiRequest;
+  }) {
+    const target = await prisma.adminUser.findUnique({ where: { id: input.adminId } });
+    if (!target) throw new Error('Administrator not found.');
+
+    if (input.actorId === input.adminId) {
+      if (input.isActive === false) throw new Error('You cannot deactivate your own account.');
+      if (input.role !== undefined && input.role !== target.role) {
+        throw new Error('You cannot change your own role.');
+      }
+    }
+
+    if (input.role) {
+      const roleValues = Object.values(AdminRole);
+      if (!roleValues.includes(input.role as (typeof AdminRole)[keyof typeof AdminRole])) {
+        throw new Error('Invalid admin role.');
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+    if (input.displayName !== undefined) data.displayName = input.displayName?.trim() || null;
+    if (input.role !== undefined) data.role = input.role;
+    if (input.isActive !== undefined) data.isActive = input.isActive;
+
+    const admin = await prisma.adminUser.update({ where: { id: input.adminId }, data });
+
+    if (input.isActive === false) {
+      await this.revokeAdminSessions(input.adminId);
+      await AdminAuditService.record({
+        adminUserId: input.actorId,
+        action: 'ADMIN_DEACTIVATED',
+        targetType: 'AdminUser',
+        targetId: admin.id,
+        metadata: { email: admin.email },
+        req: input.req,
+      });
+    } else {
+      await AdminAuditService.record({
+        adminUserId: input.actorId,
+        action: 'ADMIN_UPDATED',
+        targetType: 'AdminUser',
+        targetId: admin.id,
+        metadata: { email: admin.email, role: admin.role, isActive: admin.isActive },
+        req: input.req,
+      });
+    }
+
+    return admin;
+  }
+
+  static async resetAdminPassword(input: {
+    actorId: string;
+    adminId: string;
+    password: string;
+    req?: NextApiRequest;
+  }) {
+    if (input.password.length < 8) throw new Error('Password must be at least 8 characters.');
+
+    const target = await prisma.adminUser.findUnique({ where: { id: input.adminId } });
+    if (!target) throw new Error('Administrator not found.');
+
+    const admin = await prisma.adminUser.update({
+      where: { id: input.adminId },
+      data: { passwordHash: await hashPassword(input.password) },
+    });
+
+    await this.revokeAdminSessions(input.adminId);
+    await AdminAuditService.record({
+      adminUserId: input.actorId,
+      action: 'ADMIN_PASSWORD_RESET',
+      targetType: 'AdminUser',
+      targetId: admin.id,
+      metadata: { email: admin.email },
+      req: input.req,
+    });
+
+    return admin;
+  }
 }

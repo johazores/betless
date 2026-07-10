@@ -25,36 +25,30 @@ function serializeAdmin(admin: {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
+  if (!id) return sendError(res, 'Admin id is required.', 400);
+
   try {
-    if (req.method === 'GET') {
-      await AdminAuthService.requireAdmin(req, AdminPermission.MANAGE_ADMINS);
-      const admins = await prisma.adminUser.findMany({
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          email: true,
-          displayName: true,
-          role: true,
-          isActive: true,
-          lastLoginAt: true,
-          createdAt: true,
-        },
+    if (req.method === 'PATCH') {
+      const actor = await AdminAuthService.requireAdmin(req, AdminPermission.MANAGE_ADMINS);
+      const { displayName, role, isActive } = req.body ?? {};
+      const admin = await AdminAuthService.updateAdmin({
+        actorId: actor.id,
+        adminId: id,
+        displayName: displayName !== undefined ? String(displayName) : undefined,
+        role: typeof role === 'string' ? role : undefined,
+        isActive: typeof isActive === 'boolean' ? isActive : undefined,
+        req,
       });
-      return sendSuccess(res, admins.map(serializeAdmin));
+      return sendSuccess(res, serializeAdmin(admin));
     }
 
-    if (req.method === 'POST') {
+    if (req.method === 'DELETE') {
       const actor = await AdminAuthService.requireAdmin(req, AdminPermission.MANAGE_ADMINS);
-      const { email, password, role, displayName } = req.body ?? {};
-      if (typeof email !== 'string' || typeof password !== 'string' || typeof role !== 'string') {
-        throw new Error('Email, password, and role are required.');
-      }
-      const admin = await AdminAuthService.createAdmin({
+      const admin = await AdminAuthService.updateAdmin({
         actorId: actor.id,
-        email,
-        password,
-        role,
-        displayName: typeof displayName === 'string' ? displayName : null,
+        adminId: id,
+        isActive: false,
         req,
       });
       return sendSuccess(res, serializeAdmin(admin));

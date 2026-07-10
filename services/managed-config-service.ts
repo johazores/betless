@@ -101,4 +101,25 @@ export class ManagedConfigService {
 
     return row;
   }
+
+  static async reset(input: {
+    key: string;
+    adminUserId: string;
+    req?: NextApiRequest;
+  }) {
+    const definition = definitionByKey.get(input.key);
+    if (!definition) throw new Error('This config key is not managed by admin.');
+    if (definition.bootCritical) throw new Error('Boot-critical config is read-only in admin.');
+
+    await prisma.managedConfig.deleteMany({ where: { key: input.key } });
+
+    await AdminAuditService.record({
+      adminUserId: input.adminUserId,
+      action: 'CONFIG_RESET',
+      targetType: 'ManagedConfig',
+      targetId: input.key,
+      metadata: { key: input.key },
+      req: input.req,
+    });
+  }
 }

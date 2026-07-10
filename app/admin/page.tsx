@@ -1,5 +1,5 @@
-import { AdminClient } from './admin-client';
+import { AdminShell } from '@/components/admin/admin-shell';
 
 export default function AdminPage() {
-  return <AdminClient />;
+  return <AdminShell />;
 }
