@@ -45,7 +45,7 @@ const footerLinks = {
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface-muted">
-      <header className="sticky top-0 z-30 border-b border-line/70 bg-surface/85 backdrop-blur-md">
+      <header className="sticky top-0 z-30 overflow-visible border-b border-line/70 bg-surface/85 backdrop-blur-md">
         <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-6 lg:gap-10">
             <Link
