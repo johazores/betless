@@ -19,15 +19,17 @@ export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        'relative h-7 w-12 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100',
-        checked ? 'bg-brand-600' : 'bg-surface-sunken',
+        'inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200',
+        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 focus-visible:ring-offset-2',
+        checked ? 'bg-brand-600' : 'bg-line-strong/80',
         disabled && 'cursor-not-allowed opacity-50',
       )}
     >
       <span
+        aria-hidden
         className={cn(
-          'absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm transition-transform duration-200',
-          checked ? 'translate-x-5' : 'translate-x-0.5',
+          'block h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(15,23,42,0.18)] ring-1 ring-black/[0.04] transition-transform duration-200 ease-out',
+          checked ? 'translate-x-5' : 'translate-x-0',
         )}
       />
     </button>
@@ -49,7 +51,7 @@ export function SettingRow({
         <p className="text-sm font-semibold text-ink">{title}</p>
         {description ? <p className="mt-0.5 text-sm leading-6 text-ink-muted">{description}</p> : null}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="flex shrink-0 items-center">{children}</div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export const clerkAppearance = {
     unsafe_disableDevelopmentModeWarnings: true,
   },
   variables: {
-    colorPrimary: 'rgb(15 23 42)', // ink — matches the app's primary buttons
+    colorPrimary: 'rgb(217 119 6)', // brand-600 — matches primary buttons
     colorText: 'rgb(15 23 42)',
     colorTextSecondary: 'rgb(100 116 139)',
     colorBackground: 'rgb(255 255 255)',
@@ -35,7 +35,7 @@ export const clerkAppearance = {
     headerTitle: 'text-2xl font-black tracking-tight text-ink',
     headerSubtitle: 'text-sm leading-6 text-ink-muted',
     formButtonPrimary:
-      'min-h-11 rounded-full bg-ink text-sm font-semibold text-white shadow-sm transition-all hover:bg-ink/90 active:scale-[0.98]',
+      'min-h-11 rounded-full bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/20 transition-all hover:bg-brand-700 active:scale-[0.98]',
     formFieldLabel: 'text-sm font-semibold text-ink',
     formFieldInput:
       'rounded-xl border-line-strong text-base font-medium focus:border-brand-500 focus:ring-4 focus:ring-brand-100',

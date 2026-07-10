@@ -12,7 +12,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variants = {
   primary:
-    'bg-ink text-white shadow-sm hover:bg-ink/90 focus-visible:ring-ink/60 disabled:bg-line-strong disabled:text-ink-muted disabled:shadow-none',
+    'bg-brand-600 text-white shadow-sm shadow-brand-600/20 hover:bg-brand-700 focus-visible:ring-brand-500/40 disabled:bg-brand-200 disabled:text-brand-800/50 disabled:shadow-none',
   secondary:
     'bg-brand-100 text-brand-900 hover:bg-brand-200 focus-visible:ring-brand-500/50 disabled:bg-surface-sunken disabled:text-ink-muted',
   ghost:

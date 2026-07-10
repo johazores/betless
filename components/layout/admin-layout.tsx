@@ -74,7 +74,7 @@ export function AdminLayout({
                 className={cn(
                   'shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
                   activeTab === item.id
-                    ? 'bg-ink text-white'
+                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
                     : 'text-ink-muted hover:bg-surface hover:text-ink',
                 )}
                 onClick={() => onTabChange(item.id)}
