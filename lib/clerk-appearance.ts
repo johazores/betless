@@ -1,7 +1,7 @@
 /**
  * Single source of truth for Clerk theming. Applied on the ClerkProvider so
- * every Clerk surface (sign-in, sign-up, modals, user button menu, profile)
- * inherits the Betless visual language.
+ * the embedded sign-in and sign-up cards (the only Clerk UI in the app)
+ * inherit the Betless visual language.
  *
  * `variables` mirror the design tokens in app/globals.css; `elements` map
  * Tailwind utility classes onto Clerk's named parts. Update tokens there and
@@ -49,12 +49,16 @@ export const clerkAppearance = {
     footer: 'bg-surface-muted [&>*]:bg-transparent',
     footerActionText: 'text-sm font-semibold text-ink-muted',
     footerActionLink: 'font-black text-brand-800 hover:text-brand-900',
+    // White-label fallback: Clerk development instances force the
+    // "Secured by Clerk" badge into the card footer and expose no supported
+    // config to disable it (on production instances it is removed via
+    // Dashboard -> Customization -> Branding). Hiding the footer item here is
+    // the documented-least-invasive option until the production toggle applies.
+    footerItem: 'hidden',
+    badge: 'hidden',
+    logoBox: 'hidden',
     identityPreview: 'rounded-xl border-line bg-surface-muted',
     identityPreviewEditButton: 'text-brand-800 hover:text-brand-900',
     alternativeMethodsBlockButton: 'rounded-xl border-line-strong font-semibold text-ink hover:bg-surface-muted',
-    userButtonAvatarBox: 'h-9 w-9 ring-2 ring-line',
-    userButtonPopoverCard: 'rounded-2xl border border-line shadow-elevated',
-    userButtonPopoverActionButton: 'font-semibold text-ink hover:bg-surface-muted',
-    userButtonPopoverFooter: 'hidden',
   },
 } as const;

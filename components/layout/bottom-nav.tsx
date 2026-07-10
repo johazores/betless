@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/class-names';
 
 type IconProps = { className?: string };
@@ -75,32 +75,17 @@ function TabLink({ href, label, icon, active }: { href: string; label: string; i
   );
 }
 
-function AccountTab() {
+function AccountTab({ active }: { active: boolean }) {
   const { isLoaded, isSignedIn } = useUser();
-
-  if (isLoaded && isSignedIn) {
-    return (
-      <span className="flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-ink-muted">
-        <span className="grid h-6 w-6 place-items-center">
-          <UserButton appearance={{ elements: { userButtonAvatarBox: 'h-6 w-6' } }} />
-        </span>
-        <span>Account</span>
-      </span>
-    );
-  }
+  const signedIn = isLoaded && isSignedIn;
 
   return (
-    <SignInButton mode="modal">
-      <button
-        type="button"
-        className="flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-ink-muted transition-colors hover:text-ink"
-      >
-        <span className="grid h-6 w-6 place-items-center">
-          <UserIcon className="h-[22px] w-[22px]" />
-        </span>
-        <span>Sign in</span>
-      </button>
-    </SignInButton>
+    <TabLink
+      href={signedIn ? '/account' : '/sign-in'}
+      label={signedIn ? 'Account' : 'Sign in'}
+      active={active}
+      icon={<UserIcon className="h-[22px] w-[22px]" />}
+    />
   );
 }
 
@@ -130,7 +115,7 @@ export function BottomNav() {
         </Link>
 
         <TabLink href="/rewards" label="Rewards" active={isActive('/rewards')} icon={<GiftIcon className="h-[22px] w-[22px]" />} />
-        <AccountTab />
+        <AccountTab active={isActive('/account') || isActive('/sign-in')} />
       </div>
     </nav>
   );
