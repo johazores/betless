@@ -105,20 +105,28 @@ export function UserDetailPanel({ open, userId, canManage, onClose, onUpdated, o
       )
     : [];
 
+  if (isLoading || !user) {
+    return (
+      <Modal open={open && Boolean(userId)} onClose={onClose} title="User details" size="xl">
+        <LoadingState label="Loading user detail..." />
+      </Modal>
+    );
+  }
+
+  const isDirty = status !== user.status || verificationStatus !== user.verificationStatus;
+
   return (
     <>
       <Modal
         open={open && Boolean(userId)}
         onClose={onClose}
-        title={user?.email ?? user?.id ?? 'User details'}
-        description={user?.displayName ?? undefined}
+        title={user.email ?? user.id}
+        description={user.displayName ?? undefined}
         size="xl"
+        isDirty={isDirty}
       >
-        {isLoading || !user ? (
-          <LoadingState label="Loading user detail..." />
-        ) : (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 ['Points', formatNumber(user.pointsBalance)],
                 ['Locked', formatPeso(user.lockedBalance)],
@@ -199,8 +207,7 @@ export function UserDetailPanel({ open, userId, canManage, onClose, onUpdated, o
                 </div>
               </div>
             ) : null}
-          </div>
-        )}
+        </div>
       </Modal>
 
       <ConfirmDialog

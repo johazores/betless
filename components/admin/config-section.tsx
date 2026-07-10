@@ -5,11 +5,11 @@ import { fetchTabData } from '@/components/admin/admin-utils';
 import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 
 type ConfigItem = {
@@ -29,7 +29,7 @@ type ConfigSectionProps = {
 
 export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
   const [config, setConfig] = useState<ConfigItem[]>([]);
-  const [selectedKey, setSelectedKey] = useState('');
+  const [editItem, setEditItem] = useState<ConfigItem | null>(null);
   const [value, setValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,13 +38,7 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      const rows = await fetchTabData<ConfigItem[]>('/api/admin/config');
-      setConfig(rows);
-      setSelectedKey((current) => {
-        if (current && rows.some((item) => item.key === current && !item.bootCritical)) return current;
-        const editable = rows.filter((item) => !item.bootCritical);
-        return editable[0]?.key ?? '';
-      });
+      setConfig(await fetchTabData<ConfigItem[]>('/api/admin/config'));
     } catch (loadError) {
       onError('Config could not be loaded', loadError instanceof Error ? loadError.message : undefined);
     } finally {
@@ -56,20 +50,28 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
     void load();
   }, [load]);
 
-  const editable = config.filter((item) => !item.bootCritical);
-  const selected = config.find((item) => item.key === selectedKey);
+  function openEdit(item: ConfigItem) {
+    setEditItem(item);
+    setValue('');
+  }
+
+  function closeEdit() {
+    setEditItem(null);
+    setValue('');
+  }
 
   async function submitUpdate(event: FormEvent) {
     event.preventDefault();
+    if (!editItem) return;
     setIsSubmitting(true);
     try {
       const rows = await adminApiRequest<ConfigItem[]>('/api/admin/config', {
         method: 'POST',
-        body: JSON.stringify({ key: selectedKey, value }),
+        body: JSON.stringify({ key: editItem.key, value }),
       });
       setConfig(rows);
-      setValue('');
       onSuccess('Config updated');
+      closeEdit();
     } catch (submitError) {
       onError('Update failed', submitError instanceof Error ? submitError.message : undefined);
     } finally {
@@ -99,34 +101,8 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
       <SectionHeader
         badge="Runtime"
         title="Config"
-        description="Update whitelisted configuration keys. Boot-critical keys are read-only."
+        description="Manage whitelisted configuration keys. Boot-critical keys are read-only."
       />
-
-      <Card padding="lg">
-        <form onSubmit={submitUpdate} className="space-y-4">
-          <FormFieldGrid columns={2}>
-            <Select
-              label="Key"
-              value={selectedKey}
-              onChange={(event) => { setSelectedKey(event.target.value); setValue(''); }}
-              options={editable.map((item) => ({ label: item.key, value: item.key }))}
-            />
-            <Input
-              label="New value"
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              hint={selected?.isSecret ? 'Secret values are encrypted at rest.' : selected?.description}
-              required
-            />
-          </FormFieldGrid>
-          {selected?.description && !selected.isSecret ? (
-            <p className="text-xs leading-5 text-ink-muted">{selected.description}</p>
-          ) : null}
-          <FormActions>
-            <Button type="submit" isLoading={isSubmitting}>Update config</Button>
-          </FormActions>
-        </form>
-      </Card>
 
       <DataTable
         headers={['Key', 'Value', 'Source', 'Secret', 'Updated', 'Actions']}
@@ -138,7 +114,7 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
           item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never',
           !item.bootCritical ? (
             <div key={item.key} className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => { setSelectedKey(item.key); setValue(''); }}>Edit</Button>
+              <Button size="sm" variant="ghost" onClick={() => openEdit(item)}>Edit</Button>
               {item.source === 'managed' ? (
                 <Button size="sm" variant="ghost" onClick={() => setResetKey(item.key)}>Reset</Button>
               ) : null}
@@ -146,6 +122,39 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
           ) : 'Read only',
         ])}
       />
+
+      <Modal
+        open={editItem !== null}
+        onClose={closeEdit}
+        title={editItem ? `Edit ${editItem.key}` : 'Edit config'}
+        description={editItem?.description}
+        size="md"
+        isDirty={value.trim().length > 0}
+        footer={(
+          <FormActions className="pt-0">
+            <Button type="button" variant="ghost" onClick={closeEdit}>Cancel</Button>
+            <Button type="submit" form="edit-config-form" isLoading={isSubmitting}>Save changes</Button>
+          </FormActions>
+        )}
+      >
+        {editItem ? (
+          <form id="edit-config-form" onSubmit={submitUpdate} className="space-y-4">
+            <Input
+              label="Current value"
+              value={editItem.value ?? 'Unset'}
+              readOnly
+              hint={editItem.isSecret ? 'Current value is masked for secrets.' : undefined}
+            />
+            <Input
+              label="New value"
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              hint={editItem.isSecret ? 'Secret values are encrypted at rest.' : undefined}
+              required
+            />
+          </form>
+        ) : null}
+      </Modal>
 
       <ConfirmDialog
         open={resetKey !== null}

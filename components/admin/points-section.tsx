@@ -2,16 +2,16 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
-import { SectionHeader } from '@/components/admin/section-header';
+import { FormActions, SectionHeader } from '@/components/admin/section-header';
 import { formatNumber } from '@/components/admin/types';
 import type { UserRow } from '@/components/admin/types';
 import { adminApiRequest } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Modal } from '@/components/ui/modal';
 import { Pagination } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
 
@@ -20,17 +20,9 @@ type PointsSectionProps = {
   onError: (title: string, message?: string) => void;
 };
 
-type PendingAdjustment = {
-  kind: 'single' | 'bulk';
-  appUserId?: string;
-  userLabel?: string;
-  emails?: string[];
-  points: number;
-  reason: string;
-};
+type AdjustModal = 'single' | 'bulk' | null;
 
 export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
-  const [subTab, setSubTab] = useState<'adjust' | 'history'>('adjust');
   const [users, setUsers] = useState<UserRow[]>([]);
   const [history, setHistory] = useState<Array<{ id: string; type: string; points: number; description: string | null; userEmail: string | null; createdAt: string }>>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -39,11 +31,12 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pending, setPending] = useState<PendingAdjustment | null>(null);
+  const [adjustModal, setAdjustModal] = useState<AdjustModal>(null);
 
   const [singleUserId, setSingleUserId] = useState('');
   const [singlePoints, setSinglePoints] = useState('');
   const [singleReason, setSingleReason] = useState('');
+
   const [bulkEmails, setBulkEmails] = useState('');
   const [bulkPoints, setBulkPoints] = useState('');
   const [bulkReason, setBulkReason] = useState('');
@@ -51,8 +44,8 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
   const loadUsers = useCallback(async () => {
     const result = await fetchTabData<{ users: UserRow[] }>('/api/admin/users?page=1');
     setUsers(result.users);
-    if (result.users[0] && !singleUserId) setSingleUserId(result.users[0].id);
-  }, [singleUserId]);
+    if (result.users[0]) setSingleUserId((current) => current || result.users[0].id);
+  }, []);
 
   const loadHistory = useCallback(async () => {
     const result = await fetchTabData<{ transactions: typeof history; total: number; page: number; pageSize: number }>(
@@ -76,49 +69,60 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
     return Array.from(new Set(emails));
   }, [bulkEmails]);
 
-  function queueSingle(event: FormEvent) {
+  const singleDirty = singlePoints.trim() !== '' || singleReason.trim() !== '';
+  const bulkDirty = bulkEmails.trim() !== '' || bulkPoints.trim() !== '' || bulkReason.trim() !== '';
+
+  function closeSingle() {
+    setAdjustModal(null);
+    setSinglePoints('');
+    setSingleReason('');
+  }
+
+  function closeBulk() {
+    setAdjustModal(null);
+    setBulkEmails('');
+    setBulkPoints('');
+    setBulkReason('');
+  }
+
+  function openConfirmSingle(event: FormEvent) {
     event.preventDefault();
-    const user = users.find((u) => u.id === singleUserId);
-    setPending({
-      kind: 'single',
-      appUserId: singleUserId,
-      userLabel: user?.email ?? singleUserId,
-      points: Number(singlePoints),
-      reason: singleReason.trim(),
-    });
     setConfirmOpen(true);
   }
 
-  function queueBulk(event: FormEvent) {
+  function openConfirmBulk(event: FormEvent) {
     event.preventDefault();
-    setPending({
-      kind: 'bulk',
-      emails: bulkPreview,
-      points: Number(bulkPoints),
-      reason: bulkReason.trim(),
-    });
     setConfirmOpen(true);
   }
 
   async function confirmAdjustment() {
-    if (!pending) return;
     setIsSubmitting(true);
     try {
-      if (pending.kind === 'single') {
+      if (adjustModal === 'single') {
+        const user = users.find((u) => u.id === singleUserId);
         await adminApiRequest('/api/admin/points/adjust', {
           method: 'POST',
-          body: JSON.stringify({ appUserId: pending.appUserId, points: pending.points, reason: pending.reason }),
+          body: JSON.stringify({
+            appUserId: singleUserId,
+            points: Number(singlePoints),
+            reason: singleReason.trim(),
+          }),
         });
-        onSuccess('Points adjusted', `${pending.points > 0 ? '+' : ''}${pending.points} for ${pending.userLabel}`);
-      } else {
+        onSuccess('Points adjusted', `${Number(singlePoints) > 0 ? '+' : ''}${singlePoints} for ${user?.email ?? singleUserId}`);
+        closeSingle();
+      } else if (adjustModal === 'bulk') {
         const result = await adminApiRequest<{ adjusted: number; missing: string[] }>('/api/admin/points/bulk', {
           method: 'POST',
-          body: JSON.stringify({ emails: pending.emails?.join('\n'), points: pending.points, reason: pending.reason }),
+          body: JSON.stringify({
+            emails: bulkPreview.join('\n'),
+            points: Number(bulkPoints),
+            reason: bulkReason.trim(),
+          }),
         });
         onSuccess('Bulk adjustment complete', `Adjusted ${result.adjusted}; missing ${result.missing.length}.`);
+        closeBulk();
       }
       setConfirmOpen(false);
-      setPending(null);
       await loadHistory();
     } catch (submitError) {
       onError('Adjustment failed', submitError instanceof Error ? submitError.message : undefined);
@@ -127,6 +131,16 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
     }
   }
 
+  const pendingSummary =
+    adjustModal === 'single'
+      ? (() => {
+          const user = users.find((u) => u.id === singleUserId);
+          return `Apply ${singlePoints} points to ${user?.email ?? singleUserId}? Reason: ${singleReason.trim()}`;
+        })()
+      : adjustModal === 'bulk'
+        ? `Grant ${bulkPoints} points to ${bulkPreview.length} user(s)? Reason: ${bulkReason.trim()}`
+        : '';
+
   if (isLoading) return <LoadingState label="Loading points..." />;
 
   return (
@@ -134,79 +148,92 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
       <SectionHeader
         badge="Rewards"
         title="Points"
-        description="Adjust balances with full audit trail."
+        description="Review adjustment history and grant points when needed."
         actions={(
           <>
-            <Button variant={subTab === 'adjust' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('adjust')}>Adjust</Button>
-            <Button variant={subTab === 'history' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('history')}>History</Button>
+            <Button variant="secondary" onClick={() => setAdjustModal('single')}>Adjust points</Button>
+            <Button onClick={() => setAdjustModal('bulk')}>Bulk adjust</Button>
           </>
         )}
       />
 
-      {subTab === 'adjust' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card padding="lg">
-            <form onSubmit={queueSingle} className="space-y-4">
-              <h3 className="text-lg font-black text-ink">Single adjustment</h3>
-              <Select
-                label="User"
-                value={singleUserId}
-                onChange={(event) => setSingleUserId(event.target.value)}
-                options={users.map((user) => ({ label: user.email ?? user.id, value: user.id }))}
-              />
-              <Input label="Points" type="number" value={singlePoints} onChange={(e) => setSinglePoints(e.target.value)} hint="Use negative to deduct" required />
-              <Input label="Reason" value={singleReason} onChange={(e) => setSingleReason(e.target.value)} required />
-              <Button type="submit">Review adjustment</Button>
-            </form>
-          </Card>
+      <DataTable
+        headers={['User', 'Points', 'Description', 'Date']}
+        rows={history.map((tx) => [
+          tx.userEmail ?? '—',
+          formatNumber(tx.points),
+          tx.description ?? '—',
+          new Date(tx.createdAt).toLocaleString(),
+        ])}
+        emptyMessage="No adjustment history yet"
+      />
+      <Pagination page={historyPage} pageSize={historyPageSize} total={historyTotal} onPageChange={setHistoryPage} />
 
-          <Card padding="lg">
-            <form onSubmit={queueBulk} className="space-y-4">
-              <h3 className="text-lg font-black text-ink">Bulk adjustment</h3>
-              <label className="block">
-                <span className="text-sm font-semibold text-ink">Emails</span>
-                <textarea
-                  className="mt-2 min-h-28 w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-base font-medium text-ink outline-none transition placeholder:text-ink-muted focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
-                  value={bulkEmails}
-                  onChange={(e) => setBulkEmails(e.target.value)}
-                  placeholder="One email per line or comma-separated"
-                  required
-                />
-                <span className="mt-2 block text-xs font-medium text-ink-muted">{bulkPreview.length} unique email(s) detected</span>
-              </label>
-              <Input label="Points" type="number" value={bulkPoints} onChange={(e) => setBulkPoints(e.target.value)} required />
-              <Input label="Reason" value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} required />
-              <Button type="submit">Review bulk grant</Button>
-            </form>
-          </Card>
-        </div>
-      ) : (
-        <>
-          <DataTable
-            headers={['User', 'Points', 'Description', 'Date']}
-            rows={history.map((tx) => [
-              tx.userEmail ?? '—',
-              formatNumber(tx.points),
-              tx.description ?? '—',
-              new Date(tx.createdAt).toLocaleString(),
-            ])}
+      <Modal
+        open={adjustModal === 'single'}
+        onClose={closeSingle}
+        title="Adjust points"
+        description="Apply a single point adjustment to one user."
+        size="md"
+        isDirty={singleDirty}
+        footer={(
+          <FormActions className="pt-0">
+            <Button type="button" variant="ghost" onClick={closeSingle}>Cancel</Button>
+            <Button type="submit" form="single-adjust-form">Review adjustment</Button>
+          </FormActions>
+        )}
+      >
+        <form id="single-adjust-form" onSubmit={openConfirmSingle} className="space-y-4">
+          <Select
+            label="User"
+            value={singleUserId}
+            onChange={(event) => setSingleUserId(event.target.value)}
+            options={users.map((user) => ({ label: user.email ?? user.id, value: user.id }))}
           />
-          <Pagination page={historyPage} pageSize={historyPageSize} total={historyTotal} onPageChange={setHistoryPage} />
-        </>
-      )}
+          <Input label="Points" type="number" value={singlePoints} onChange={(e) => setSinglePoints(e.target.value)} hint="Use negative to deduct" required />
+          <Input label="Reason" value={singleReason} onChange={(e) => setSingleReason(e.target.value)} required />
+        </form>
+      </Modal>
+
+      <Modal
+        open={adjustModal === 'bulk'}
+        onClose={closeBulk}
+        title="Bulk adjust points"
+        description="Grant points to multiple users by email."
+        size="lg"
+        isDirty={bulkDirty}
+        footer={(
+          <FormActions className="pt-0">
+            <Button type="button" variant="ghost" onClick={closeBulk}>Cancel</Button>
+            <Button type="submit" form="bulk-adjust-form">Review bulk grant</Button>
+          </FormActions>
+        )}
+      >
+        <form id="bulk-adjust-form" onSubmit={openConfirmBulk} className="space-y-4">
+          <label className="block">
+            <span className="text-sm font-semibold text-ink">Emails</span>
+            <textarea
+              className="mt-2 min-h-32 w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-base font-medium text-ink outline-none transition placeholder:text-ink-muted focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              value={bulkEmails}
+              onChange={(e) => setBulkEmails(e.target.value)}
+              placeholder="One email per line or comma-separated"
+              required
+            />
+            <span className="mt-2 block text-xs font-medium text-ink-muted">{bulkPreview.length} unique email(s) detected</span>
+          </label>
+          <Input label="Points" type="number" value={bulkPoints} onChange={(e) => setBulkPoints(e.target.value)} required />
+          <Input label="Reason" value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} required />
+        </form>
+      </Modal>
 
       <ConfirmDialog
         open={confirmOpen}
-        title={pending?.kind === 'bulk' ? 'Confirm bulk adjustment' : 'Confirm point adjustment'}
-        description={
-          pending?.kind === 'bulk'
-            ? `Grant ${pending.points} points to ${pending.emails?.length ?? 0} user(s)? Reason: ${pending.reason}`
-            : `Apply ${pending?.points} points to ${pending?.userLabel}? Reason: ${pending?.reason}`
-        }
+        title={adjustModal === 'bulk' ? 'Confirm bulk adjustment' : 'Confirm point adjustment'}
+        description={pendingSummary}
         confirmLabel="Apply adjustment"
         isLoading={isSubmitting}
         onConfirm={() => void confirmAdjustment()}
-        onCancel={() => { setConfirmOpen(false); setPending(null); }}
+        onCancel={() => setConfirmOpen(false)}
       />
     </div>
   );

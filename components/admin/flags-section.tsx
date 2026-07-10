@@ -5,11 +5,11 @@ import { fetchTabData } from '@/components/admin/admin-utils';
 import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Modal } from '@/components/ui/modal';
 
 type FeatureFlag = {
   key: string;
@@ -18,19 +18,29 @@ type FeatureFlag = {
   updatedAt: string;
 };
 
+type FlagForm = {
+  key: string;
+  description: string;
+  enabled: boolean;
+};
+
 type FlagsSectionProps = {
   onSuccess: (title: string, message?: string) => void;
   onError: (title: string, message?: string) => void;
 };
 
+const emptyFlag: FlagForm = { key: '', description: '', enabled: false };
+
 export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [key, setKey] = useState('');
-  const [description, setDescription] = useState('');
-  const [enabled, setEnabled] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [form, setForm] = useState<FlagForm>(emptyFlag);
+  const [baseline, setBaseline] = useState<FlagForm>(emptyFlag);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<FeatureFlag | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -47,10 +57,30 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
     void load();
   }, [load]);
 
-  function editFlag(flag: FeatureFlag) {
-    setKey(flag.key);
-    setDescription(flag.description ?? '');
-    setEnabled(flag.enabled);
+  const isDirty =
+    form.key !== baseline.key
+    || form.description !== baseline.description
+    || form.enabled !== baseline.enabled;
+
+  function openCreate() {
+    setFormMode('create');
+    setForm(emptyFlag);
+    setBaseline(emptyFlag);
+    setFormOpen(true);
+  }
+
+  function openEdit(flag: FeatureFlag) {
+    const next = { key: flag.key, description: flag.description ?? '', enabled: flag.enabled };
+    setFormMode('edit');
+    setForm(next);
+    setBaseline(next);
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setForm(emptyFlag);
+    setBaseline(emptyFlag);
   }
 
   async function submitFlag(event: FormEvent) {
@@ -59,13 +89,11 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
     try {
       await adminApiRequest('/api/admin/feature-flags', {
         method: 'POST',
-        body: JSON.stringify({ key, enabled, description }),
+        body: JSON.stringify(form),
       });
       await load();
-      setKey('');
-      setDescription('');
-      setEnabled(false);
-      onSuccess('Feature flag saved');
+      onSuccess(formMode === 'create' ? 'Feature flag created' : 'Feature flag updated');
+      closeForm();
     } catch (submitError) {
       onError('Save failed', submitError instanceof Error ? submitError.message : undefined);
     } finally {
@@ -73,15 +101,21 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
     }
   }
 
-  async function toggleFlag(flag: FeatureFlag) {
+  async function confirmToggle() {
+    if (!toggleTarget) return;
     setIsSubmitting(true);
     try {
       await adminApiRequest('/api/admin/feature-flags', {
         method: 'POST',
-        body: JSON.stringify({ key: flag.key, enabled: !flag.enabled, description: flag.description }),
+        body: JSON.stringify({
+          key: toggleTarget.key,
+          enabled: !toggleTarget.enabled,
+          description: toggleTarget.description,
+        }),
       });
       await load();
-      onSuccess(`Flag ${flag.key} ${flag.enabled ? 'disabled' : 'enabled'}`);
+      onSuccess(`Flag ${toggleTarget.key} ${toggleTarget.enabled ? 'disabled' : 'enabled'}`);
+      setToggleTarget(null);
     } catch (submitError) {
       onError('Toggle failed', submitError instanceof Error ? submitError.message : undefined);
     } finally {
@@ -95,7 +129,6 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
     try {
       await adminDelete(`/api/admin/feature-flags/${encodeURIComponent(deleteKey)}`);
       await load();
-      if (key === deleteKey) { setKey(''); setDescription(''); setEnabled(false); }
       onSuccess('Feature flag deleted');
       setDeleteKey(null);
     } catch (submitError) {
@@ -113,23 +146,8 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
         badge="Runtime"
         title="Feature flags"
         description="Create, update, toggle, and delete runtime feature flags."
+        actions={<Button onClick={openCreate}>Create flag</Button>}
       />
-
-      <Card padding="lg">
-        <form onSubmit={submitFlag} className="space-y-4">
-          <FormFieldGrid columns={4}>
-            <Input label="Key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="flag_key" required />
-            <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-            <label className="flex min-h-[3.25rem] items-end gap-2 pb-3 text-sm font-semibold text-ink">
-              <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 rounded border-line-strong" />
-              Enabled
-            </label>
-          </FormFieldGrid>
-          <FormActions>
-            <Button type="submit" isLoading={isSubmitting}>{key && flags.some((f) => f.key === key) ? 'Update flag' : 'Create flag'}</Button>
-          </FormActions>
-        </form>
-      </Card>
 
       <DataTable
         headers={['Key', 'Enabled', 'Description', 'Updated', 'Actions']}
@@ -139,13 +157,67 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
           flag.description ?? '—',
           new Date(flag.updatedAt).toLocaleString(),
           <div key={flag.key} className="flex flex-wrap gap-2">
-            <Button size="sm" variant="ghost" onClick={() => editFlag(flag)}>Edit</Button>
-            <Button size="sm" variant="secondary" onClick={() => void toggleFlag(flag)} disabled={isSubmitting}>
+            <Button size="sm" variant="ghost" onClick={() => openEdit(flag)}>Edit</Button>
+            <Button size="sm" variant="secondary" onClick={() => setToggleTarget(flag)} disabled={isSubmitting}>
               {flag.enabled ? 'Disable' : 'Enable'}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setDeleteKey(flag.key)}>Delete</Button>
           </div>,
         ])}
+      />
+
+      <Modal
+        open={formOpen}
+        onClose={closeForm}
+        title={formMode === 'create' ? 'Create feature flag' : `Edit ${form.key}`}
+        description={formMode === 'create' ? 'Add a new runtime feature flag.' : 'Update flag settings.'}
+        size="md"
+        isDirty={isDirty}
+        footer={(
+          <FormActions className="pt-0">
+            <Button type="button" variant="ghost" onClick={closeForm}>Cancel</Button>
+            <Button type="submit" form="flag-form" isLoading={isSubmitting}>
+              {formMode === 'create' ? 'Create flag' : 'Save changes'}
+            </Button>
+          </FormActions>
+        )}
+      >
+        <form id="flag-form" onSubmit={submitFlag} className="space-y-4">
+          <FormFieldGrid columns={2}>
+            <Input
+              label="Key"
+              value={form.key}
+              onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
+              placeholder="flag_key"
+              readOnly={formMode === 'edit'}
+              required
+            />
+            <Input
+              label="Description"
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            />
+          </FormFieldGrid>
+          <label className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <input
+              type="checkbox"
+              checked={form.enabled}
+              onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))}
+              className="h-4 w-4 rounded border-line-strong"
+            />
+            Enabled
+          </label>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={toggleTarget !== null}
+        title={toggleTarget?.enabled ? 'Disable feature flag' : 'Enable feature flag'}
+        description={toggleTarget ? `${toggleTarget.enabled ? 'Disable' : 'Enable'} flag "${toggleTarget.key}"?` : undefined}
+        confirmLabel={toggleTarget?.enabled ? 'Disable' : 'Enable'}
+        isLoading={isSubmitting}
+        onConfirm={() => void confirmToggle()}
+        onCancel={() => setToggleTarget(null)}
       />
 
       <ConfirmDialog

@@ -7,7 +7,6 @@ import { AdminRole } from '@/lib/domain';
 import { adminRoleDescriptions, adminRoleLabels } from '@/lib/admin-permissions';
 import { adminDelete, adminPatchJson, adminPostJson } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
@@ -31,19 +30,31 @@ type AdminsSectionProps = {
   onError: (title: string, message?: string) => void;
 };
 
+const emptyCreate: {
+  email: string;
+  displayName: string;
+  password: string;
+  role: string;
+} = {
+  email: '',
+  displayName: '',
+  password: '',
+  role: AdminRole.READ_ONLY,
+};
+
 export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSectionProps) {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [email, setEmail] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState<string>(AdminRole.READ_ONLY);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyCreate);
+  const [createBaseline, setCreateBaseline] = useState(emptyCreate);
 
   const [editAdmin, setEditAdmin] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState('');
   const [editDisplayName, setEditDisplayName] = useState('');
+  const [editBaseline, setEditBaseline] = useState({ role: '', displayName: '' });
 
   const [resetAdmin, setResetAdmin] = useState<AdminUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -65,17 +76,36 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
     void load();
   }, [load]);
 
+  function openCreate() {
+    setCreateForm(emptyCreate);
+    setCreateBaseline(emptyCreate);
+    setCreateOpen(true);
+  }
+
+  function closeCreate() {
+    setCreateOpen(false);
+    setCreateForm(emptyCreate);
+    setCreateBaseline(emptyCreate);
+  }
+
+  const createDirty =
+    createForm.email !== createBaseline.email
+    || createForm.displayName !== createBaseline.displayName
+    || createForm.password !== createBaseline.password
+    || createForm.role !== createBaseline.role;
+
+  const editDirty = editAdmin
+    ? editRole !== editBaseline.role || editDisplayName !== editBaseline.displayName
+    : false;
+
   async function createAdmin(event: FormEvent) {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await adminPostJson('/api/admin/admin-users', { email, password, role, displayName });
-      setEmail('');
-      setDisplayName('');
-      setPassword('');
-      setRole(AdminRole.READ_ONLY);
+      await adminPostJson('/api/admin/admin-users', createForm);
       await load();
       onSuccess('Administrator created');
+      closeCreate();
     } catch (submitError) {
       onError('Create failed', submitError instanceof Error ? submitError.message : undefined);
     } finally {
@@ -145,28 +175,73 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
         badge="Team"
         title="Admin users"
         description="Create administrators and manage roles and access."
+        actions={<Button onClick={openCreate}>Add administrator</Button>}
       />
 
-      <Card padding="lg">
-        <form onSubmit={createAdmin} className="space-y-4">
-          <FormFieldGrid columns={4}>
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} hint="Minimum 8 characters" required />
-            <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} options={roleOptions} />
-          </FormFieldGrid>
-          <p className="text-xs leading-5 text-ink-muted">{adminRoleDescriptions[role]}</p>
-          <FormActions>
-            <Button type="submit" isLoading={isSubmitting}>Add administrator</Button>
+      <DataTable
+        headers={['Email', 'Name', 'Role', 'Active', 'Last login', 'Actions']}
+        rows={admins.map((admin) => [
+          admin.email,
+          admin.displayName ?? '—',
+          adminRoleLabels[admin.role] ?? admin.role,
+          admin.isActive ? 'Yes' : 'No',
+          admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never',
+          admin.id === currentAdminId ? (
+            <span key={admin.id} className="text-sm font-medium text-ink-muted">Current user</span>
+          ) : (
+            <div key={admin.id} className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditAdmin(admin);
+                  setEditRole(admin.role);
+                  setEditDisplayName(admin.displayName ?? '');
+                  setEditBaseline({ role: admin.role, displayName: admin.displayName ?? '' });
+                }}
+              >
+                Edit
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setResetAdmin(admin)}>Reset password</Button>
+              <Button size="sm" variant="ghost" onClick={() => setDeactivateAdmin(admin)}>
+                {admin.isActive ? 'Deactivate' : 'Activate'}
+              </Button>
+            </div>
+          ),
+        ])}
+      />
+
+      <Modal
+        open={createOpen}
+        onClose={closeCreate}
+        title="Add administrator"
+        description="Create a new administrator account with an assigned role."
+        size="lg"
+        isDirty={createDirty}
+        footer={(
+          <FormActions className="pt-0">
+            <Button type="button" variant="ghost" onClick={closeCreate}>Cancel</Button>
+            <Button type="submit" form="create-admin-form" isLoading={isSubmitting}>Create administrator</Button>
           </FormActions>
+        )}
+      >
+        <form id="create-admin-form" onSubmit={createAdmin} className="space-y-4">
+          <FormFieldGrid columns={2}>
+            <Input label="Email" type="email" value={createForm.email} onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} required />
+            <Input label="Display name" value={createForm.displayName} onChange={(e) => setCreateForm((f) => ({ ...f, displayName: e.target.value }))} />
+            <Input label="Password" type="password" value={createForm.password} onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} hint="Minimum 8 characters" required />
+            <Select label="Role" value={createForm.role} onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))} options={roleOptions} />
+          </FormFieldGrid>
+          <p className="text-xs leading-5 text-ink-muted">{adminRoleDescriptions[createForm.role]}</p>
         </form>
-      </Card>
+      </Modal>
 
       <Modal
         open={editAdmin !== null}
         onClose={() => setEditAdmin(null)}
         title={editAdmin ? `Edit ${editAdmin.email}` : 'Edit administrator'}
         size="md"
+        isDirty={editDirty}
         footer={(
           <FormActions className="pt-0">
             <Button variant="ghost" onClick={() => setEditAdmin(null)}>Cancel</Button>
@@ -186,9 +261,10 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
       <Modal
         open={resetAdmin !== null}
         onClose={() => { setResetAdmin(null); setNewPassword(''); }}
-        title={resetAdmin ? `Reset password` : 'Reset password'}
+        title="Reset password"
         description={resetAdmin ? `Set a new password for ${resetAdmin.email}. All active sessions will be revoked.` : undefined}
         size="md"
+        isDirty={newPassword.length > 0}
         footer={(
           <FormActions className="pt-0">
             <Button variant="ghost" onClick={() => { setResetAdmin(null); setNewPassword(''); }}>Cancel</Button>
@@ -198,28 +274,6 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
       >
         <Input label="New password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} hint="Minimum 8 characters" required />
       </Modal>
-
-      <DataTable
-        headers={['Email', 'Name', 'Role', 'Active', 'Last login', 'Actions']}
-        rows={admins.map((admin) => [
-          admin.email,
-          admin.displayName ?? '—',
-          adminRoleLabels[admin.role] ?? admin.role,
-          admin.isActive ? 'Yes' : 'No',
-          admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never',
-          admin.id === currentAdminId ? (
-            <span key={admin.id} className="text-sm font-medium text-ink-muted">Current user</span>
-          ) : (
-            <div key={admin.id} className="flex flex-wrap gap-2">
-              <Button size="sm" variant="ghost" onClick={() => { setEditAdmin(admin); setEditRole(admin.role); setEditDisplayName(admin.displayName ?? ''); }}>Edit</Button>
-              <Button size="sm" variant="secondary" onClick={() => setResetAdmin(admin)}>Reset password</Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeactivateAdmin(admin)}>
-                {admin.isActive ? 'Deactivate' : 'Activate'}
-              </Button>
-            </div>
-          ),
-        ])}
-      />
 
       <ConfirmDialog
         open={deactivateAdmin !== null}
