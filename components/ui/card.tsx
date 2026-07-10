@@ -20,7 +20,7 @@ export function Card({ as, interactive = false, padding = 'md', className, ...pr
   return (
     <Component
       className={cn(
-        'rounded-2xl border border-line bg-surface text-ink shadow-card',
+        'rounded-xl border border-line bg-surface text-ink shadow-sm',
         paddings[padding],
         interactive &&
           'transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-soft',

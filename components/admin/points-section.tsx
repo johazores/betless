@@ -144,7 +144,7 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
   if (isLoading) return <LoadingState label="Loading points..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeader
         badge="Rewards"
         title="Points"
@@ -157,17 +157,20 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
         )}
       />
 
-      <DataTable
-        headers={['User', 'Points', 'Description', 'Date']}
-        rows={history.map((tx) => [
-          tx.userEmail ?? '—',
-          formatNumber(tx.points),
-          tx.description ?? '—',
-          new Date(tx.createdAt).toLocaleString(),
-        ])}
-        emptyMessage="No adjustment history yet"
-      />
-      <Pagination page={historyPage} pageSize={historyPageSize} total={historyTotal} onPageChange={setHistoryPage} />
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+        <DataTable
+          className="rounded-none border-0 shadow-none"
+          headers={['User', 'Points', 'Description', 'Date']}
+          rows={history.map((tx) => [
+            tx.userEmail ?? '—',
+            formatNumber(tx.points),
+            tx.description ?? '—',
+            new Date(tx.createdAt).toLocaleString(),
+          ])}
+          emptyMessage="No adjustment history yet"
+        />
+        <Pagination page={historyPage} pageSize={historyPageSize} total={historyTotal} onPageChange={setHistoryPage} />
+      </div>
 
       <Modal
         open={adjustModal === 'single'}

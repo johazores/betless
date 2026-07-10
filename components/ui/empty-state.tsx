@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/class-names';
 
 type EmptyStateProps = {
   title?: string;
   message?: string;
   icon?: ReactNode;
   action?: ReactNode;
+  className?: string;
 };
 
 export function EmptyState({
@@ -12,9 +14,10 @@ export function EmptyState({
   message = 'Create a Betless vault to start your plan.',
   icon,
   action,
+  className,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-line bg-surface p-10 text-center shadow-card">
+    <div className={cn('flex flex-col items-center rounded-xl border border-dashed border-line bg-surface-muted/30 px-6 py-12 text-center', className)}>
       <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-700">
         {icon ?? (
           <svg

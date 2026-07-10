@@ -141,7 +141,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
   if (isLoading) return <LoadingState label="Loading feature flags..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeader
         badge="Runtime"
         title="Feature flags"
@@ -149,22 +149,30 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
         actions={<Button onClick={openCreate}>Create flag</Button>}
       />
 
-      <DataTable
-        headers={['Key', 'Enabled', 'Description', 'Updated', 'Actions']}
-        rows={flags.map((flag) => [
-          flag.key,
-          flag.enabled ? 'On' : 'Off',
-          flag.description ?? '—',
-          new Date(flag.updatedAt).toLocaleString(),
-          <div key={flag.key} className="flex flex-wrap gap-2">
-            <Button size="sm" variant="ghost" onClick={() => openEdit(flag)}>Edit</Button>
-            <Button size="sm" variant="secondary" onClick={() => setToggleTarget(flag)} disabled={isSubmitting}>
-              {flag.enabled ? 'Disable' : 'Enable'}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setDeleteKey(flag.key)}>Delete</Button>
-          </div>,
-        ])}
-      />
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+        <DataTable
+          className="rounded-none border-0 shadow-none"
+          headers={['Key', 'Status', 'Description', 'Updated', '']}
+          rows={flags.map((flag) => [
+            <span key={`${flag.key}-name`} className="font-mono text-xs">{flag.key}</span>,
+            flag.enabled ? (
+              <span key={`${flag.key}-on`} className="inline-flex rounded-md border border-success/20 bg-success-surface px-2 py-0.5 text-xs font-medium text-success">Enabled</span>
+            ) : (
+              <span key={`${flag.key}-off`} className="inline-flex rounded-md border border-line bg-surface-sunken px-2 py-0.5 text-xs font-medium text-ink-muted">Disabled</span>
+            ),
+            flag.description ?? '—',
+            new Date(flag.updatedAt).toLocaleString(),
+            <div key={flag.key} className="flex flex-wrap justify-end gap-1">
+              <Button size="sm" variant="ghost" onClick={() => openEdit(flag)}>Edit</Button>
+              <Button size="sm" variant="ghost" onClick={() => setToggleTarget(flag)} disabled={isSubmitting}>
+                {flag.enabled ? 'Disable' : 'Enable'}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setDeleteKey(flag.key)}>Delete</Button>
+            </div>,
+          ])}
+          emptyMessage="No feature flags configured"
+        />
+      </div>
 
       <Modal
         open={formOpen}

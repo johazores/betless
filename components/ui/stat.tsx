@@ -11,9 +11,9 @@ type StatProps = {
 
 export function Stat({ label, value, hint, mono = false, className }: StatProps) {
   return (
-    <div className={cn('rounded-xl border border-line bg-surface-muted p-4', className)}>
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">{label}</p>
-      <p className={cn('mt-1 font-semibold text-ink', mono && 'break-all font-mono text-sm')}>{value}</p>
+    <div className={cn('rounded-lg border border-line bg-surface-muted/60 p-3', className)}>
+      <p className="text-xs font-medium text-ink-muted">{label}</p>
+      <p className={cn('mt-1 text-sm font-medium text-ink', mono && 'break-all font-mono text-xs')}>{value}</p>
       {hint ? <p className="mt-1 text-xs leading-5 text-ink-muted">{hint}</p> : null}
     </div>
   );

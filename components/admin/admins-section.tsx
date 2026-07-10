@@ -170,7 +170,7 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
   if (isLoading) return <LoadingState label="Loading administrators..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeader
         badge="Team"
         title="Admin users"
@@ -178,38 +178,46 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
         actions={<Button onClick={openCreate}>Add administrator</Button>}
       />
 
-      <DataTable
-        headers={['Email', 'Name', 'Role', 'Active', 'Last login', 'Actions']}
-        rows={admins.map((admin) => [
-          admin.email,
-          admin.displayName ?? '—',
-          adminRoleLabels[admin.role] ?? admin.role,
-          admin.isActive ? 'Yes' : 'No',
-          admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never',
-          admin.id === currentAdminId ? (
-            <span key={admin.id} className="text-sm font-medium text-ink-muted">Current user</span>
-          ) : (
-            <div key={admin.id} className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setEditAdmin(admin);
-                  setEditRole(admin.role);
-                  setEditDisplayName(admin.displayName ?? '');
-                  setEditBaseline({ role: admin.role, displayName: admin.displayName ?? '' });
-                }}
-              >
-                Edit
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => setResetAdmin(admin)}>Reset password</Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeactivateAdmin(admin)}>
-                {admin.isActive ? 'Deactivate' : 'Activate'}
-              </Button>
-            </div>
-          ),
-        ])}
-      />
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+        <DataTable
+          className="rounded-none border-0 shadow-none"
+          headers={['Email', 'Name', 'Role', 'Status', 'Last login', '']}
+          rows={admins.map((admin) => [
+            admin.email,
+            admin.displayName ?? '—',
+            adminRoleLabels[admin.role] ?? admin.role,
+            admin.isActive ? (
+              <span key={`${admin.id}-active`} className="inline-flex rounded-md border border-success/20 bg-success-surface px-2 py-0.5 text-xs font-medium text-success">Active</span>
+            ) : (
+              <span key={`${admin.id}-inactive`} className="inline-flex rounded-md border border-line bg-surface-sunken px-2 py-0.5 text-xs font-medium text-ink-muted">Inactive</span>
+            ),
+            admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never',
+            admin.id === currentAdminId ? (
+              <span key={admin.id} className="text-xs text-ink-muted">Current user</span>
+            ) : (
+              <div key={admin.id} className="flex flex-wrap justify-end gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditAdmin(admin);
+                    setEditRole(admin.role);
+                    setEditDisplayName(admin.displayName ?? '');
+                    setEditBaseline({ role: admin.role, displayName: admin.displayName ?? '' });
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setResetAdmin(admin)}>Reset password</Button>
+                <Button size="sm" variant="ghost" onClick={() => setDeactivateAdmin(admin)}>
+                  {admin.isActive ? 'Deactivate' : 'Activate'}
+                </Button>
+              </div>
+            ),
+          ])}
+          emptyMessage="No administrators found"
+        />
+      </div>
 
       <Modal
         open={createOpen}

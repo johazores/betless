@@ -6,16 +6,10 @@ import { fetchTabData } from '@/components/admin/admin-utils';
 import type { AnalyticsData } from '@/components/admin/types';
 import { formatNumber, formatPeso } from '@/components/admin/types';
 import { Card } from '@/components/ui/card';
+import { KpiCard } from '@/components/ui/kpi-card';
 import { LoadingState } from '@/components/ui/loading-state';
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card padding="md">
-      <p className="text-sm font-bold text-ink-muted">{label}</p>
-      <p className="mt-2 text-2xl font-black tracking-tight text-ink">{value}</p>
-    </Card>
-  );
-}
+import { MiniBarChart } from '@/components/ui/mini-bar-chart';
+import { Stat } from '@/components/ui/stat';
 
 export function DashboardSection() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -36,52 +30,73 @@ export function DashboardSection() {
 
   if (isLoading || !data) return <LoadingState label="Loading dashboard..." />;
 
-  const maxRegistrations = Math.max(...data.userGrowth.map((d) => d.registrations), 1);
+  const chartData = data.userGrowth.map((day) => ({
+    label: day.date,
+    value: day.registrations,
+  }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <SectionHeader
         badge="Overview"
         title="Dashboard"
         description="Platform metrics, user growth, and environment health at a glance."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        <MetricCard label="Total users" value={formatNumber(data.metrics.totalUsers)} />
-        <MetricCard label="Active users" value={formatNumber(data.metrics.activeUsers)} />
-        <MetricCard label="Locked balance" value={formatPeso(data.metrics.lockedBalance)} />
-        <MetricCard label="Points issued" value={formatNumber(data.metrics.pointsIssued)} />
-        <MetricCard label="Points redeemed" value={formatNumber(data.metrics.pointsRedeemed)} />
-        <MetricCard label="Vaults" value={formatNumber(data.metrics.allVaults)} />
-        <MetricCard label="Active vaults" value={formatNumber(data.metrics.activeVaults)} />
-        <MetricCard label="On-chain ops" value={formatNumber(data.metrics.stellarOps)} />
-        <MetricCard label="Failed ops" value={formatNumber(data.metrics.failedOps)} />
-      </div>
+      <section className="space-y-3">
+        <h3 className="text-sm font-medium text-ink-muted">Users & engagement</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard label="Total users" value={formatNumber(data.metrics.totalUsers)} />
+          <KpiCard label="Active users (30d)" value={formatNumber(data.metrics.activeUsers)} tone="brand" />
+          <KpiCard label="Points issued" value={formatNumber(data.metrics.pointsIssued)} />
+          <KpiCard label="Points redeemed" value={formatNumber(data.metrics.pointsRedeemed)} />
+        </div>
+      </section>
 
-      <Card padding="lg">
-        <h3 className="text-lg font-black text-ink">Registrations — last 30 days</h3>
-        <div className="mt-5 flex h-36 items-end gap-1.5">
-          {data.userGrowth.map((day) => (
-            <div key={day.date} title={`${day.date}: ${day.registrations}`} className="flex flex-1 items-end">
-              <div
-                className="w-full rounded-t-md bg-gradient-to-t from-brand-500 to-brand-400 transition-all duration-200 hover:from-brand-600 hover:to-brand-500"
-                style={{ height: `${Math.max(6, (day.registrations / maxRegistrations) * 100)}%` }}
-              />
-            </div>
-          ))}
+      <section className="space-y-3">
+        <h3 className="text-sm font-medium text-ink-muted">Vaults & on-chain</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard label="Locked balance" value={formatPeso(data.metrics.lockedBalance)} />
+          <KpiCard label="Total vaults" value={formatNumber(data.metrics.allVaults)} />
+          <KpiCard label="Active vaults" value={formatNumber(data.metrics.activeVaults)} />
+          <KpiCard
+            label="Failed on-chain ops"
+            value={formatNumber(data.metrics.failedOps)}
+            tone={data.metrics.failedOps > 0 ? 'danger' : 'default'}
+            hint={`${formatNumber(data.metrics.stellarOps)} total operations`}
+          />
+        </div>
+      </section>
+
+      <Card padding="lg" className="shadow-sm">
+        <div className="mb-1 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-ink">Registrations</h3>
+            <p className="text-sm text-ink-muted">Daily sign-ups over the last 30 days</p>
+          </div>
+        </div>
+        <div className="mt-5">
+          <MiniBarChart
+            data={chartData}
+            valueLabel="registrations"
+            emptyMessage="No registrations in the last 30 days"
+          />
         </div>
       </Card>
 
-      <Card padding="lg">
-        <h3 className="text-lg font-black text-ink">Environment</h3>
-        <dl className="mt-4 divide-y divide-line rounded-xl border border-line">
+      <Card padding="lg" className="shadow-sm">
+        <h3 className="text-base font-semibold text-ink">Environment</h3>
+        <p className="mt-1 text-sm text-ink-muted">Runtime configuration visible to administrators</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Object.entries(data.environment).map(([key, value]) => (
-            <div key={key} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <dt className="text-sm font-semibold text-ink-muted">{key}</dt>
-              <dd className="break-all text-sm font-medium text-ink">{String(value ?? '—')}</dd>
-            </div>
+            <Stat
+              key={key}
+              label={key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}
+              value={String(value ?? '—')}
+              mono
+            />
           ))}
-        </dl>
+        </div>
       </Card>
     </div>
   );

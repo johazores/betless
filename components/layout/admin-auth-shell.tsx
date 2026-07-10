@@ -30,16 +30,16 @@ export function AdminAuthShell({ badge, title, subtitle, highlights, children }:
         <section className={adminContainerClass}>
           <div className="grid gap-10 py-10 lg:grid-cols-[1fr_minmax(0,26rem)] lg:items-start lg:py-16">
             <div className="lg:sticky lg:top-28">
-              <span className="inline-flex rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
+              <span className="inline-flex rounded-md border border-brand-200/80 bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800">
                 {badge}
               </span>
-              <h1 className="mt-5 text-4xl font-black tracking-tight text-ink sm:text-5xl">{title}</h1>
-              <p className="mt-5 max-w-xl text-lg leading-8 text-ink-muted">{subtitle}</p>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">{title}</h1>
+              <p className="mt-3 max-w-xl text-base leading-7 text-ink-muted">{subtitle}</p>
 
-              <div className="mt-8 space-y-3">
+              <div className="mt-6 space-y-2">
                 {highlights.map(([heading, body]) => (
-                  <div key={heading} className="rounded-2xl border border-line bg-surface p-4 shadow-card">
-                    <p className="text-sm font-black text-ink">{heading}</p>
+                  <div key={heading} className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+                    <p className="text-sm font-semibold text-ink">{heading}</p>
                     <p className="mt-1 text-sm leading-6 text-ink-muted">{body}</p>
                   </div>
                 ))}

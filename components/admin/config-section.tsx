@@ -97,31 +97,35 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
   if (isLoading) return <LoadingState label="Loading config..." />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeader
         badge="Runtime"
         title="Config"
         description="Manage whitelisted configuration keys. Boot-critical keys are read-only."
       />
 
-      <DataTable
-        headers={['Key', 'Value', 'Source', 'Secret', 'Updated', 'Actions']}
-        rows={config.map((item) => [
-          item.key,
-          item.value ?? 'Unset',
-          item.source,
-          item.isSecret ? 'Masked' : 'Plain',
-          item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never',
-          !item.bootCritical ? (
-            <div key={item.key} className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => openEdit(item)}>Edit</Button>
-              {item.source === 'managed' ? (
-                <Button size="sm" variant="ghost" onClick={() => setResetKey(item.key)}>Reset</Button>
-              ) : null}
-            </div>
-          ) : 'Read only',
-        ])}
-      />
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+        <DataTable
+          className="rounded-none border-0 shadow-none"
+          headers={['Key', 'Value', 'Source', 'Secret', 'Updated', '']}
+          rows={config.map((item) => [
+            <span key={`${item.key}-name`} className="font-mono text-xs">{item.key}</span>,
+            item.value ?? 'Unset',
+            item.source,
+            item.isSecret ? 'Masked' : 'Plain',
+            item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never',
+            !item.bootCritical ? (
+              <div key={item.key} className="flex justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={() => openEdit(item)}>Edit</Button>
+                {item.source === 'managed' ? (
+                  <Button size="sm" variant="ghost" onClick={() => setResetKey(item.key)}>Reset</Button>
+                ) : null}
+              </div>
+            ) : <span className="text-xs text-ink-muted">Read only</span>,
+          ])}
+          emptyMessage="No configuration keys found"
+        />
+      </div>
 
       <Modal
         open={editItem !== null}
