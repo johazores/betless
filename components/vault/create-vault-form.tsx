@@ -133,6 +133,7 @@ export function CreateVaultForm() {
             </dl>
             <p className="mt-4 text-xs font-semibold leading-5 text-ink-muted">
               Points start after your first full month. 1 point = ₱1. Your full deposit is returned automatically when the lock period ends.
+              The lock is recorded on the Stellar network, so you can verify it independently at any time.
             </p>
           </div>
         ) : null}

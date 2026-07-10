@@ -24,9 +24,19 @@ export function VaultCard({ vault }: { vault: VaultView }) {
                 : `${vault.pointsEarned.toLocaleString('en-PH')} points earned`}
           </p>
         </div>
-        <span className="w-fit rounded-full bg-surface-sunken px-3 py-1 text-xs font-black text-ink">
-          {getVaultStatusLabel(vault.status)}
-        </span>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <span className="w-fit rounded-full bg-surface-sunken px-3 py-1 text-xs font-black text-ink">
+            {getVaultStatusLabel(vault.status)}
+          </span>
+          {vault.stellar?.status === 'LOCKED' ? (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-success" title="This vault's deposit is locked on the Stellar network until maturity.">
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                <path fillRule="evenodd" d="M8 1a4 4 0 0 0-4 4v2H3.5A1.5 1.5 0 0 0 2 8.5v5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 12.5 7H12V5a4 4 0 0 0-4-4Zm2.5 6V5a2.5 2.5 0 0 0-5 0v2h5Z" clipRule="evenodd" />
+              </svg>
+              Lock verified
+            </span>
+          ) : null}
+        </div>
       </div>
       {isActive ? (
         <div className="mt-5">

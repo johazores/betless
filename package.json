@@ -18,7 +18,8 @@
     "db:reset:force": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "stellar:setup": "node scripts/setup-stellar-testnet.mjs",
-    "stellar:smoke": "tsx --env-file=.env scripts/smoke-stellar.ts"
+    "stellar:smoke": "tsx --env-file=.env scripts/smoke-stellar.ts",
+    "demo:seed": "tsx --env-file=.env scripts/seed-demo.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.16",

@@ -7,7 +7,7 @@ const steps = [
   },
   {
     title: 'Fund a savings vault',
-    body: 'Deposit ₱10,000 or more and lock it for 12, 24, 36, or 48 months.',
+    body: 'Deposit ₱10,000 or more and lock it for 12 to 60 months, in 12-month steps.',
   },
   {
     title: 'Earn points every month',

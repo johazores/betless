@@ -91,6 +91,7 @@ The database schema was rebuilt for the commitment savings model, so existing de
 ## Documentation
 
 - `docs/business-model.md` — product rules and implementation notes.
+- `docs/demo-guide.md` — step-by-step demo flow, talking points, and judge Q&A. Use `npm run demo:seed` to populate backdated demo vaults (with live on-chain locks) for the most recent user.
 - `docs/stellar-architecture.md` — audit of the previous Stellar integration and the on-chain custody architecture (claimable-balance vault locks, anchor rails, diagrams for all core flows). Phases 1–2 (outbox + claimable-balance locks) are implemented; anchor rails remain future work.
 
 ## QA Commands

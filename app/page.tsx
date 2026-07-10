@@ -19,7 +19,7 @@ import {
 const exampleDeposit = 50_000;
 
 const promises = [
-  ['Your money comes back', 'When the lock period ends, 100% of your deposit is returned automatically.'],
+  ['Your money comes back', 'When the lock period ends, 100% of your deposit is returned automatically. Every vault lock is independently verifiable on the Stellar network — not just a promise in our database.'],
   ['Clear rewards', `You earn about ${Math.round(ANNUAL_REWARD_RATE * 100)}% of your deposit per year as points. 1 point = ₱1. No tiers, no fine print.`],
   ['Transparent exit', `Need the money early? Withdraw any time for a flat ${formatPeso(FLAT_WITHDRAWAL_FEE_PHP)} fee (1% for vaults above ${formatPeso(FLAT_FEE_PRINCIPAL_LIMIT_PHP)}), always shown before you confirm.`],
 ];

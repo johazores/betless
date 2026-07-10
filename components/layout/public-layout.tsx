@@ -29,7 +29,10 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <Logo showTagline={false} markClassName="h-8 w-8" />
           <div className="flex flex-col gap-3 text-sm text-ink-muted sm:flex-row sm:items-center sm:justify-between">
             <p className="font-semibold text-ink">Betless helps you commit to long-term savings and earn real-world rewards.</p>
-            <p>Funds are managed through licensed custodial partners. Rewards are fulfilled by partner merchants.</p>
+            <p>
+              Funds are managed through licensed custodial partners. Vault locks are independently verifiable on the
+              Stellar network. Rewards are fulfilled by partner merchants.
+            </p>
           </div>
         </div>
       </footer>
