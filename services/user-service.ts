@@ -7,21 +7,49 @@ export type ClerkUserSnapshot = {
 };
 
 export class UserService {
+  private static async fetchClerkProfile(clerkUserId: string) {
+    try {
+      const { clerkClient } = await import('@clerk/nextjs/server');
+      const client = await clerkClient();
+      const user = await client.users.getUser(clerkUserId);
+      const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses?.[0]?.emailAddress ?? null;
+      const displayName =
+        user.fullName ||
+        [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+        user.username ||
+        null;
+      return { email, displayName };
+    } catch {
+      return { email: null, displayName: null };
+    }
+  }
+
   static async ensureAppUser(snapshot: ClerkUserSnapshot) {
     if (!snapshot.clerkUserId) {
       throw new Error('Please sign in to continue.');
+    }
+
+    let email = snapshot.email;
+    let displayName = snapshot.displayName;
+
+    // Enrich from Clerk when the caller did not already supply profile fields,
+    // so accounts persist a real email/display name instead of just an id.
+    if (email === undefined && displayName === undefined) {
+      const profile = await this.fetchClerkProfile(snapshot.clerkUserId);
+      email = profile.email;
+      displayName = profile.displayName;
     }
 
     return prisma.appUser.upsert({
       where: { clerkUserId: snapshot.clerkUserId },
       create: {
         clerkUserId: snapshot.clerkUserId,
-        email: snapshot.email ?? null,
-        displayName: snapshot.displayName ?? null,
+        email: email ?? null,
+        displayName: displayName ?? null,
       },
       update: {
-        email: snapshot.email ?? undefined,
-        displayName: snapshot.displayName ?? undefined,
+        email: email ?? undefined,
+        displayName: displayName ?? undefined,
       },
     });
   }

@@ -4,6 +4,44 @@
 
 :root {
   color-scheme: light;
+
+  /* Brand ramp (consolidated amber/orange -> single brand scale) */
+  --brand-50: 255 251 235;
+  --brand-100: 254 243 199;
+  --brand-200: 253 230 138;
+  --brand-300: 252 211 77;
+  --brand-400: 251 191 36;
+  --brand-500: 245 158 11;
+  --brand-600: 217 119 6;
+  --brand-700: 180 83 9;
+  --brand-800: 146 64 14;
+  --brand-900: 120 53 15;
+
+  /* Surfaces & lines */
+  --surface: 255 255 255;
+  --surface-muted: 248 250 252;
+  --surface-sunken: 241 245 249;
+  --border: 226 232 240;
+  --border-strong: 203 213 225;
+
+  /* Text */
+  --foreground: 15 23 42;
+  --muted-foreground: 100 116 139;
+
+  /* Feedback tones */
+  --success: 5 150 105;
+  --success-surface: 236 253 245;
+  --info: 37 99 235;
+  --info-surface: 239 246 255;
+  --danger: 220 38 38;
+  --danger-surface: 254 242 242;
+
+  /* Radius scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 }
 
 * {
@@ -17,8 +55,16 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: rgb(var(--surface-muted));
+  color: rgb(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 a {

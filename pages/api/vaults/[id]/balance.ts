@@ -2,12 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getApiVaultAccess } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
-import { getSingleQueryValue, parseOptionalId } from '@/lib/validators';
-import { TopUpService } from '@/services/top-up-service';
-import { VaultService } from '@/services/vault-service';
+import { getSingleQueryValue } from '@/lib/validators';
+import { VaultFundingService } from '@/services/vault-funding-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!requireMethod(req, res, 'POST')) return;
+  if (!requireMethod(req, res, 'GET')) return;
 
   const id = getSingleQueryValue(req.query.id);
 
@@ -17,12 +16,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const access = await getApiVaultAccess(req);
-    const topUpId = parseOptionalId(req.body, 'topUpId');
-    await TopUpService.markTopUpCompleted(id, access, topUpId);
-    const vault = await VaultService.refreshVaultDetail(id, access);
+    const vault = await VaultFundingService.syncBalance(id, access);
     return sendSuccess(res, vault);
   } catch (error) {
     const message = getApiErrorMessage(error);
-    return sendError(res, message, 400);
+    return sendError(res, message, message.includes('sign in') ? 401 : 400);
   }
 }

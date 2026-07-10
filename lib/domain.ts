@@ -86,7 +86,9 @@ export const ActivityEventType = {
   REWARD_ISSUED: 'REWARD_ISSUED',
   RECEIPT_SAVED: 'RECEIPT_SAVED',
   STELLAR_PAYMENT_SUBMITTED: 'STELLAR_PAYMENT_SUBMITTED',
+  STELLAR_ACCOUNT_FUNDED: 'STELLAR_ACCOUNT_FUNDED',
   ACCOUNT_CONNECTED: 'ACCOUNT_CONNECTED',
+  VAULT_UNLOCKED: 'VAULT_UNLOCKED',
 } as const;
 
 export type ActivityEventType = (typeof ActivityEventType)[keyof typeof ActivityEventType];

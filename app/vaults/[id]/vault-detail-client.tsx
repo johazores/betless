@@ -32,6 +32,8 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
   const [topUpLoading, setTopUpLoading] = useState(false);
   const [rewardLoading, setRewardLoading] = useState(false);
   const [proofLoading, setProofLoading] = useState(false);
+  const [fundLoading, setFundLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -127,6 +129,31 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
     );
   }
 
+  function handleFund() {
+    void runMutation<VaultDetailView>(
+      `/api/vaults/${id}/fund`,
+      {},
+      (updatedVault) => setVault(updatedVault),
+      setFundLoading,
+    );
+  }
+
+  async function handleRefreshBalance() {
+    setRefreshLoading(true);
+    setError('');
+
+    try {
+      const token = isSignedIn ? await getToken() : null;
+      const vaultAccessToken = getVaultToken(id);
+      const updated = await apiRequest<VaultDetailView>(`/api/vaults/${id}/balance`, undefined, { token, vaultAccessToken });
+      setVault(updated);
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : 'Balance could not be refreshed.');
+    } finally {
+      setRefreshLoading(false);
+    }
+  }
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -195,7 +222,15 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <RewardTimeline vault={vault} onClaimReward={handleClaimReward} isLoading={rewardLoading} />
-        <StellarProofCard vault={vault} onCreateProof={handleCreateProof} isLoading={proofLoading} />
+        <StellarProofCard
+          vault={vault}
+          onCreateProof={handleCreateProof}
+          onFund={handleFund}
+          onRefreshBalance={handleRefreshBalance}
+          isLoading={proofLoading}
+          isFunding={fundLoading}
+          isRefreshing={refreshLoading}
+        />
       </div>
     </div>
   );

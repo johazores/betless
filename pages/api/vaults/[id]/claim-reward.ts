@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getApiVaultAccess } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
-import { getSingleQueryValue } from '@/lib/validators';
+import { getSingleQueryValue, parseOptionalId } from '@/lib/validators';
 import { RewardService } from '@/services/reward-service';
 import { VaultService } from '@/services/vault-service';
 
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const access = await getApiVaultAccess(req);
-    const rewardId = typeof req.body?.rewardId === 'string' ? req.body.rewardId : undefined;
+    const rewardId = parseOptionalId(req.body, 'rewardId');
     const voucher = await RewardService.claimReward(id, access, rewardId);
     const vault = await VaultService.refreshVaultDetail(id, access);
     return sendSuccess(res, { vault, voucher });

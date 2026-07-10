@@ -1,11 +1,29 @@
-import type { HTMLAttributes } from 'react';
+import type { ElementType, HTMLAttributes } from 'react';
 import { cn } from '@/lib/class-names';
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+type CardProps = HTMLAttributes<HTMLDivElement> & {
+  as?: ElementType;
+  interactive?: boolean;
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+};
+
+const paddings = {
+  none: '',
+  sm: 'p-4',
+  md: 'p-5 sm:p-6',
+  lg: 'p-6 sm:p-8',
+};
+
+export function Card({ as, interactive = false, padding = 'md', className, ...props }: CardProps) {
+  const Component = as ?? 'div';
+
   return (
-    <div
+    <Component
       className={cn(
-        'rounded-2xl border border-slate-200 bg-white p-5 text-slate-950 shadow-sm sm:p-6',
+        'rounded-2xl border border-line bg-surface text-ink shadow-card',
+        paddings[padding],
+        interactive &&
+          'transition-all duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-soft',
         className,
       )}
       {...props}

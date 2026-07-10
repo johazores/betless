@@ -4,6 +4,7 @@ import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { validateCreateVaultRequest } from '@/lib/validators';
 import { StellarProofService } from '@/services/stellar-proof-service';
+import { VaultFundingService } from '@/services/vault-funding-service';
 import { VaultService } from '@/services/vault-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -26,7 +27,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     const createdVault = await VaultService.createVault(input, access);
-    await StellarProofService.createOrUpdateCommitmentProof(createdVault.id, access);
+
+    // Activate + fund the wallet on-ledger (Friendbot on testnet) so the proof
+    // payment has a real destination account. Best-effort: creation must not
+    // fail if the network is momentarily unavailable — the vault page exposes a
+    // retry via POST /api/vaults/[id]/fund.
+    try {
+      await VaultFundingService.activateAndFund(createdVault.id, access);
+    } catch {
+      // stellarError is persisted inside the service; continue.
+    }
+
+    try {
+      await StellarProofService.createOrUpdateCommitmentProof(createdVault.id, access);
+    } catch {
+      // Proof failures are persisted as FAILED and retryable from the UI.
+    }
+
     const vault = await VaultService.refreshVaultDetail(createdVault.id, access);
     return sendSuccess(res, { ...vault, accessToken: guestAccessToken }, 201);
   } catch (error) {

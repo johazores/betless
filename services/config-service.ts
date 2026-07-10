@@ -1,9 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { getConfiguredStellarNetwork, getStellarNetworkLabel, getStellarNetworkPassphrase, StellarNetwork } from '@/lib/stellar-explorer';
 
+const DEFAULT_REWARD_RATE = 0.01;
+
 export class ConfigService {
-  static getRewardRate() {
-    return 0.01;
+  static async getRewardRate() {
+    const raw = await this.getConfigValue('reward_rate', process.env.REWARD_RATE ?? String(DEFAULT_REWARD_RATE));
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_REWARD_RATE;
   }
 
   static getStellarNetwork() {
@@ -23,6 +27,12 @@ export class ConfigService {
     return this.getStellarNetwork() === StellarNetwork.PUBLIC
       ? 'https://horizon.stellar.org'
       : 'https://horizon-testnet.stellar.org';
+  }
+
+  static getStellarFriendbotUrl(): string | null {
+    if (process.env.STELLAR_FRIENDBOT_URL) return process.env.STELLAR_FRIENDBOT_URL;
+    // Friendbot only exists on non-production networks.
+    return this.getStellarNetwork() === StellarNetwork.PUBLIC ? null : 'https://friendbot.stellar.org';
   }
 
   static async getConfigValue(key: string, fallback: string) {

@@ -62,8 +62,12 @@ export type VaultDetailView = {
   rewardRate: number;
   reason: string | null;
   status: VaultStatus;
-  stellarBalanceId: string | null;
+  stellarProofReference: string | null;
   stellarStatus: StellarStatus;
+  stellarNativeBalance: number | null;
+  stellarBalanceSyncedAt: string | null;
+  stellarFundedAt: string | null;
+  stellarError: string | null;
   unlockAt: string;
   createdAt: string;
   updatedAt: string;
@@ -93,6 +97,7 @@ export type DashboardVaultView = {
   unlockAt: string;
   createdAt: string;
   stellarStatus: StellarStatus;
+  stellarNativeBalance: number | null;
   latestReceipt: ProofReceiptView | null;
 };
 

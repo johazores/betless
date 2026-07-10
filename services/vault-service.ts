@@ -1,4 +1,4 @@
-import { ActivityEventType, ActivityRail, ActivityStatus, VaultMode, decimalToNumber } from '@/lib/domain';
+import { ActivityEventType, ActivityRail, ActivityStatus, VaultMode, VaultStatus, decimalToNumber } from '@/lib/domain';
 import { addWeeks } from '@/lib/dates';
 import { getPlannedTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
@@ -64,8 +64,12 @@ type VaultWithRelations = {
   rewardRate: unknown;
   reason: string | null;
   status: VaultDetailView['status'];
-  stellarBalanceId: string | null;
+  stellarProofReference: string | null;
   stellarStatus: VaultDetailView['stellarStatus'];
+  stellarNativeBalance: unknown | null;
+  stellarBalanceSyncedAt: Date | null;
+  stellarFundedAt: Date | null;
+  stellarError: string | null;
   unlockAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -83,13 +87,36 @@ export class VaultService {
     return addWeeks(new Date(), durationWeeks);
   }
 
+  private static buildOwnerConditions(access: VaultAccess) {
+    const conditions: Array<Record<string, unknown>> = [];
+    if (access.clerkUserId) conditions.push({ appUser: { clerkUserId: access.clerkUserId } });
+    if (access.vaultAccessTokenHash) conditions.push({ guestAccessTokenHash: access.vaultAccessTokenHash });
+    return conditions;
+  }
+
+  private static async findByIdempotencyKey(idempotencyKey: string, access: VaultAccess) {
+    const conditions = this.buildOwnerConditions(access);
+    if (conditions.length === 0) return null;
+    return prisma.vault.findFirst({ where: { idempotencyKey, OR: conditions } });
+  }
+
   static async createVault(input: CreateVaultInput, access: VaultAccess) {
     const appUser = access.clerkUserId ? await UserService.ensureAppUser({ clerkUserId: access.clerkUserId }) : null;
 
     if (!appUser && !access.vaultAccessTokenHash) {
       throw new Error('Create an account or keep this browser open to save the vault.');
     }
-    const rewardRate = ConfigService.getRewardRate();
+
+    // Idempotency: a retried/refreshed submission with the same key returns the
+    // already-created vault instead of creating a duplicate.
+    if (input.idempotencyKey) {
+      const existing = await this.findByIdempotencyKey(input.idempotencyKey, access);
+      if (existing) {
+        return this.getVaultDetail(existing.id, access);
+      }
+    }
+
+    const rewardRate = await ConfigService.getRewardRate();
     const durationWeeks = this.calculateDurationWeeks(input.durationMonths);
     const rewardValue = RewardService.calculateRewardValue(input.targetAmount, rewardRate);
     const unlockAt = this.calculateUnlockDate(durationWeeks);
@@ -104,11 +131,14 @@ export class VaultService {
       : 0;
     const rewardMilestoneCount = input.mode === VaultMode.PERIODIC_TOP_UP ? Math.max(1, plannedTopUpCount) : 1;
 
-    const vault = await prisma.$transaction(async (tx: any) => {
+    let createdVaultId: string;
+    try {
+      createdVaultId = await prisma.$transaction(async (tx: any) => {
       const createdVault = await tx.vault.create({
         data: {
           appUserId: appUser?.id ?? null,
           guestAccessTokenHash: appUser ? null : access.vaultAccessTokenHash,
+          idempotencyKey: input.idempotencyKey ?? null,
           walletAddress: input.walletAddress,
           mode: input.mode,
           targetAmount: input.targetAmount,
@@ -156,10 +186,73 @@ export class VaultService {
         makeFirstAvailable: input.mode === VaultMode.ONE_TIME_LOCK && input.currentAmount >= input.targetAmount,
       });
 
-      return createdVault;
+      return createdVault.id;
+      });
+    } catch (error) {
+      const target = (error as { code?: string; meta?: { target?: string[] | string } })?.code === 'P2002'
+        ? (error as { meta?: { target?: string[] | string } }).meta?.target
+        : null;
+      const targets = Array.isArray(target) ? target : target ? [target] : [];
+
+      if (input.idempotencyKey && targets.some((field) => field.includes('idempotencyKey'))) {
+        const existing = await this.findByIdempotencyKey(input.idempotencyKey, access);
+        if (existing) return this.getVaultDetail(existing.id, access);
+      }
+      if (targets.some((field) => field.includes('walletAddress'))) {
+        throw new Error('You already have a vault using this wallet address. Open it from your dashboard.');
+      }
+      if (targets.some((field) => field.includes('guestAccessTokenHash'))) {
+        throw new Error('This browser already has a vault. Open your dashboard to view it, or sign in to add more.');
+      }
+      throw error;
+    }
+
+    return this.getVaultDetail(createdVaultId, access);
+  }
+
+  static async unlockVault(vaultId: string, access: VaultAccess) {
+    await prisma.$transaction(async (tx: any) => {
+      const vault = await tx.vault.findFirst({ where: buildVaultAccessWhere(vaultId, access) });
+
+      if (!vault) {
+        throw new Error('Vault not found.');
+      }
+
+      if (vault.status === VaultStatus.COMPLETED || vault.status === VaultStatus.CANCELLED) {
+        return;
+      }
+
+      const goalReached = vault.currentAmount.greaterThanOrEqualTo(vault.targetAmount);
+      const lockElapsed = vault.unlockAt.getTime() <= Date.now();
+
+      if (!goalReached && !lockElapsed) {
+        throw new Error(`This vault is still locked until ${vault.unlockAt.toISOString().slice(0, 10)}.`);
+      }
+
+      const withdrawnAmount = decimalToNumber(vault.currentAmount);
+
+      await tx.vault.update({
+        where: { id: vaultId },
+        data: { status: VaultStatus.COMPLETED },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: vault.appUserId,
+        vaultId,
+        type: ActivityEventType.VAULT_UNLOCKED,
+        rail: ActivityRail.APP,
+        status: ActivityStatus.COMPLETED,
+        title: 'Vault unlocked',
+        description: `${withdrawnAmount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 })} released from the vault`,
+        walletAddress: vault.walletAddress,
+        amount: withdrawnAmount,
+        assetCode: 'PHP',
+        reference: vaultId,
+        metadata: { unlockedAt: new Date().toISOString() },
+      });
     });
 
-    return this.getVaultDetail(vault.id, access);
+    return this.getVaultDetail(vaultId, access);
   }
 
   static async listVaults(accessOrClerkUserId: VaultAccess | string): Promise<DashboardVaultView[]> {
@@ -201,6 +294,7 @@ export class VaultService {
         unlockAt: vault.unlockAt.toISOString(),
         createdAt: vault.createdAt.toISOString(),
         stellarStatus: vault.stellarStatus,
+        stellarNativeBalance: vault.stellarNativeBalance == null ? null : decimalToNumber(vault.stellarNativeBalance),
         latestReceipt: vault.receipts?.[0] ? this.toProofReceiptView(vault.receipts[0]) : null,
       };
     });
@@ -395,8 +489,12 @@ export class VaultService {
       rewardRate: decimalToNumber(vault.rewardRate),
       reason: vault.reason,
       status: vault.status,
-      stellarBalanceId: vault.stellarBalanceId,
+      stellarProofReference: vault.stellarProofReference,
       stellarStatus: vault.stellarStatus,
+      stellarNativeBalance: vault.stellarNativeBalance == null ? null : decimalToNumber(vault.stellarNativeBalance),
+      stellarBalanceSyncedAt: vault.stellarBalanceSyncedAt ? vault.stellarBalanceSyncedAt.toISOString() : null,
+      stellarFundedAt: vault.stellarFundedAt ? vault.stellarFundedAt.toISOString() : null,
+      stellarError: vault.stellarError,
       unlockAt: vault.unlockAt.toISOString(),
       createdAt: vault.createdAt.toISOString(),
       updatedAt: vault.updatedAt.toISOString(),

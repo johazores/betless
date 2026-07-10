@@ -35,6 +35,7 @@ model Vault {
   id               String          @id @default(cuid())
   appUserId        String?
   guestAccessTokenHash String?  @unique
+  idempotencyKey   String?         @unique
   walletAddress    String
   displayName      String?
   mode             VaultMode       @default(ONE_TIME_LOCK)
@@ -50,8 +51,12 @@ model Vault {
   reason           String?
   status           VaultStatus     @default(ACTIVE)
 
-  stellarBalanceId String?
-  stellarStatus    StellarStatus   @default(NOT_CREATED)
+  stellarProofReference String?
+  stellarStatus         StellarStatus @default(NOT_CREATED)
+  stellarNativeBalance  Decimal?
+  stellarBalanceSyncedAt DateTime?
+  stellarFundedAt       DateTime?
+  stellarError          String?
 
   unlockAt         DateTime
   createdAt        DateTime        @default(now())
@@ -63,6 +68,7 @@ model Vault {
   receipts         ProofReceipt[]
   activityEvents   ActivityEvent[]
 
+  @@unique([appUserId, walletAddress])
   @@index([appUserId, status, createdAt])
   @@index([guestAccessTokenHash])
   @@index([walletAddress])
@@ -182,7 +188,9 @@ enum ActivityEventType {
   REWARD_ISSUED
   RECEIPT_SAVED
   STELLAR_PAYMENT_SUBMITTED
+  STELLAR_ACCOUNT_FUNDED
   ACCOUNT_CONNECTED
+  VAULT_UNLOCKED
 }
 
 enum ActivityRail {

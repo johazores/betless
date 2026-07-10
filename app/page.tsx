@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { Progress } from '@/components/ui/progress';
+import { Stat } from '@/components/ui/stat';
 
 const steps = [
   ['Create a vault', 'Choose a wallet, set a goal, and pick a lock period.'],
@@ -47,14 +48,8 @@ export default function HomePage() {
               </div>
               <Progress value={20} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-semibold text-slate-600">Monthly top-up</p>
-                  <p className="mt-1 text-2xl font-black text-slate-950">₱2,000</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-semibold text-slate-600">Reward type</p>
-                  <p className="mt-1 text-2xl font-black text-slate-950">Fixed</p>
-                </div>
+                <Stat label="Monthly top-up" value={<span className="text-2xl">₱2,000</span>} />
+                <Stat label="Reward type" value={<span className="text-2xl">Fixed</span>} />
               </div>
               <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
                 Create a vault, complete top-ups, claim rewards, and save a receipt.

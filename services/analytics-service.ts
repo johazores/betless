@@ -1,4 +1,4 @@
-import { ActivityStatus, RewardStatus, TopUpStatus, decimalToNumber } from '@/lib/domain';
+import { ActivityStatus, RewardStatus, TopUpStatus, VaultStatus, decimalToNumber } from '@/lib/domain';
 import { prisma } from '@/lib/prisma';
 import { ActivityEventService } from '@/services/activity-event-service';
 import type { VaultAccess } from '@/services/vault-access-service';
@@ -63,7 +63,16 @@ export class AnalyticsService {
       }),
     ]);
 
-    const totalBalance = vaults.reduce((sum: number, vault: any) => sum + decimalToNumber(vault.currentAmount), 0);
+    const isWithdrawn = (vault: any) => vault.status === VaultStatus.COMPLETED || vault.status === VaultStatus.CANCELLED;
+
+    // Balance excludes vaults that have been unlocked/withdrawn.
+    const totalBalance = vaults
+      .filter((vault: any) => !isWithdrawn(vault))
+      .reduce((sum: number, vault: any) => sum + decimalToNumber(vault.currentAmount), 0);
+    // Withdrawals are the balances released by unlocked/cancelled vaults.
+    const totalWithdrawals = vaults
+      .filter((vault: any) => isWithdrawn(vault))
+      .reduce((sum: number, vault: any) => sum + decimalToNumber(vault.currentAmount), 0);
     const initialDeposits = vaults.reduce((sum: number, vault: any) => {
       const completedTopUps = vault.topUps
         .filter((topUp: any) => topUp.status === TopUpStatus.COMPLETED)
@@ -72,7 +81,9 @@ export class AnalyticsService {
     }, 0);
     const completedTopUps = topUps.reduce((sum: number, topUp: any) => sum + decimalToNumber(topUp.amount), 0);
     const rewardsEarned = rewards.reduce((sum: number, reward: any) => sum + decimalToNumber(reward.rewardValue), 0);
-    const targetTotal = vaults.reduce((sum: number, vault: any) => sum + decimalToNumber(vault.targetAmount), 0);
+    const targetTotal = vaults
+      .filter((vault: any) => !isWithdrawn(vault))
+      .reduce((sum: number, vault: any) => sum + decimalToNumber(vault.targetAmount), 0);
     const completedTransactions = events.filter((event: any) => event.status === ActivityStatus.COMPLETED).length;
 
     const monthlyMap = new Map<string, number>();
@@ -97,7 +108,7 @@ export class AnalyticsService {
     return {
       totalBalance,
       totalDeposits: initialDeposits + completedTopUps,
-      totalWithdrawals: 0,
+      totalWithdrawals,
       rewardsEarned,
       rewardsRedeemed: rewards.length,
       completedTransactions,

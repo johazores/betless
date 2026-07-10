@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Stat } from '@/components/ui/stat';
 import { apiRequest } from '@/lib/api-client';
 import { formatShortDate } from '@/lib/dates';
 import { getGuestSessionToken, getVaultToken } from '@/lib/vault-session';
@@ -90,62 +91,28 @@ export function ReceiptClient({ id }: { id: string }) {
             <p className="mt-3 text-sm leading-7 text-slate-600">{receipt.message}</p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold text-slate-500">Created</p>
-                <p className="mt-1 font-black text-slate-950">{formatShortDate(receipt.createdAt)}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold text-slate-500">Network</p>
-                <p className="mt-1 font-black text-slate-950">{receipt.network}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold text-slate-500">Status</p>
-                <p className="mt-1 font-black text-slate-950">{receipt.status === 'NETWORK_CONFIRMED' ? 'Confirmed' : 'Saved'}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                <p className="text-sm font-bold text-slate-500">Wallet address</p>
-                <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.publicAddress}</p>
-              </div>
+              <Stat label="Created" value={formatShortDate(receipt.createdAt)} />
+              <Stat label="Network" value={receipt.network} />
+              <Stat label="Status" value={receipt.status === 'NETWORK_CONFIRMED' ? 'Confirmed' : 'Saved'} />
+              <Stat label="Wallet address" value={receipt.publicAddress} mono className="sm:col-span-2" />
               {receipt.sourceAccount ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                  <p className="text-sm font-bold text-slate-500">Source account</p>
-                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.sourceAccount}</p>
-                </div>
+                <Stat label="Source account" value={receipt.sourceAccount} mono className="sm:col-span-2" />
               ) : null}
               {receipt.destinationAccount ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                  <p className="text-sm font-bold text-slate-500">Destination account</p>
-                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.destinationAccount}</p>
-                </div>
+                <Stat label="Destination account" value={receipt.destinationAccount} mono className="sm:col-span-2" />
               ) : null}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                <p className="text-sm font-bold text-slate-500">Receipt reference</p>
-                <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.proofReference}</p>
-              </div>
+              <Stat label="Receipt reference" value={receipt.proofReference} mono className="sm:col-span-2" />
               {receipt.transactionHash ? (
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2">
-                  <p className="text-sm font-bold text-emerald-700">Transaction hash</p>
-                  <p className="mt-1 break-all font-mono text-sm font-black text-emerald-950">{receipt.transactionHash}</p>
+                <div className="rounded-xl border border-success/20 bg-success-surface p-4 sm:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-success">Transaction hash</p>
+                  <p className="mt-1 break-all font-mono text-sm font-semibold text-ink">{receipt.transactionHash}</p>
                 </div>
               ) : null}
               {receipt.operationId ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
-                  <p className="text-sm font-bold text-slate-500">Operation ID</p>
-                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.operationId}</p>
-                </div>
+                <Stat label="Operation ID" value={receipt.operationId} mono className="sm:col-span-2" />
               ) : null}
-              {receipt.ledger ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-bold text-slate-500">Ledger</p>
-                  <p className="mt-1 font-black text-slate-950">{receipt.ledger}</p>
-                </div>
-              ) : null}
-              {receipt.memo ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-bold text-slate-500">Memo</p>
-                  <p className="mt-1 font-black text-slate-950">{receipt.memo}</p>
-                </div>
-              ) : null}
+              {receipt.ledger ? <Stat label="Ledger" value={receipt.ledger} /> : null}
+              {receipt.memo ? <Stat label="Memo" value={receipt.memo} /> : null}
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

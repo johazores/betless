@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SignInButton, useAuth } from '@clerk/nextjs';
 import { Alert } from '@/components/ui/alert';
@@ -15,7 +16,7 @@ import { formatPeso } from '@/lib/money';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';
 import { getOrCreateGuestSessionToken, saveVaultToken } from '@/lib/vault-session';
-import type { VaultDetailView } from '@/types/vault';
+import type { DashboardVaultView, VaultDetailView } from '@/types/vault';
 
 type FormState = VaultFormState;
 type WalletChoice = 'create' | 'existing';
@@ -96,6 +97,45 @@ export function CreateVaultForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
+  const [existingVaults, setExistingVaults] = useState<DashboardVaultView[] | null>(null);
+  const [checkingExisting, setCheckingExisting] = useState(false);
+  const [forceCreate, setForceCreate] = useState(false);
+
+  // A stable idempotency key per wizard session prevents duplicate vaults from
+  // double-submits, retries, or refreshes of the final step.
+  const idempotencyKey = useMemo(
+    () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `btl-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    [],
+  );
+
+  // Detect an existing signed-in session with vaults and offer a redirect
+  // instead of silently allowing another vault to be created.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkExisting() {
+      if (!isLoaded || !isSignedIn) {
+        setExistingVaults(null);
+        return;
+      }
+
+      setCheckingExisting(true);
+      try {
+        const token = await getToken();
+        const vaults = await apiRequest<DashboardVaultView[]>('/api/vaults', undefined, { token });
+        if (!cancelled) setExistingVaults(vaults);
+      } catch {
+        if (!cancelled) setExistingVaults(null);
+      } finally {
+        if (!cancelled) setCheckingExisting(false);
+      }
+    }
+
+    void checkExisting();
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken, isLoaded, isSignedIn]);
 
   const rewardEstimate = useMemo(() => {
     const target = Number(form.targetAmount || 0);
@@ -198,6 +238,7 @@ export function CreateVaultForm() {
         method: 'POST',
         body: JSON.stringify({
           ...form,
+          idempotencyKey,
           walletAddress: form.walletAddress.trim(),
           targetAmount: Number(form.targetAmount),
           currentAmount: form.mode === VAULT_MODE.ONE_TIME_LOCK ? Number(form.targetAmount) : Number(form.currentAmount),
@@ -216,6 +257,38 @@ export function CreateVaultForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  const hasExistingVaults = Boolean(existingVaults && existingVaults.length > 0);
+
+  if (checkingExisting && !forceCreate) {
+    return (
+      <Card>
+        <p className="text-sm font-semibold text-slate-600">Checking your account…</p>
+      </Card>
+    );
+  }
+
+  if (hasExistingVaults && !forceCreate) {
+    const primaryVault = existingVaults?.[0];
+    return (
+      <Card>
+        <p className="text-sm font-black text-amber-700">You are signed in</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">You already have a vault.</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Open your dashboard to manage it. You can still create another vault if you want a separate goal.
+        </p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <Link href="/dashboard"><Button className="w-full sm:w-auto">Go to dashboard</Button></Link>
+          {primaryVault ? (
+            <Link href={`/vaults/${primaryVault.id}`}><Button variant="secondary" className="w-full sm:w-auto">Open latest vault</Button></Link>
+          ) : null}
+          <Button type="button" variant="ghost" onClick={() => setForceCreate(true)} className="w-full sm:w-auto">
+            Create another vault
+          </Button>
+        </div>
+      </Card>
+    );
   }
 
   return (

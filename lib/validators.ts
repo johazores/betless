@@ -14,11 +14,47 @@ export type CreateVaultInput = {
   durationMonths: number;
   rewardType: string;
   reason?: string;
+  idempotencyKey?: string;
 };
+
+function optionalToken(value: unknown, maxLength = 200) {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  if (trimmed.length > maxLength) {
+    throw new Error('Request key is invalid.');
+  }
+  return trimmed;
+}
 
 export function getSingleQueryValue(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value[0];
   return value;
+}
+
+/**
+ * Validates an optional identifier from a request body. Returns undefined when
+ * absent, and throws for malformed values (wrong type, too long, illegal chars).
+ */
+export function parseOptionalId(body: unknown, field: string): string | undefined {
+  if (body === undefined || body === null) return undefined;
+  if (typeof body !== 'object') {
+    throw new Error('Request body is invalid.');
+  }
+
+  const value = (body as Record<string, unknown>)[field];
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(`${field} must be a string.`);
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return undefined;
+  if (trimmed.length > 64 || !/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+    throw new Error(`${field} is invalid.`);
+  }
+
+  return trimmed;
 }
 
 function requireString(value: unknown, field: string) {
@@ -71,6 +107,7 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
   }
 
   const payload = body as Record<string, unknown>;
+  const idempotencyKey = optionalToken(payload.idempotencyKey);
   const walletAddress = requireString(payload.walletAddress, 'Stellar public address');
 
   if (!isValidStellarPublicKey(walletAddress)) {
@@ -102,6 +139,7 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
       durationMonths,
       rewardType,
       reason,
+      idempotencyKey,
     };
   }
 
@@ -128,5 +166,6 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
     durationMonths,
     rewardType,
     reason,
+    idempotencyKey,
   };
 }

@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Progress } from '@/components/ui/progress';
+import { Stat } from '@/components/ui/stat';
 import { apiRequest, postJson } from '@/lib/api-client';
 import { formatDateTime, formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -171,14 +172,11 @@ export function DashboardClient() {
               </div>
               <div className="mt-6"><Progress value={analytics?.savingsProgressPercent ?? 0} /></div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-bold text-slate-500">Withdrawals</p>
-                  <p className="mt-1 text-xl font-black text-slate-950">{formatPeso(analytics?.totalWithdrawals ?? 0)}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-bold text-slate-500">Network receipts</p>
-                  <p className="mt-1 text-xl font-black text-slate-950">{receipts.filter((receipt) => receipt.status === 'NETWORK_CONFIRMED').length}</p>
-                </div>
+                <Stat label="Withdrawals" value={<span className="text-xl">{formatPeso(analytics?.totalWithdrawals ?? 0)}</span>} />
+                <Stat
+                  label="Network receipts"
+                  value={<span className="text-xl">{receipts.filter((receipt) => receipt.status === 'NETWORK_CONFIRMED').length}</span>}
+                />
               </div>
             </Card>
 
@@ -251,6 +249,9 @@ export function DashboardClient() {
                       <p className="text-sm font-black text-amber-700">{vault.mode === 'PERIODIC_TOP_UP' ? 'Recurring vault' : 'One-time vault'}</p>
                       <h2 className="mt-2 text-2xl font-black text-slate-950">{formatPeso(vault.currentAmount)} saved</h2>
                       <p className="mt-1 text-sm font-semibold text-slate-600">Target: {formatPeso(vault.targetAmount)} · Unlock: {formatShortDate(vault.unlockAt)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        On-chain wallet: {vault.stellarNativeBalance != null ? `${vault.stellarNativeBalance} XLM` : 'not activated yet'}
+                      </p>
                     </div>
                     <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">{vault.status.replaceAll('_', ' ')}</span>
                   </div>

@@ -51,7 +51,17 @@ const requiredFiles = [
   'docs/transaction-activity-analytics.md',
   'docs/stellar-explorer-verification.md',
   'lib/stellar-explorer.ts',
+  'lib/stellar.ts',
   'prisma/migrations/20260710050000_stellar_explorer_fields/migration.sql',
+  'prisma/migrations/20260710060000_stellar_funding_fields/migration.sql',
+  'proxy.ts',
+  'services/stellar-service.ts',
+  'services/vault-funding-service.ts',
+  'services/user-service.ts',
+  'pages/api/vaults/[id]/fund.ts',
+  'pages/api/vaults/[id]/balance.ts',
+  'pages/api/vaults/[id]/unlock.ts',
+  'pages/api/session/connect.ts',
   'README.md',
 ];
 
@@ -227,6 +237,32 @@ const dashboardClient = readFileSync(join(root, 'app/dashboard/dashboard-client.
 for (const requiredCopy of ['Total balance', 'Total deposits', 'Rewards earned', 'Monthly activity', 'Vault growth']) {
   if (!dashboardClient.includes(requiredCopy)) {
     failures.push(`Analytics dashboard is missing required metric: ${requiredCopy}`);
+  }
+}
+
+const stellarService = readFileSync(join(root, 'services/stellar-service.ts'), 'utf8');
+for (const required of ['getAccount', 'fundWithFriendbot', 'submitAndConfirm', 'ensureAccountFunded']) {
+  if (!stellarService.includes(required)) {
+    failures.push(`Real Stellar service is missing method: ${required}`);
+  }
+}
+
+const configService = readFileSync(join(root, 'services/config-service.ts'), 'utf8');
+if (!configService.includes('getStellarFriendbotUrl')) {
+  failures.push('Config service is missing getStellarFriendbotUrl for account funding.');
+}
+
+const fundingSchema = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
+for (const required of ['idempotencyKey', 'stellarNativeBalance', 'stellarProofReference', 'STELLAR_ACCOUNT_FUNDED', 'VAULT_UNLOCKED']) {
+  if (!fundingSchema.includes(required)) {
+    failures.push(`Prisma schema is missing funding/dedup field or enum value: ${required}`);
+  }
+}
+
+const fundingMigration = readFileSync(join(root, 'prisma/migrations/20260710060000_stellar_funding_fields/migration.sql'), 'utf8');
+for (const required of ['stellarProofReference', 'idempotencyKey', 'Vault_appUserId_walletAddress_key', 'stellarNativeBalance']) {
+  if (!fundingMigration.includes(required)) {
+    failures.push(`Stellar funding migration is missing: ${required}`);
   }
 }
 
