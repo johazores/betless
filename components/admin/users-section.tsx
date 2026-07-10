@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { UserDetailPanel } from '@/components/admin/user-detail-panel';
-import { FilterToolbar } from '@/components/admin/filter-toolbar';
+import { FilterToolbar, FilterSubmit } from '@/components/admin/filter-toolbar';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { SectionHeader } from '@/components/admin/section-header';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
@@ -85,7 +85,7 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
             { label: 'Closed', value: 'CLOSED' },
           ]}
         />
-        <Button type="submit" variant="secondary" className="w-full lg:w-auto">Search</Button>
+        <FilterSubmit>Search</FilterSubmit>
       </FilterToolbar>
 
       {isLoading ? <LoadingState label="Loading users..." /> : (

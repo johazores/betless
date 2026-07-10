@@ -4,6 +4,8 @@ import { cn } from '@/lib/class-names';
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
+  /** pill = standalone CTAs; field = aligns with form inputs */
+  shape?: 'pill' | 'field';
   isLoading?: boolean;
   children: ReactNode;
 };
@@ -17,10 +19,21 @@ const variants = {
     'bg-transparent text-ink-muted hover:bg-surface-sunken hover:text-ink focus-visible:ring-line-strong disabled:text-line-strong',
 };
 
+const shapes = {
+  pill: 'rounded-full',
+  field: 'rounded-xl',
+};
+
 const sizes = {
   sm: 'min-h-9 gap-1.5 px-3.5 py-2 text-xs',
-  md: 'min-h-11 gap-2 px-5 py-3 text-sm',
-  lg: 'min-h-12 gap-2 px-6 py-3.5 text-base',
+  md: 'min-h-11 gap-2 px-5 py-2.5 text-sm',
+  lg: 'min-h-12 gap-2 px-6 py-3 text-base',
+};
+
+const fieldSizes = {
+  sm: 'h-9 px-3.5 text-xs',
+  md: 'h-11 px-5 text-sm',
+  lg: 'h-12 px-6 text-base',
 };
 
 function Spinner() {
@@ -40,6 +53,7 @@ function Spinner() {
 export function Button({
   variant = 'primary',
   size = 'md',
+  shape = 'pill',
   isLoading = false,
   className,
   disabled,
@@ -49,9 +63,11 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100',
-        sizes[size],
+        'inline-flex items-center justify-center font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100',
+        shapes[shape],
+        shape === 'field' ? fieldSizes[size] : sizes[size],
         variants[variant],
+        shape === 'field' && 'shadow-none',
         className,
       )}
       disabled={disabled || isLoading}

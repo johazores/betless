@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
-import { FilterToolbar } from '@/components/admin/filter-toolbar';
+import { FilterToolbar, FilterSubmit } from '@/components/admin/filter-toolbar';
 import { SectionHeader } from '@/components/admin/section-header';
 import { getDisplayLabel } from '@/lib/display-labels';
 import { StatusBadge } from '@/components/admin/status-badge';
@@ -125,7 +125,7 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
           { label: 'Claim', value: 'CLAIM' },
           { label: 'Early withdraw', value: 'EARLY_WITHDRAW' },
         ]} />
-        <Button type="submit" variant="secondary" className="w-full lg:w-auto">Filter</Button>
+        <FilterSubmit>Filter</FilterSubmit>
       </FilterToolbar>
 
       {isLoading ? <LoadingState label="Loading operations..." /> : data ? (

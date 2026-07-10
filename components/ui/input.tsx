@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
+import { formControlClassName, formFieldOffsetClassName, formLabelClassName } from '@/lib/form-control-styles';
 import { cn } from '@/lib/class-names';
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -12,12 +13,13 @@ export function Input({ label, hint, error, className, id, ...props }: InputProp
 
   return (
     <label htmlFor={fieldId} className="block">
-      <span className="text-sm font-semibold text-ink">{label}</span>
+      <span className={formLabelClassName}>{label}</span>
       <input
         id={fieldId}
         aria-invalid={error ? true : undefined}
         className={cn(
-          'mt-2 w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-base font-medium text-ink outline-none transition placeholder:text-ink-muted focus:border-brand-500 focus:ring-4 focus:ring-brand-100',
+          formFieldOffsetClassName,
+          formControlClassName,
           error && 'border-danger/50 focus:border-danger focus:ring-danger/15',
           className,
         )}

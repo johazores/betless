@@ -89,22 +89,25 @@ export function AdminLayout({
             <aside className="hidden lg:sticky lg:top-[4.5rem] lg:z-20 lg:block lg:max-h-[calc(100vh-4.5rem)] lg:self-start lg:overflow-y-auto">
               <nav className="space-y-0.5 pr-1" aria-label="Admin sections">
                 <p className="mb-2 px-3 text-xs font-medium text-ink-muted">Workspace</p>
-                {navItems.map((item) => (
+                {navItems.map((item) => {
+                  const isActive = activeTab === item.id;
+                  return (
                   <button
                     key={item.id}
                     type="button"
                     className={cn(
-                      'relative block w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-150',
-                      activeTab === item.id
-                        ? 'bg-surface text-ink shadow-sm ring-1 ring-line before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-brand-600'
-                        : 'text-ink-muted hover:bg-surface/80 hover:text-ink',
+                      'relative block w-full rounded-lg py-2 pl-3 pr-3 text-left text-sm transition-colors duration-150',
+                      isActive
+                        ? 'bg-surface font-semibold text-ink after:absolute after:inset-y-1 after:left-0 after:w-[3px] after:rounded-r-sm after:bg-brand-600'
+                        : 'font-medium text-ink-muted hover:bg-surface/70 hover:text-ink',
                     )}
                     onClick={() => onTabChange(item.id)}
-                    aria-current={activeTab === item.id ? 'page' : undefined}
+                    aria-current={isActive ? 'page' : undefined}
                   >
                     {item.label}
                   </button>
-                ))}
+                  );
+                })}
               </nav>
             </aside>
 

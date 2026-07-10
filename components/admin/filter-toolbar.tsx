@@ -1,4 +1,6 @@
-import type { FormEvent, ReactNode } from 'react';
+import type { ComponentProps, FormEvent, ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { formFieldOffsetClassName, formLabelClassName } from '@/lib/form-control-styles';
 import { cn } from '@/lib/class-names';
 
 type FilterToolbarProps = {
@@ -13,6 +15,26 @@ const layoutClasses = {
   default: 'grid min-w-0 flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_12rem_auto] lg:items-end',
   wide: 'grid min-w-0 flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 lg:items-end',
 };
+
+type FilterSubmitProps = ComponentProps<typeof Button>;
+
+/** Submit button aligned with labeled inputs in filter toolbars. */
+export function FilterSubmit({ className, variant = 'secondary', shape = 'field', ...props }: FilterSubmitProps) {
+  return (
+    <div className={cn('flex min-w-[6.5rem] flex-col', className)}>
+      <span className={cn(formLabelClassName, 'text-transparent select-none')} aria-hidden="true">
+        Action
+      </span>
+      <Button
+        type="submit"
+        variant={variant}
+        shape={shape}
+        className={cn(formFieldOffsetClassName, 'w-full')}
+        {...props}
+      />
+    </div>
+  );
+}
 
 /** Lightweight filter row — avoids heavy card chrome around search/filter controls. */
 export function FilterToolbar({ children, onSubmit, className, actions, layout = 'default' }: FilterToolbarProps) {

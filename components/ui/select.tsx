@@ -1,4 +1,5 @@
 import type { SelectHTMLAttributes } from 'react';
+import { formControlClassName, formFieldOffsetClassName, formLabelClassName } from '@/lib/form-control-styles';
 import { cn } from '@/lib/class-names';
 
 export type SelectOption = {
@@ -17,14 +18,11 @@ export function Select({ label, options, hint, className, id, ...props }: Select
 
   return (
     <label htmlFor={fieldId} className="block">
-      <span className="text-sm font-semibold text-ink">{label}</span>
-      <div className="relative mt-2">
+      <span className={formLabelClassName}>{label}</span>
+      <div className={cn('relative', formFieldOffsetClassName)}>
         <select
           id={fieldId}
-          className={cn(
-            'w-full appearance-none rounded-xl border border-line-strong bg-surface px-4 py-3 pr-10 text-base font-medium text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100',
-            className,
-          )}
+          className={cn(formControlClassName, 'appearance-none pr-10', className)}
           {...props}
         >
           {options.map((option) => (

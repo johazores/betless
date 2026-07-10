@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
-import { FilterToolbar } from '@/components/admin/filter-toolbar';
+import { FilterToolbar, FilterSubmit } from '@/components/admin/filter-toolbar';
 import { getDisplayLabel } from '@/lib/display-labels';
 import { SectionHeader } from '@/components/admin/section-header';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
         <Input label="Admin user id" value={adminUserId} onChange={(e) => setAdminUserId(e.target.value)} />
         <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        <Button type="submit" variant="secondary">Filter</Button>
+        <FilterSubmit>Filter</FilterSubmit>
       </FilterToolbar>
 
       {isLoading ? <LoadingState label="Loading audit logs..." /> : (
