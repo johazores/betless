@@ -2,6 +2,10 @@ export type PaymentMethod = {
   id: PaymentMethodId;
   name: string;
   description: string;
+  /** Brand logo under `/public/payment-methods`. */
+  logoSrc?: string;
+  /** Use a wider container for horizontal wordmarks (e.g. InstaPay). */
+  logoWide?: boolean;
   /** Fallback initial(s) if mark component is unavailable. */
   mark: string;
   /** Brand background for the fallback mark. */
@@ -19,6 +23,7 @@ export const paymentMethods: PaymentMethod[] = [
     id: 'gcash',
     name: 'GCash',
     description: 'Instant · No fees',
+    logoSrc: '/payment-methods/gcash.png',
     mark: 'G',
     markClassName: 'bg-[#007CFF]',
   },
@@ -31,8 +36,10 @@ export const paymentMethods: PaymentMethod[] = [
   },
   {
     id: 'instapay',
-    name: 'Bank transfer',
-    description: 'InstaPay · BPI, BDO, UnionBank, and more',
+    name: 'InstaPay',
+    description: 'Bank transfer · BPI, BDO, UnionBank, and more',
+    logoSrc: '/payment-methods/instapay.png',
+    logoWide: true,
     mark: '⇄',
     markClassName: 'bg-ink',
   },

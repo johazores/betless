@@ -1,21 +1,6 @@
 import type { SVGProps } from 'react';
-import type { PaymentMethodId } from '@/lib/payment-methods';
 
 type MarkProps = SVGProps<SVGSVGElement>;
-
-/** GCash — blue app tile with white G mark (optimized for 32–44px). */
-export function GCashMark(props: MarkProps) {
-  return (
-    <svg viewBox="0 0 40 40" fill="none" aria-hidden {...props}>
-      <rect width="40" height="40" rx="10" fill="#007CFF" />
-      <path
-        d="M20 11.5a8.5 8.5 0 1 0 3.45 16.58V24.8h-3.08v-2.47h5.55v5.55H20A8.5 8.5 0 0 1 20 11.5Z"
-        fill="#fff"
-      />
-      <path d="M23.45 16.2h4.05v2.08h-4.05V16.2Z" fill="#fff" />
-    </svg>
-  );
-}
 
 /** Maya — official wordmark paths from brand asset, scaled to icon tile. */
 export function MayaMark(props: MarkProps) {
@@ -44,30 +29,6 @@ export function MayaMark(props: MarkProps) {
   );
 }
 
-/** InstaPay bank transfer — BSP InstaPay green with bidirectional arrows. */
-export function InstaPayMark(props: MarkProps) {
-  return (
-    <svg viewBox="0 0 40 40" fill="none" aria-hidden {...props}>
-      <rect width="40" height="40" rx="10" fill="#005A31" />
-      <path
-        d="M11 17.5h11.5M20.5 13l4 4.5-4 4.5M29 22.5H17.5M19.5 27l-4-4.5 4-4.5"
-        stroke="#7CFCB8"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="10" y="28.5" width="20" height="2.5" rx="1.25" fill="#7CFCB8" opacity="0.55" />
-    </svg>
-  );
-}
-
 export const paymentMethodMarks = {
-  gcash: GCashMark,
   maya: MayaMark,
-  instapay: InstaPayMark,
-} as const satisfies Record<PaymentMethodId, typeof GCashMark>;
-
-export function PaymentMethodMark({ id, ...props }: { id: PaymentMethodId } & MarkProps) {
-  const Icon = paymentMethodMarks[id];
-  return <Icon {...props} />;
-}
+} as const;
