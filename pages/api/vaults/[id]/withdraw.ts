@@ -6,7 +6,7 @@ import { getSingleQueryValue } from '@/lib/validators';
 import { VaultService } from '@/services/vault-service';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!requireMethod(req, res, 'GET')) return;
+  if (!requireMethod(req, res, 'POST')) return;
 
   const id = getSingleQueryValue(req.query.id);
 
@@ -16,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const clerkUserId = requireApiUserId(req);
-    const vault = await VaultService.getVaultDetail(id, clerkUserId);
-    return sendSuccess(res, vault);
+    const result = await VaultService.withdrawEarly(id, clerkUserId);
+    return sendSuccess(res, result);
   } catch (error) {
     const message = getApiErrorMessage(error);
     const status = message === 'Vault not found.' ? 404 : message.includes('sign in') ? 401 : 400;

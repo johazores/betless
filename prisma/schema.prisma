@@ -7,15 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model AppConfig {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  isSecret  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model AppUser {
   id          String   @id @default(cuid())
   clerkUserId String   @unique
@@ -24,212 +15,62 @@ model AppUser {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  vaults      Vault[]
-  receipts    ProofReceipt[]
-  activityEvents ActivityEvent[]
-
-  @@index([createdAt])
+  vaults             Vault[]
+  pointsTransactions PointsTransaction[]
 }
 
 model Vault {
-  id               String          @id @default(cuid())
-  appUserId        String?
-  guestAccessTokenHash String?  @unique
-  idempotencyKey   String?         @unique
-  walletAddress    String
-  displayName      String?
-  mode             VaultMode       @default(ONE_TIME_LOCK)
+  id         String      @id @default(cuid())
+  appUserId  String
+  principal  Decimal
+  lockMonths Int
+  status     VaultStatus @default(ACTIVE)
+  startAt    DateTime    @default(now())
+  maturesAt  DateTime
 
-  targetAmount     Decimal
-  currentAmount    Decimal         @default(0)
-  topUpAmount      Decimal?
-  topUpFrequency   TopUpFrequency?
+  // Set when the vault closes (maturity or early withdrawal).
+  closedAt       DateTime?
+  withdrawalFee  Decimal?
+  returnedAmount Decimal?
 
-  durationWeeks    Int
-  rewardType       String
-  rewardRate       Decimal         @default(0.01)
-  reason           String?
-  status           VaultStatus     @default(ACTIVE)
+  idempotencyKey String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  stellarProofReference String?
-  stellarStatus         StellarStatus @default(NOT_CREATED)
-  stellarNativeBalance  Decimal?
-  stellarBalanceSyncedAt DateTime?
-  stellarFundedAt       DateTime?
-  stellarError          String?
+  appUser            AppUser             @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  pointsTransactions PointsTransaction[]
 
-  unlockAt         DateTime
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-
-  appUser          AppUser?        @relation(fields: [appUserId], references: [id], onDelete: SetNull)
-  rewards          RewardClaim[]
-  topUps           TopUp[]
-  receipts         ProofReceipt[]
-  activityEvents   ActivityEvent[]
-
-  @@unique([appUserId, walletAddress])
   @@index([appUserId, status, createdAt])
-  @@index([guestAccessTokenHash])
-  @@index([walletAddress])
-}
-
-enum VaultMode {
-  ONE_TIME_LOCK
-  PERIODIC_TOP_UP
-}
-
-enum TopUpFrequency {
-  WEEKLY
-  MONTHLY
 }
 
 enum VaultStatus {
   ACTIVE
-  UNLOCK_READY
-  COMPLETED
-  CANCELLED
+  MATURED
+  WITHDRAWN_EARLY
 }
 
-enum StellarStatus {
-  NOT_CREATED
-  PENDING
-  CREATED
-  FAILED
-}
-
-model TopUp {
-  id        String      @id @default(cuid())
-  vaultId   String
-  amount    Decimal
-  dueAt     DateTime
-  paidAt    DateTime?
-  status    TopUpStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-
-  vault     Vault       @relation(fields: [vaultId], references: [id], onDelete: Cascade)
-
-  @@index([vaultId, status, dueAt])
-}
-
-enum TopUpStatus {
-  PENDING
-  COMPLETED
-  MISSED
-}
-
-model RewardClaim {
-  id          String       @id @default(cuid())
-  vaultId     String
-  weekNumber  Int
-  rewardName  String
-  rewardValue Decimal
+model PointsTransaction {
+  id        String                @id @default(cuid())
+  appUserId String
+  vaultId   String?
+  type      PointsTransactionType
+  // Positive for rewards earned, negative for redemptions. 1 point = 1 PHP.
+  points      Int
+  // 1-based month number of the lock period; used to make monthly accrual idempotent.
+  monthIndex  Int?
+  rewardName  String?
   voucherCode String?
-  status      RewardStatus @default(LOCKED)
-  claimedAt   DateTime?
-  createdAt   DateTime     @default(now())
+  description String
+  createdAt   DateTime @default(now())
 
-  vault       Vault        @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  appUser AppUser @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  vault   Vault?  @relation(fields: [vaultId], references: [id], onDelete: SetNull)
 
-  @@unique([vaultId, weekNumber])
-  @@index([vaultId, status, weekNumber])
-}
-
-enum RewardStatus {
-  LOCKED
-  AVAILABLE
-  CLAIMED
-}
-
-model ProofReceipt {
-  id              String             @id @default(cuid())
-  appUserId       String?
-  vaultId         String
-  status          ProofReceiptStatus @default(LOCAL_RECEIPT)
-  network         String             @default("Stellar")
-  publicAddress   String
-  sourceAccount   String?
-  destinationAccount String?
-  proofReference  String             @unique
-  transactionHash String?
-  operationId     String?
-  ledger          Int?
-  memo            String?
-  explorerUrl     String?
-  accountExplorerUrl String?
-  message         String
-  createdAt       DateTime           @default(now())
-
-  appUser         AppUser?           @relation(fields: [appUserId], references: [id], onDelete: SetNull)
-  vault           Vault              @relation(fields: [vaultId], references: [id], onDelete: Cascade)
-  activityEvents  ActivityEvent[]
-
+  @@unique([vaultId, monthIndex])
   @@index([appUserId, createdAt])
-  @@index([vaultId, createdAt])
-  @@index([transactionHash])
 }
 
-enum ProofReceiptStatus {
-  LOCAL_RECEIPT
-  NETWORK_CONFIRMED
-  FAILED
+enum PointsTransactionType {
+  MONTHLY_REWARD
+  REDEMPTION
 }
-
-enum ActivityStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum ActivityEventType {
-  VAULT_CREATED
-  TOP_UP_RECORDED
-  REWARD_ISSUED
-  RECEIPT_SAVED
-  STELLAR_PAYMENT_SUBMITTED
-  STELLAR_ACCOUNT_FUNDED
-  ACCOUNT_CONNECTED
-  VAULT_UNLOCKED
-}
-
-enum ActivityRail {
-  APP
-  STELLAR
-}
-
-model ActivityEvent {
-  id              String            @id @default(cuid())
-  appUserId       String?
-  vaultId         String?
-  receiptId       String?
-  type            ActivityEventType
-  rail            ActivityRail      @default(APP)
-  status          ActivityStatus    @default(COMPLETED)
-  title           String
-  description     String
-  walletAddress   String?
-  sourceAccount   String?
-  destinationAccount String?
-  network         String?
-  amount          Decimal?
-  assetCode       String?
-  transactionHash String?
-  operationId     String?
-  ledger          Int?
-  reference       String?
-  explorerUrl     String?
-  accountExplorerUrl String?
-  metadata        Json?
-  createdAt       DateTime          @default(now())
-
-  appUser         AppUser?          @relation(fields: [appUserId], references: [id], onDelete: SetNull)
-  vault           Vault?            @relation(fields: [vaultId], references: [id], onDelete: Cascade)
-  receipt         ProofReceipt?     @relation(fields: [receiptId], references: [id], onDelete: SetNull)
-
-  @@index([appUserId, createdAt])
-  @@index([vaultId, createdAt])
-  @@index([status, createdAt])
-  @@index([transactionHash])
-}
-

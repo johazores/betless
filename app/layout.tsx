@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Betless — Commitment Savings',
-  description: 'A Stellar-powered commitment savings and milestone rewards app.',
+  description: 'Lock your savings, earn monthly points, and redeem real-world rewards. Your full deposit comes back at maturity.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

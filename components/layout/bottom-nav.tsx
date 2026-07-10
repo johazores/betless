@@ -18,20 +18,21 @@ function HomeIcon({ className }: IconProps) {
   );
 }
 
-function WalletIcon({ className }: IconProps) {
+function VaultIcon({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2" />
-      <rect x="3" y="7" width="18" height="13" rx="2.5" />
-      <path d="M16 13h2.5" />
+      <rect x="4" y="10" width="16" height="11" rx="2.5" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     </svg>
   );
 }
 
-function ActivityIcon({ className }: IconProps) {
+function GiftIcon({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 12h4l2.5 7 5-16L17 12h4" />
+      <rect x="3" y="8" width="18" height="4" rx="1" />
+      <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8v13" />
+      <path d="M12 8c-1.5-3-6-3.5-6-1s4.5 1.5 6 1zm0 0c1.5-3 6-3.5 6-1s-4.5 1.5-6 1z" />
     </svg>
   );
 }
@@ -74,16 +75,14 @@ function TabLink({ href, label, icon, active }: { href: string; label: string; i
   );
 }
 
-function AccountTab({ active }: { active: boolean }) {
+function AccountTab() {
   const { isLoaded, isSignedIn } = useUser();
 
   if (isLoaded && isSignedIn) {
     return (
       <span className="flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-ink-muted">
         <span className="grid h-6 w-6 place-items-center">
-          <UserButton
-            appearance={{ elements: { userButtonAvatarBox: 'h-6 w-6' } }}
-          />
+          <UserButton appearance={{ elements: { userButtonAvatarBox: 'h-6 w-6' } }} />
         </span>
         <span>Account</span>
       </span>
@@ -94,10 +93,7 @@ function AccountTab({ active }: { active: boolean }) {
     <SignInButton mode="modal">
       <button
         type="button"
-        className={cn(
-          'flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors',
-          active ? 'text-brand-600' : 'text-ink-muted hover:text-ink',
-        )}
+        className="flex flex-col items-center justify-center gap-1 text-[11px] font-semibold text-ink-muted transition-colors hover:text-ink"
       >
         <span className="grid h-6 w-6 place-items-center">
           <UserIcon className="h-[22px] w-[22px]" />
@@ -119,7 +115,7 @@ export function BottomNav() {
     >
       <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2">
         <TabLink href="/" label="Home" active={isActive('/')} icon={<HomeIcon className="h-[22px] w-[22px]" />} />
-        <TabLink href="/dashboard" label="Wallet" active={isActive('/dashboard')} icon={<WalletIcon className="h-[22px] w-[22px]" />} />
+        <TabLink href="/dashboard" label="Vaults" active={isActive('/dashboard') || isActive('/vaults')} icon={<VaultIcon className="h-[22px] w-[22px]" />} />
 
         <Link
           href="/create-vault"
@@ -133,8 +129,8 @@ export function BottomNav() {
           <span className={cn('text-[11px] font-semibold', createActive ? 'text-brand-600' : 'text-ink-muted')}>Create</span>
         </Link>
 
-        <TabLink href="/activity" label="Activity" active={isActive('/activity')} icon={<ActivityIcon className="h-[22px] w-[22px]" />} />
-        <AccountTab active={false} />
+        <TabLink href="/rewards" label="Rewards" active={isActive('/rewards')} icon={<GiftIcon className="h-[22px] w-[22px]" />} />
+        <AccountTab />
       </div>
     </nav>
   );

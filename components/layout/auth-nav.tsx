@@ -7,22 +7,19 @@ export function AuthNav() {
   const { isLoaded, isSignedIn } = useUser();
 
   if (!isLoaded) {
-    return <div className="h-10 w-28 rounded-full bg-slate-100" aria-label="Loading account navigation" />;
+    return <div className="h-10 w-28 rounded-full bg-surface-sunken" aria-label="Loading account navigation" />;
   }
 
   if (!isSignedIn) {
     return (
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 sm:inline-flex">
-          Dashboard
-        </Link>
         <SignInButton mode="modal">
-          <button className="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 md:inline-flex">
+          <button className="hidden rounded-full border border-line-strong bg-surface px-4 py-2 text-sm font-bold text-ink transition hover:bg-surface-muted sm:inline-flex">
             Sign in
           </button>
         </SignInButton>
-        <Link href="/create-vault" className="rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800">
-          Create Vault
+        <Link href="/sign-up" className="rounded-full bg-ink px-4 py-2 text-sm font-bold text-white transition hover:bg-ink/90">
+          Get started
         </Link>
       </div>
     );
@@ -30,11 +27,8 @@ export function AuthNav() {
 
   return (
     <div className="flex items-center gap-3">
-      <Link href="/create-vault" className="hidden rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800 sm:inline-flex">
-        Create Vault
-      </Link>
-      <Link href="/dashboard" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50">
-        Dashboard
+      <Link href="/create-vault" className="hidden rounded-full bg-ink px-4 py-2 text-sm font-bold text-white transition hover:bg-ink/90 md:inline-flex">
+        New vault
       </Link>
       <UserButton />
     </div>

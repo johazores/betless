@@ -1,57 +1,56 @@
 # Betless
 
-Betless is a commitment savings app that helps users protect money, follow a clear savings plan, and earn fixed milestone rewards.
+Betless is a commitment savings app. Users lock a deposit for a fixed period, earn points every month, redeem those points for real-world rewards, and get their full deposit back at maturity.
 
-The product is designed for non-technical users. A person can create a vault immediately, connect an account later, and return to review vault history and receipts.
-
-## Current Product Flow
+## Product Flow
 
 1. Open the landing page.
-2. Select **Create Vault**.
-3. Create a new wallet or use an existing Stellar public address.
-4. Choose a vault type, target amount, lock period, and top-up schedule.
-5. Choose a fixed milestone reward.
-6. Create the vault.
-7. Track progress, complete top-ups, claim rewards, and save a receipt.
-8. Connect an account to view the vault later from the dashboard.
+2. Sign up (required — vaults and points are tied to your account).
+3. Create a commitment savings vault: choose a deposit and lock period.
+4. After the first full month, points start accumulating monthly.
+5. Redeem points for real-world rewards (groceries, travel, apparel, gadgets, partner merchants).
+6. When the lock period ends, the full deposit is returned automatically and the vault closes. Points are preserved.
+7. Early withdrawal is available at any time for a fee, shown clearly before confirmation.
 
-## Product Principles
+## Business Rules
 
-- Start without friction.
-- Sign in only when the user wants saved history.
-- Never ask for private keys on the server.
-- Keep labels short and action-oriented.
-- Make every screen show the next action.
-- Use fixed rewards only.
-- Keep financial custody and reward fulfillment with connected partners.
+| Rule | Value |
+|------|-------|
+| Minimum deposit | ₱10,000 |
+| Lock period | 12-month increments (12, 24, 36, 48, 60) |
+| Rewards rate | ~4% of the deposit per year, credited as points monthly |
+| Points value | 1 point = ₱1 |
+| Points start | After the first full month of the lock period |
+| Early withdrawal fee | Flat ₱500 for vaults up to ₱50,000; 1% of the principal above that |
+| Maturity | 100% of the principal returned automatically; vault closes; points preserved |
 
-## Features
+All of these constants live in `lib/vault-rules.ts` and are shared by the API, services, and UI so previews always match what the server applies.
 
-- Public landing page.
-- Fast Create Vault flow.
-- Optional Clerk account connection.
-- Guest vault access from the same browser.
-- Create new Stellar wallet in-browser.
-- Use existing Stellar public address.
-- One-time lock and recurring top-up plans.
-- Top-up schedule tracking.
-- Fixed milestone rewards.
-- Voucher code generation.
-- Vault receipt creation.
-- Dashboard for signed-in users.
-- Receipt page with network verification link when available.
-- Health endpoint.
+Behind the scenes, deposits are held and invested through licensed custodial partners; users only see the points they earn for maintaining their commitment.
+
+## How Points Accrue
+
+There is no cron job. Monthly rewards are accrued lazily: whenever a user's data is read, `VaultService.syncVaults` inserts any monthly point rewards that have become due (idempotent via a unique `(vaultId, monthIndex)` constraint) and settles any vault whose lock period has ended.
 
 ## Tech Stack
 
-- Next.js App Router for pages.
-- Pages Router API routes under `/pages/api`.
-- TypeScript.
-- Tailwind CSS.
-- Prisma.
-- PostgreSQL.
-- Clerk.
-- Stellar SDK.
+- Next.js App Router for pages, Pages Router for API routes under `pages/api`.
+- TypeScript, Tailwind CSS.
+- Prisma + PostgreSQL.
+- Clerk for authentication (required for all vault features).
+
+## Routes
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Landing page (public) |
+| `/sign-in`, `/sign-up` | Clerk auth |
+| `/create-vault` | Create a vault |
+| `/dashboard` | Locked balance, points, vault list, points activity |
+| `/vaults/[id]` | Vault detail and early withdrawal |
+| `/rewards` | Rewards catalog, redemption, history |
+
+API: `GET/POST /api/vaults`, `GET /api/vaults/[id]`, `POST /api/vaults/[id]/withdraw`, `GET /api/summary`, `GET /api/points`, `POST /api/rewards/redeem`, `GET /api/health`.
 
 ## Environment Variables
 
@@ -59,93 +58,23 @@ The product is designed for non-technical users. A person can create a vault imm
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require"
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_replace_me"
 CLERK_SECRET_KEY="sk_test_replace_me"
-STELLAR_HORIZON_URL="https://horizon-testnet.stellar.org"
-STELLAR_PROOF_SOURCE_SECRET=""
 ```
-
-`STELLAR_PROOF_SOURCE_SECRET` is optional. When set to a funded Stellar source account, Betless can attach network transaction details to receipts. Without it, Betless still saves a private vault receipt and keeps the user flow complete.
 
 ## Install
 
 ```bash
 npm install
 cp .env.example .env
-npm run prisma:migrate
-npm run prisma:seed
+npm run db:reset:force   # applies the fresh commitment-savings schema
 npm run dev
 ```
 
-## Fresh Database Reset
-
-Use this only for a disposable development database:
-
-```bash
-npm run db:reset:force
-npm run prisma:generate
-npm run dev
-```
+The database schema was rebuilt for the commitment savings model, so existing development databases must be reset with `npm run db:reset:force`.
 
 ## QA Commands
 
 ```bash
 npm run typecheck
 npm run verify:mvp
-NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=true NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_replace_me CLERK_SECRET_KEY=sk_test_replace_me NEXT_TELEMETRY_DISABLED=1 npm run build:next
 npm run check
 ```
-
-## Main Routes
-
-- `/` — landing page
-- `/create-vault` — create flow
-- `/vaults/[id]` — vault detail
-- `/dashboard` — account history
-- `/receipts/[id]` — receipt detail
-- `/api/health` — health check
-
-## Security Notes
-
-- Secret keys are never sent to Betless servers.
-- Guest vault access uses a browser-held access token and server-side hash.
-- Signed-in vaults are protected by Clerk session verification.
-- Receipts are visible only to the account owner or the browser that created the vault.
-
-### Fix missing guest access token column
-
-If vault creation fails with `guestAccessTokenHash does not exist`, run:
-
-```bash
-npm run prisma:migrate
-npm run prisma:generate
-npm run dev
-```
-
-For a clean development reset:
-
-```bash
-npm run db:reset:force
-npm run prisma:generate
-npm run dev
-```
-
-See `docs/database-guest-token-fix.md` for details.
-
-## Guest-to-Account Continuity
-
-Users can create a vault before signing in. Betless saves guest progress in this browser using a secure guest session token. The token is sent through `x-vault-token`, and only its hash is stored in the database.
-
-When a guest signs in, `/api/session/connect` links all browser-saved vaults and receipts to the Clerk account. The dashboard works before and after sign-in, so users do not lose vaults, receipts, rewards, or activity.
-
-## Activity and analytics
-
-Betless now records a clear activity timeline for vault creation, top-ups, rewards, receipts, account connection, and Stellar payment confirmation.
-
-Run the latest database migration before testing:
-
-```bash
-npm run prisma:migrate
-npm run prisma:generate
-npm run dev
-```
-
-The dashboard includes balance, deposits, rewards, progress, monthly activity, vault growth, and recent activity. Stellar explorer links appear only when a real Stellar transaction hash exists.

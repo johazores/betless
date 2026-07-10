@@ -2,25 +2,18 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireApiUserId } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
-import { getSingleQueryValue } from '@/lib/validators';
-import { VaultService } from '@/services/vault-service';
+import { PointsService } from '@/services/points-service';
 
+/** Full points history: monthly rewards earned and redemptions. */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!requireMethod(req, res, 'GET')) return;
 
-  const id = getSingleQueryValue(req.query.id);
-
-  if (!id) {
-    return sendError(res, 'Vault ID is required.', 400);
-  }
-
   try {
     const clerkUserId = requireApiUserId(req);
-    const vault = await VaultService.getVaultDetail(id, clerkUserId);
-    return sendSuccess(res, vault);
+    const transactions = await PointsService.listTransactions(clerkUserId);
+    return sendSuccess(res, transactions);
   } catch (error) {
     const message = getApiErrorMessage(error);
-    const status = message === 'Vault not found.' ? 404 : message.includes('sign in') ? 401 : 400;
-    return sendError(res, message, status);
+    return sendError(res, message, message.includes('sign in') ? 401 : 400);
   }
 }

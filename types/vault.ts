@@ -1,150 +1,50 @@
-import type {
-  ActivityEventType,
-  ActivityRail,
-  ActivityStatus,
-  ProofReceiptStatus,
-  RewardStatus,
-  StellarStatus,
-  TopUpFrequency,
-  TopUpStatus,
-  VaultMode,
-  VaultStatus,
-} from '@/lib/domain';
+import type { PointsTransactionType, VaultStatus } from '@/lib/domain';
 
-export type TopUpView = {
+export type VaultView = {
   id: string;
-  amount: number;
-  dueAt: string;
-  paidAt: string | null;
-  status: TopUpStatus;
-};
-
-export type RewardClaimView = {
-  id: string;
-  weekNumber: number;
-  rewardName: string;
-  rewardValue: number;
-  voucherCode: string | null;
-  status: RewardStatus;
-  claimedAt: string | null;
-};
-
-export type ProofReceiptView = {
-  id: string;
-  vaultId: string;
-  status: ProofReceiptStatus;
-  network: string;
-  publicAddress: string;
-  sourceAccount: string | null;
-  destinationAccount: string | null;
-  proofReference: string;
-  transactionHash: string | null;
-  operationId: string | null;
-  ledger: number | null;
-  memo: string | null;
-  explorerUrl: string | null;
-  accountExplorerUrl: string | null;
-  message: string;
-  createdAt: string;
-};
-
-export type VaultDetailView = {
-  id: string;
-  walletAddress: string;
-  displayName: string | null;
-  mode: VaultMode;
-  targetAmount: number;
-  currentAmount: number;
-  topUpAmount: number | null;
-  topUpFrequency: TopUpFrequency | null;
-  durationWeeks: number;
-  rewardType: string;
-  rewardRate: number;
-  reason: string | null;
+  principal: number;
+  lockMonths: number;
   status: VaultStatus;
-  stellarProofReference: string | null;
-  stellarStatus: StellarStatus;
-  stellarNativeBalance: number | null;
-  stellarBalanceSyncedAt: string | null;
-  stellarFundedAt: string | null;
-  stellarError: string | null;
-  unlockAt: string;
-  createdAt: string;
-  updatedAt: string;
+  startAt: string;
+  maturesAt: string;
+  closedAt: string | null;
+  withdrawalFee: number | null;
+  returnedAmount: number | null;
+  monthlyPoints: number;
+  monthsCompleted: number;
+  pointsEarned: number;
+  totalPointsAtMaturity: number;
   progressPercent: number;
-  nextTopUp: TopUpView | null;
-  availableReward: RewardClaimView | null;
-  topUps: TopUpView[];
-  rewards: RewardClaimView[];
-  receipts: ProofReceiptView[];
-  latestReceipt: ProofReceiptView | null;
-};
-
-export type VoucherResult = {
-  code: string;
-  name: string;
-  value: number;
-};
-
-export type DashboardVaultView = {
-  id: string;
-  status: VaultStatus;
-  mode: VaultMode;
-  targetAmount: number;
-  currentAmount: number;
-  progressPercent: number;
-  rewardType: string;
-  unlockAt: string;
+  /** Fee charged if the vault is withdrawn early right now. Null once closed. */
+  earlyWithdrawalFee: number | null;
   createdAt: string;
-  stellarStatus: StellarStatus;
-  stellarNativeBalance: number | null;
-  latestReceipt: ProofReceiptView | null;
 };
 
-export type ActivityItemView = {
+export type PointsTransactionView = {
   id: string;
-  type: ActivityEventType;
-  rail: ActivityRail;
-  status: ActivityStatus;
-  title: string;
-  description: string;
-  walletAddress: string | null;
-  sourceAccount: string | null;
-  destinationAccount: string | null;
-  network: string | null;
-  amount: number | null;
-  assetCode: string | null;
-  transactionHash: string | null;
-  operationId: string | null;
-  ledger: number | null;
-  reference: string | null;
-  explorerUrl: string | null;
-  accountExplorerUrl: string | null;
   vaultId: string | null;
-  receiptId: string | null;
-  href: string;
+  type: PointsTransactionType;
+  points: number;
+  rewardName: string | null;
+  voucherCode: string | null;
+  description: string;
   createdAt: string;
 };
 
-export type MonthlyActivityPoint = {
-  month: string;
-  count: number;
+export type SummaryView = {
+  lockedBalance: number;
+  availablePoints: number;
 };
 
-export type VaultGrowthPoint = {
-  label: string;
-  value: number;
+export type WithdrawResult = {
+  vault: VaultView;
+  fee: number;
+  returnedAmount: number;
 };
 
-export type AnalyticsView = {
-  totalBalance: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
-  rewardsEarned: number;
-  rewardsRedeemed: number;
-  completedTransactions: number;
-  savingsProgressPercent: number;
-  vaultGrowth: VaultGrowthPoint[];
-  monthlyActivity: MonthlyActivityPoint[];
-  recentActivity: ActivityItemView[];
+export type RedemptionResult = {
+  rewardName: string;
+  points: number;
+  voucherCode: string;
+  remainingPoints: number;
 };

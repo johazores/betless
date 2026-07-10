@@ -1,9 +1,19 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// Betless is guest-first: pages stay publicly reachable, but clerkMiddleware
-// wires Clerk's server-side session context (recommended for Clerk v6+/Next 16)
-// so authenticated sessions are detected consistently across routes.
-export default clerkMiddleware();
+// The landing and auth pages are public; everything vault-related requires an
+// account. API routes return their own 401 JSON, so they are not redirected.
+const isProtectedPage = createRouteMatcher([
+  '/create-vault(.*)',
+  '/dashboard(.*)',
+  '/vaults(.*)',
+  '/rewards(.*)',
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedPage(req)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
