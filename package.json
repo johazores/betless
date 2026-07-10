@@ -41,6 +41,6 @@
     "typescript": "^5.9.0"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx --env-file=.env scripts/seed-demo.ts"
   }
 }

@@ -9,26 +9,38 @@
  * Points themselves appear via lazy accrual on the next dashboard read.
  *
  * Usage:
- *   npm run demo:seed              # seeds the most recently created user
- *   npm run demo:seed -- <email>   # seeds the user with this email
+ *   npm run demo:seed              # seeds the most recently created user, or a demo user if none exists
+ *   npm run demo:seed -- <email>   # seeds this user, creating a demo profile if needed
  */
 import { addMonths } from '../lib/dates';
+import { VaultStatus } from '../lib/domain';
 import { prisma } from '../lib/prisma';
 import { StellarService } from '../services/stellar-service';
 
 async function main() {
-  const email = process.argv[2];
+  const email = process.argv[2]?.trim().toLowerCase();
+  const fallbackEmail = 'demo.admin@betless.local';
 
-  const user = email
+  let user = email
     ? await prisma.appUser.findFirst({ where: { email } })
     : await prisma.appUser.findFirst({ orderBy: { createdAt: 'desc' } });
 
   if (!user) {
-    throw new Error(
-      email
-        ? `No user found with email ${email}. Sign up in the app first.`
-        : 'No users found. Sign up in the app first, then rerun this script.',
-    );
+    const demoEmail = email ?? fallbackEmail;
+    user = await prisma.appUser.upsert({
+      where: { clerkUserId: `demo-seed-${demoEmail}` },
+      create: {
+        clerkUserId: `demo-seed-${demoEmail}`,
+        email: demoEmail,
+        displayName: 'Demo Admin User',
+        lastSeenAt: new Date(),
+      },
+      update: {
+        email: demoEmail,
+        displayName: 'Demo Admin User',
+        lastSeenAt: new Date(),
+      },
+    });
   }
 
   console.log(`Seeding demo vaults for ${user.email ?? user.clerkUserId}...`);
@@ -37,26 +49,50 @@ async function main() {
   const now = new Date();
 
   const inProgressStart = addMonths(now, -5);
-  const inProgress = await prisma.vault.create({
-    data: {
+  const inProgress = await prisma.vault.upsert({
+    where: { idempotencyKey: `demo-in-progress-${user.id}` },
+    create: {
       appUserId: user.id,
       principal: 50_000,
       lockMonths: 12,
       startAt: inProgressStart,
       maturesAt: addMonths(inProgressStart, 12),
+      idempotencyKey: `demo-in-progress-${user.id}`,
+    },
+    update: {
+      principal: 50_000,
+      lockMonths: 12,
+      status: VaultStatus.ACTIVE,
+      startAt: inProgressStart,
+      maturesAt: addMonths(inProgressStart, 12),
+      closedAt: null,
+      withdrawalFee: null,
+      returnedAmount: null,
     },
   });
   console.log(`Created in-progress vault (₱50,000, month 5 of 12): ${inProgress.id}`);
   await StellarService.lockVaultPrincipal(inProgress);
 
   const maturedStart = addMonths(now, -13);
-  const matured = await prisma.vault.create({
-    data: {
+  const matured = await prisma.vault.upsert({
+    where: { idempotencyKey: `demo-matured-${user.id}` },
+    create: {
       appUserId: user.id,
       principal: 25_000,
       lockMonths: 12,
       startAt: maturedStart,
       maturesAt: addMonths(maturedStart, 12),
+      idempotencyKey: `demo-matured-${user.id}`,
+    },
+    update: {
+      principal: 25_000,
+      lockMonths: 12,
+      status: VaultStatus.ACTIVE,
+      startAt: maturedStart,
+      maturesAt: addMonths(maturedStart, 12),
+      closedAt: null,
+      withdrawalFee: null,
+      returnedAmount: null,
     },
   });
   console.log(`Created past-maturity vault (₱25,000, will settle on next dashboard load): ${matured.id}`);
