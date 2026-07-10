@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Select } from '@/components/ui/select';
-import { Stat } from '@/components/ui/stat';
+import { FormActions } from '@/components/admin/section-header';
 
 type UserDetail = {
   id: string;
@@ -88,7 +88,7 @@ export function UserDetailPanel({ userId, canManage, onClose, onUpdated, onError
       `${op.kind} (${vault.id.slice(0, 8)}…)`,
       op.state,
       formatPeso(op.amount),
-      op.explorerUrl ? <a key={op.id} className="font-semibold text-brand-700 hover:underline" href={op.explorerUrl} target="_blank" rel="noreferrer">Explorer</a> : '—',
+      op.explorerUrl ? <a key={op.id} className="font-semibold text-ink transition-colors hover:text-brand-600" href={op.explorerUrl} target="_blank" rel="noreferrer">Explorer</a> : '—',
     ]),
   );
 
@@ -102,40 +102,50 @@ export function UserDetailPanel({ userId, canManage, onClose, onUpdated, onError
         <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Stat label="Points" value={formatNumber(user.pointsBalance)} />
-        <Stat label="Locked" value={formatPeso(user.lockedBalance)} />
-        <Stat label="Status" value={user.status} />
-        <Stat label="Verification" value={user.verificationStatus} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ['Points', formatNumber(user.pointsBalance)],
+          ['Locked', formatPeso(user.lockedBalance)],
+          ['Status', user.status],
+          ['Verification', user.verificationStatus],
+        ].map(([label, value]) => (
+          <Card key={label} padding="md">
+            <p className="text-sm font-bold text-ink-muted">{label}</p>
+            <p className="mt-2 text-lg font-black text-ink">{value}</p>
+          </Card>
+        ))}
       </div>
 
       {canManage ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Select
-            label="Account status"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-            options={Object.values(AppUserStatus).map((value) => ({ label: value, value }))}
-          />
-          <Select
-            label="Verification status"
-            value={verificationStatus}
-            onChange={(event) => setVerificationStatus(event.target.value)}
-            options={Object.values(AppUserVerificationStatus).map((value) => ({ label: value, value }))}
-          />
-          <div className="md:col-span-2">
+        <div className="space-y-4 rounded-2xl border border-line bg-surface-muted p-4">
+          <p className="text-sm font-black text-ink">Update account</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Select
+              label="Account status"
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              options={Object.values(AppUserStatus).map((value) => ({ label: value, value }))}
+            />
+            <Select
+              label="Verification status"
+              value={verificationStatus}
+              onChange={(event) => setVerificationStatus(event.target.value)}
+              options={Object.values(AppUserVerificationStatus).map((value) => ({ label: value, value }))}
+            />
+          </div>
+          <FormActions className="pt-0">
             <Button
               onClick={() => setConfirmOpen(true)}
               disabled={status === user.status && verificationStatus === user.verificationStatus}
             >
               Save changes
             </Button>
-          </div>
+          </FormActions>
         </div>
       ) : null}
 
       <div>
-        <h4 className="font-black text-ink">Vaults</h4>
+        <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Vaults</h4>
         <div className="mt-3">
           <DataTable
             headers={['Vault', 'Amount', 'Status', 'Matures', 'Claimable']}
@@ -151,7 +161,7 @@ export function UserDetailPanel({ userId, canManage, onClose, onUpdated, onError
       </div>
 
       <div>
-        <h4 className="font-black text-ink">Points transactions</h4>
+        <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Points transactions</h4>
         <div className="mt-3">
           <DataTable
             headers={['Type', 'Points', 'Description', 'Date']}
@@ -167,7 +177,7 @@ export function UserDetailPanel({ userId, canManage, onClose, onUpdated, onError
 
       {stellarRows.length > 0 ? (
         <div>
-          <h4 className="font-black text-ink">Stellar operations</h4>
+          <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Stellar operations</h4>
           <div className="mt-3">
             <DataTable headers={['Operation', 'State', 'Amount', 'Link']} rows={stellarRows} />
           </div>

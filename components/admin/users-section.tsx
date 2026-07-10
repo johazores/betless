@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { UserDetailPanel } from '@/components/admin/user-detail-panel';
+import { SectionHeader } from '@/components/admin/section-header';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
 import type { UserRow } from '@/components/admin/types';
 import { formatNumber, formatPeso } from '@/components/admin/types';
@@ -53,42 +54,39 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">User management</h2>
-        <p className="mt-1 text-sm text-ink-muted">Search, inspect, and update platform users.</p>
-      </div>
+      <SectionHeader
+        badge="Customers"
+        title="Users"
+        description="Search, inspect, and update platform users."
+      />
 
       <Card padding="lg">
         <form
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end"
           onSubmit={(event) => {
             event.preventDefault();
             setPage(1);
             void load();
           }}
         >
-          <div className="min-w-0 flex-1">
-            <Input
-              label="Search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Email, name, or Clerk id"
-            />
-          </div>
-          <div className="w-full sm:w-48">
-            <Select
-              label="Status"
-              value={status}
-              onChange={(event) => { setStatus(event.target.value); setPage(1); }}
-              options={[
-                { label: 'All statuses', value: 'ALL' },
-                { label: 'Active', value: 'ACTIVE' },
-                { label: 'Suspended', value: 'SUSPENDED' },
-                { label: 'Closed', value: 'CLOSED' },
-              ]}
-            />
-          </div>
-          <Button type="submit" variant="secondary">Search</Button>
+          <Input
+            label="Search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Email, name, or Clerk id"
+          />
+          <Select
+            label="Status"
+            value={status}
+            onChange={(event) => { setStatus(event.target.value); setPage(1); }}
+            options={[
+              { label: 'All statuses', value: 'ALL' },
+              { label: 'Active', value: 'ACTIVE' },
+              { label: 'Suspended', value: 'SUSPENDED' },
+              { label: 'Closed', value: 'CLOSED' },
+            ]}
+          />
+          <Button type="submit" variant="secondary" className="w-full sm:w-auto">Search</Button>
         </form>
       </Card>
 
@@ -100,7 +98,7 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
               <button
                 key={user.id}
                 type="button"
-                className="text-left font-semibold text-brand-700 hover:underline"
+                className="text-left font-semibold text-ink transition-colors hover:text-brand-600"
                 onClick={() => setSelectedUserId(user.id)}
               >
                 {user.email ?? user.id}

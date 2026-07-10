@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { fetchTabData } from '@/components/admin/admin-utils';
+import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -95,27 +96,35 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">Managed runtime config</h2>
-        <p className="mt-1 text-sm text-ink-muted">Update whitelisted configuration keys. Boot-critical keys are read-only.</p>
-      </div>
+      <SectionHeader
+        badge="Runtime"
+        title="Config"
+        description="Update whitelisted configuration keys. Boot-critical keys are read-only."
+      />
 
       <Card padding="lg">
-        <form onSubmit={submitUpdate} className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-          <Select
-            label="Key"
-            value={selectedKey}
-            onChange={(event) => { setSelectedKey(event.target.value); setValue(''); }}
-            options={editable.map((item) => ({ label: item.key, value: item.key }))}
-          />
-          <Input
-            label="New value"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            hint={selected?.isSecret ? 'Secret values are encrypted at rest.' : selected?.description}
-            required
-          />
-          <Button type="submit" isLoading={isSubmitting}>Update config</Button>
+        <form onSubmit={submitUpdate} className="space-y-4">
+          <FormFieldGrid columns={2}>
+            <Select
+              label="Key"
+              value={selectedKey}
+              onChange={(event) => { setSelectedKey(event.target.value); setValue(''); }}
+              options={editable.map((item) => ({ label: item.key, value: item.key }))}
+            />
+            <Input
+              label="New value"
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              hint={selected?.isSecret ? 'Secret values are encrypted at rest.' : selected?.description}
+              required
+            />
+          </FormFieldGrid>
+          {selected?.description && !selected.isSecret ? (
+            <p className="text-xs leading-5 text-ink-muted">{selected.description}</p>
+          ) : null}
+          <FormActions>
+            <Button type="submit" isLoading={isSubmitting}>Update config</Button>
+          </FormActions>
         </form>
       </Card>
 

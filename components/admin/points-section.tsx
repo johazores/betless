@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
+import { SectionHeader } from '@/components/admin/section-header';
 import { formatNumber } from '@/components/admin/types';
 import type { UserRow } from '@/components/admin/types';
 import { adminApiRequest } from '@/lib/admin-api-client';
@@ -130,22 +131,23 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-ink">Points management</h2>
-          <p className="mt-1 text-sm text-ink-muted">Adjust balances with full audit trail.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant={subTab === 'adjust' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('adjust')}>Adjust</Button>
-          <Button variant={subTab === 'history' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('history')}>History</Button>
-        </div>
-      </div>
+      <SectionHeader
+        badge="Rewards"
+        title="Points"
+        description="Adjust balances with full audit trail."
+        actions={(
+          <>
+            <Button variant={subTab === 'adjust' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('adjust')}>Adjust</Button>
+            <Button variant={subTab === 'history' ? 'primary' : 'secondary'} size="sm" onClick={() => setSubTab('history')}>History</Button>
+          </>
+        )}
+      />
 
       {subTab === 'adjust' ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <Card padding="lg">
             <form onSubmit={queueSingle} className="space-y-4">
-              <h3 className="font-black text-ink">Single adjustment</h3>
+              <h3 className="text-lg font-black text-ink">Single adjustment</h3>
               <Select
                 label="User"
                 value={singleUserId}
@@ -160,7 +162,7 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
 
           <Card padding="lg">
             <form onSubmit={queueBulk} className="space-y-4">
-              <h3 className="font-black text-ink">Bulk adjustment</h3>
+              <h3 className="text-lg font-black text-ink">Bulk adjustment</h3>
               <label className="block">
                 <span className="text-sm font-semibold text-ink">Emails</span>
                 <textarea

@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { fetchTabData } from '@/components/admin/admin-utils';
+import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -108,20 +109,25 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">Feature flags</h2>
-        <p className="mt-1 text-sm text-ink-muted">Create, update, toggle, and delete runtime feature flags.</p>
-      </div>
+      <SectionHeader
+        badge="Runtime"
+        title="Feature flags"
+        description="Create, update, toggle, and delete runtime feature flags."
+      />
 
       <Card padding="lg">
-        <form onSubmit={submitFlag} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 lg:items-end">
-          <Input label="Key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="flag_key" required />
-          <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 rounded border-line-strong" />
-            Enabled
-          </label>
-          <Button type="submit" isLoading={isSubmitting}>{key && flags.some((f) => f.key === key) ? 'Update flag' : 'Create flag'}</Button>
+        <form onSubmit={submitFlag} className="space-y-4">
+          <FormFieldGrid columns={4}>
+            <Input label="Key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="flag_key" required />
+            <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="flex min-h-[3.25rem] items-end gap-2 pb-3 text-sm font-semibold text-ink">
+              <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 rounded border-line-strong" />
+              Enabled
+            </label>
+          </FormFieldGrid>
+          <FormActions>
+            <Button type="submit" isLoading={isSubmitting}>{key && flags.some((f) => f.key === key) ? 'Update flag' : 'Create flag'}</Button>
+          </FormActions>
         </form>
       </Card>
 

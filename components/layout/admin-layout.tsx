@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { adminContainerClass } from '@/components/admin/section-header';
 import { Logo } from '@/components/layout/logo';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/class-names';
 
@@ -18,6 +18,13 @@ type AdminLayoutProps = {
   alerts?: ReactNode;
 };
 
+function formatRoleLabel(role: string) {
+  return role
+    .split('_')
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function AdminLayout({
   adminEmail,
   adminRole,
@@ -29,39 +36,48 @@ export function AdminLayout({
   alerts,
 }: AdminLayoutProps) {
   return (
-    <div className="min-h-screen bg-surface-muted">
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="shrink-0 rounded-xl transition-opacity hover:opacity-90" aria-label="Betless admin">
-              <Logo />
-            </Link>
-            <Badge>Internal operations</Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink">
-              {adminEmail}
-            </span>
-            <Badge>{adminRole.replace(/_/g, ' ')}</Badge>
-            <Button variant="ghost" size="sm" onClick={onLogout}>
-              Logout
-            </Button>
+    <div className="flex min-h-screen flex-col bg-surface-muted">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur-md">
+        <div className={adminContainerClass}>
+          <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+              <Link href="/admin" className="shrink-0 rounded-xl transition-opacity hover:opacity-90" aria-label="Betless admin home">
+                <Logo showTagline={false} markClassName="h-9 w-9" />
+              </Link>
+              <span className="hidden h-6 w-px bg-line sm:block" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-ink">Admin</p>
+                <p className="text-xs font-medium text-ink-muted">Internal operations</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              <span className="max-w-[14rem] truncate rounded-full bg-surface-sunken px-3 py-1.5 text-xs font-medium text-ink-muted sm:max-w-none">
+                {adminEmail}
+              </span>
+              <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink">
+                {formatRoleLabel(adminRole)}
+              </span>
+              <Button variant="ghost" size="sm" onClick={onLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <div className="flex flex-col gap-4 lg:hidden">
-          <div className="flex gap-2 overflow-x-auto pb-1">
+      <main className="flex-1">
+        <div className={cn(adminContainerClass, 'py-8 lg:py-10')}>
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 className={cn(
-                  'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+                  'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150',
                   activeTab === item.id
-                    ? 'bg-ink text-white'
-                    : 'border border-line bg-surface text-ink-muted hover:text-ink',
+                    ? 'bg-ink text-white shadow-sm'
+                    : 'border border-line bg-surface text-ink-muted hover:border-line-strong hover:text-ink',
                 )}
                 onClick={() => onTabChange(item.id)}
               >
@@ -69,35 +85,47 @@ export function AdminLayout({
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-          <aside className="hidden lg:block">
-            <nav className="sticky top-24 space-y-1 rounded-2xl border border-line bg-surface p-2 shadow-card">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={cn(
-                    'block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors',
-                    activeTab === item.id
-                      ? 'bg-ink text-white'
-                      : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
-                  )}
-                  onClick={() => onTabChange(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
+          <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+            <aside className="hidden lg:block">
+              <nav className="sticky top-[4.5rem] space-y-1 rounded-2xl border border-line bg-surface p-2 shadow-card">
+                <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Workspace</p>
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={cn(
+                      'block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-150',
+                      activeTab === item.id
+                        ? 'bg-brand-100 text-brand-900'
+                        : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
+                    )}
+                    onClick={() => onTabChange(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            </aside>
 
-          <section className="space-y-4">
-            {alerts}
-            {children}
-          </section>
+            <section className="min-w-0 space-y-6">
+              {alerts}
+              {children}
+            </section>
+          </div>
         </div>
-      </div>
+      </main>
+
+      <footer className="mt-auto border-t border-line bg-surface">
+        <div className={cn(adminContainerClass, 'py-8')}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <Logo showTagline={false} markClassName="h-8 w-8" />
+            <p className="max-w-xl text-sm leading-6 text-ink-muted">
+              Betless admin console. All actions are logged and attributed to your administrator account.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

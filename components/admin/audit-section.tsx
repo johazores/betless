@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
+import { SectionHeader } from '@/components/admin/section-header';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
@@ -62,14 +63,15 @@ export function AuditSection({ onError }: AuditSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">Audit logs</h2>
-        <p className="mt-1 text-sm text-ink-muted">Immutable record of all administrator actions.</p>
-      </div>
+      <SectionHeader
+        badge="Compliance"
+        title="Audit logs"
+        description="Immutable record of all administrator actions."
+      />
 
       <Card padding="lg">
         <form
-          className="grid gap-3 md:grid-cols-2 lg:grid-cols-5 lg:items-end"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end"
           onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }}
         >
           <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="POINTS_ADJUSTED" />

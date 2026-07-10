@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
+import { SectionHeader } from '@/components/admin/section-header';
 import { formatPeso } from '@/components/admin/types';
 import { AdminPermission } from '@/lib/admin-permissions';
 import { adminApiRequest } from '@/lib/admin-api-client';
@@ -13,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Pagination } from '@/components/ui/pagination';
 import { Select } from '@/components/ui/select';
-import { Stat } from '@/components/ui/stat';
 
 type OnChainSectionProps = {
   can: (permission: string) => boolean;
@@ -87,22 +87,26 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">On-chain management</h2>
-        <p className="mt-1 text-sm text-ink-muted">Monitor Stellar operations and retry failed transactions.</p>
-      </div>
+      <SectionHeader
+        badge="Stellar"
+        title="On-chain"
+        description="Monitor Stellar operations and retry failed transactions."
+      />
 
       {data ? (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3">
           {Object.entries(data.health).map(([key, value]) => (
-            <Stat key={key} label={key} value={String(value)} />
+            <Card key={key} padding="md">
+              <p className="text-sm font-bold text-ink-muted">{key}</p>
+              <p className="mt-2 text-lg font-black tracking-tight text-ink">{String(value)}</p>
+            </Card>
           ))}
         </div>
       ) : null}
 
       <Card padding="lg">
         <form
-          className="grid gap-3 md:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
           onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }}
         >
           <Input label="User email" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -118,9 +122,7 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
             { label: 'Claim', value: 'CLAIM' },
             { label: 'Early withdraw', value: 'EARLY_WITHDRAW' },
           ]} />
-          <div className="flex items-end">
-            <Button type="submit" variant="secondary" className="w-full">Filter</Button>
-          </div>
+          <Button type="submit" variant="secondary" className="w-full lg:w-auto">Filter</Button>
         </form>
       </Card>
 
@@ -133,7 +135,7 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
               op.userEmail ?? 'Unknown',
               formatPeso(op.amount),
               op.state,
-              op.explorerUrl ? <a key={op.id} className="font-semibold text-brand-700 hover:underline" href={op.explorerUrl} target="_blank" rel="noreferrer">Explorer</a> : op.errorMessage ?? 'No tx',
+              op.explorerUrl ? <a key={op.id} className="font-semibold text-ink transition-colors hover:text-brand-600" href={op.explorerUrl} target="_blank" rel="noreferrer">Explorer</a> : op.errorMessage ?? 'No tx',
               can(AdminPermission.RETRY_ON_CHAIN) && op.state !== 'CONFIRMED'
                 ? <Button key={`retry-${op.id}`} size="sm" variant="secondary" onClick={() => setRetryId(op.id)}>Retry</Button>
                 : 'Read only',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { adminContainerClass } from '@/components/admin/section-header';
 import { AdminLayout, type AdminTab } from '@/components/layout/admin-layout';
 import { useAdminFeedback } from '@/components/admin/admin-utils';
 import { useAdminSession } from '@/components/admin/use-admin-session';
@@ -31,9 +32,11 @@ export function AdminShell() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-surface-muted px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <LoadingState label="Loading admin panel..." />
+      <main className="min-h-screen bg-surface-muted">
+        <div className={adminContainerClass}>
+          <div className="py-10">
+            <LoadingState label="Loading admin panel..." />
+          </div>
         </div>
       </main>
     );

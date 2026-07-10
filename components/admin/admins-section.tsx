@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { fetchTabData } from '@/components/admin/admin-utils';
 import { AdminRole } from '@/lib/domain';
 import { adminRoleDescriptions, adminRoleLabels } from '@/lib/admin-permissions';
@@ -139,41 +140,50 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-ink">Admin users</h2>
-        <p className="mt-1 text-sm text-ink-muted">Create administrators and manage roles and access.</p>
-      </div>
+      <SectionHeader
+        badge="Team"
+        title="Admin users"
+        description="Create administrators and manage roles and access."
+      />
 
       <Card padding="lg">
-        <form onSubmit={createAdmin} className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 lg:items-end">
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-          <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} hint="Minimum 8 characters" required />
-          <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} options={roleOptions} hint={adminRoleDescriptions[role]} />
-          <Button type="submit" isLoading={isSubmitting}>Add administrator</Button>
+        <form onSubmit={createAdmin} className="space-y-4">
+          <FormFieldGrid columns={4}>
+            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+            <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} hint="Minimum 8 characters" required />
+            <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} options={roleOptions} />
+          </FormFieldGrid>
+          <p className="text-xs leading-5 text-ink-muted">{adminRoleDescriptions[role]}</p>
+          <FormActions>
+            <Button type="submit" isLoading={isSubmitting}>Add administrator</Button>
+          </FormActions>
         </form>
       </Card>
 
       {editAdmin ? (
         <Card padding="lg" className="space-y-4">
-          <h3 className="font-black text-ink">Edit {editAdmin.email}</h3>
-          <Select label="Role" value={editRole} onChange={(e) => setEditRole(e.target.value)} options={roleOptions} hint={adminRoleDescriptions[editRole]} />
-          <Input label="Display name" value={editDisplayName} onChange={(e) => setEditDisplayName(e.target.value)} />
-          <div className="flex gap-2">
-            <Button onClick={() => void saveEdit()} isLoading={isSubmitting}>Save changes</Button>
+          <h3 className="text-lg font-black text-ink">Edit {editAdmin.email}</h3>
+          <FormFieldGrid columns={2}>
+            <Select label="Role" value={editRole} onChange={(e) => setEditRole(e.target.value)} options={roleOptions} />
+            <Input label="Display name" value={editDisplayName} onChange={(e) => setEditDisplayName(e.target.value)} />
+          </FormFieldGrid>
+          <p className="text-xs leading-5 text-ink-muted">{adminRoleDescriptions[editRole]}</p>
+          <FormActions>
             <Button variant="ghost" onClick={() => setEditAdmin(null)}>Cancel</Button>
-          </div>
+            <Button onClick={() => void saveEdit()} isLoading={isSubmitting}>Save changes</Button>
+          </FormActions>
         </Card>
       ) : null}
 
       {resetAdmin ? (
         <Card padding="lg" className="space-y-4">
-          <h3 className="font-black text-ink">Reset password for {resetAdmin.email}</h3>
+          <h3 className="text-lg font-black text-ink">Reset password for {resetAdmin.email}</h3>
           <Input label="New password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} hint="Minimum 8 characters" required />
-          <div className="flex gap-2">
-            <Button onClick={() => void confirmReset()} isLoading={isSubmitting} disabled={newPassword.length < 8}>Reset password</Button>
+          <FormActions>
             <Button variant="ghost" onClick={() => { setResetAdmin(null); setNewPassword(''); }}>Cancel</Button>
-          </div>
+            <Button onClick={() => void confirmReset()} isLoading={isSubmitting} disabled={newPassword.length < 8}>Reset password</Button>
+          </FormActions>
         </Card>
       ) : null}
 
@@ -185,7 +195,9 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
           adminRoleLabels[admin.role] ?? admin.role,
           admin.isActive ? 'Yes' : 'No',
           admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : 'Never',
-          admin.id === currentAdminId ? 'Current user' : (
+          admin.id === currentAdminId ? (
+            <span key={admin.id} className="text-sm font-medium text-ink-muted">Current user</span>
+          ) : (
             <div key={admin.id} className="flex flex-wrap gap-2">
               <Button size="sm" variant="ghost" onClick={() => { setEditAdmin(admin); setEditRole(admin.role); setEditDisplayName(admin.displayName ?? ''); }}>Edit</Button>
               <Button size="sm" variant="secondary" onClick={() => setResetAdmin(admin)}>Reset password</Button>
