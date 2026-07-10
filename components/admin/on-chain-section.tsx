@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
 import { FilterToolbar } from '@/components/admin/filter-toolbar';
-import { StatusBadge } from '@/components/admin/status-badge';
 import { SectionHeader } from '@/components/admin/section-header';
+import { getDisplayLabel } from '@/lib/display-labels';
+import { StatusBadge } from '@/components/admin/status-badge';
 import { formatPeso } from '@/components/admin/types';
 import { AdminPermission } from '@/lib/admin-permissions';
 import { adminApiRequest } from '@/lib/admin-api-client';
@@ -100,7 +101,7 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
           {Object.entries(data.health).map(([key, value]) => (
             <KpiCard
               key={key}
-              label={key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}
+              label={getDisplayLabel(key, 'environmentKey')}
               value={String(value)}
             />
           ))}
@@ -133,10 +134,10 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
             className="rounded-none border-0 shadow-none"
             headers={['Operation', 'User', 'Amount', 'State', 'Transaction', '']}
             rows={data.operations.map((op) => [
-              <span key={`${op.id}-kind`} className="font-medium">{op.kind}</span>,
+              getDisplayLabel(op.kind, 'stellarOperationKind'),
               op.userEmail ?? 'Unknown',
               formatPeso(op.amount),
-              <StatusBadge key={`${op.id}-state`} status={op.state} />,
+              <StatusBadge key={`${op.id}-state`} status={op.state} context="stellarOperationState" />,
               op.explorerUrl ? (
                 <a key={op.id} className="font-medium text-ink underline-offset-2 hover:text-brand-700 hover:underline" href={op.explorerUrl} target="_blank" rel="noreferrer">
                   View tx

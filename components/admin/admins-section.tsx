@@ -4,7 +4,8 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
 import { fetchTabData } from '@/components/admin/admin-utils';
 import { AdminRole } from '@/lib/domain';
-import { adminRoleDescriptions, adminRoleLabels } from '@/lib/admin-permissions';
+import { enumToSelectOptions, getDisplayLabel } from '@/lib/display-labels';
+import { adminRoleDescriptions } from '@/lib/admin-permissions';
 import { adminDelete, adminPatchJson, adminPostJson } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -162,10 +163,7 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
     }
   }
 
-  const roleOptions = Object.values(AdminRole).map((value) => ({
-    label: adminRoleLabels[value] ?? value,
-    value,
-  }));
+  const roleOptions = enumToSelectOptions(Object.values(AdminRole), 'adminRole');
 
   if (isLoading) return <LoadingState label="Loading administrators..." />;
 
@@ -185,7 +183,7 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
           rows={admins.map((admin) => [
             admin.email,
             admin.displayName ?? '—',
-            adminRoleLabels[admin.role] ?? admin.role,
+            getDisplayLabel(admin.role, 'adminRole'),
             admin.isActive ? (
               <span key={`${admin.id}-active`} className="inline-flex rounded-md border border-success/20 bg-success-surface px-2 py-0.5 text-xs font-medium text-success">Active</span>
             ) : (

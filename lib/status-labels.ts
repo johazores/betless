@@ -1,11 +1,8 @@
-import type { VaultStatus } from '@/lib/domain';
-
-const vaultStatusLabels: Record<VaultStatus, string> = {
-  ACTIVE: 'Locked',
-  MATURED: 'Matured',
-  WITHDRAWN_EARLY: 'Withdrawn early',
-};
-
-export function getVaultStatusLabel(status: VaultStatus) {
-  return vaultStatusLabels[status];
-}
+export {
+  getDisplayLabel,
+  getVaultStatusLabel,
+  humanizeIdentifier,
+  enumToSelectOptions,
+  formatDisplayValue,
+  type DisplayLabelContext,
+} from '@/lib/display-labels';

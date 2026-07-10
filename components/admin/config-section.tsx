@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { fetchTabData } from '@/components/admin/admin-utils';
 import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
+import { getDisplayLabel } from '@/lib/display-labels';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -10,7 +11,6 @@ import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Modal } from '@/components/ui/modal';
-import { Select } from '@/components/ui/select';
 
 type ConfigItem = {
   key: string;
@@ -100,19 +100,22 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
     <div className="space-y-5">
       <SectionHeader
         badge="Runtime"
-        title="Config"
+        title="Configuration"
         description="Manage whitelisted configuration keys. Boot-critical keys are read-only."
       />
 
       <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
         <DataTable
           className="rounded-none border-0 shadow-none"
-          headers={['Key', 'Value', 'Source', 'Secret', 'Updated', '']}
+          headers={['Setting', 'Value', 'Source', 'Visibility', 'Updated', '']}
           rows={config.map((item) => [
-            <span key={`${item.key}-name`} className="font-mono text-xs">{item.key}</span>,
-            item.value ?? 'Unset',
-            item.source,
-            item.isSecret ? 'Masked' : 'Plain',
+            <div key={`${item.key}-label`}>
+              <p className="font-medium text-ink">{getDisplayLabel(item.key, 'configKey')}</p>
+              {item.description ? <p className="mt-0.5 text-xs text-ink-muted">{item.description}</p> : null}
+            </div>,
+            item.value ?? 'Not set',
+            getDisplayLabel(item.source, 'configSource'),
+            item.isSecret ? 'Secret' : 'Plain text',
             item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'Never',
             !item.bootCritical ? (
               <div key={item.key} className="flex justify-end gap-1">
@@ -130,7 +133,7 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
       <Modal
         open={editItem !== null}
         onClose={closeEdit}
-        title={editItem ? `Edit ${editItem.key}` : 'Edit config'}
+        title={editItem ? `Edit ${getDisplayLabel(editItem.key, 'configKey')}` : 'Edit configuration'}
         description={editItem?.description}
         size="md"
         isDirty={value.trim().length > 0}
@@ -163,7 +166,7 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
       <ConfirmDialog
         open={resetKey !== null}
         title="Reset config key"
-        description={`Reset "${resetKey}" to the environment default? The managed override will be removed.`}
+        description={`Reset "${getDisplayLabel(resetKey ?? '', 'configKey')}" to the environment default? The managed override will be removed.`}
         confirmLabel="Reset to default"
         tone="danger"
         isLoading={isSubmitting}

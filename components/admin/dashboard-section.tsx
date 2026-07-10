@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { KpiCard } from '@/components/ui/kpi-card';
 import { LoadingState } from '@/components/ui/loading-state';
 import { MiniBarChart } from '@/components/ui/mini-bar-chart';
+import { getDisplayLabel, formatDisplayValue } from '@/lib/display-labels';
 import { Stat } from '@/components/ui/stat';
 
 export function DashboardSection() {
@@ -91,9 +92,9 @@ export function DashboardSection() {
           {Object.entries(data.environment).map(([key, value]) => (
             <Stat
               key={key}
-              label={key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}
-              value={String(value ?? '—')}
-              mono
+              label={getDisplayLabel(key, 'environmentKey')}
+              value={formatDisplayValue(value, key)}
+              mono={typeof value === 'string' && key === 'horizonUrl'}
             />
           ))}
         </div>

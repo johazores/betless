@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildQuery, fetchTabData } from '@/components/admin/admin-utils';
 import { FilterToolbar } from '@/components/admin/filter-toolbar';
+import { getDisplayLabel } from '@/lib/display-labels';
 import { SectionHeader } from '@/components/admin/section-header';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -79,7 +80,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
         layout="wide"
         onSubmit={(event) => { event.preventDefault(); setPage(1); void load(); }}
       >
-        <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="POINTS_ADJUSTED" />
+        <Input label="Action" value={action} onChange={(e) => setAction(e.target.value)} placeholder="e.g. Points adjusted" />
         <Input label="Admin user id" value={adminUserId} onChange={(e) => setAdminUserId(e.target.value)} />
         <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
         <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
@@ -94,8 +95,13 @@ export function AuditSection({ onError }: AuditSectionProps) {
             rows={logs.map((log) => [
               new Date(log.createdAt).toLocaleString(),
               log.adminEmail ?? 'System',
-              <span key={`${log.id}-action`} className="font-mono text-xs">{log.action}</span>,
-              `${log.targetType ?? ''} ${log.targetId ?? ''}`.trim() || '—',
+              getDisplayLabel(log.action, 'auditAction'),
+              log.targetType || log.targetId
+                ? [
+                    log.targetType ? getDisplayLabel(log.targetType, 'targetType') : null,
+                    log.targetId ? `${log.targetId.slice(0, 8)}…` : null,
+                  ].filter(Boolean).join(' · ')
+                : '—',
               log.reason ?? '—',
               <Button key={log.id} size="sm" variant="ghost" onClick={() => setSelectedLogId(log.id)}>
                 View
@@ -107,7 +113,7 @@ export function AuditSection({ onError }: AuditSectionProps) {
           <Modal
             open={selectedLog !== null}
             onClose={() => setSelectedLogId(null)}
-            title={selectedLog?.action ?? 'Audit entry'}
+            title={selectedLog ? getDisplayLabel(selectedLog.action, 'auditAction') : 'Audit entry'}
             description={selectedLog ? new Date(selectedLog.createdAt).toLocaleString() : undefined}
             size="lg"
           >
@@ -115,7 +121,12 @@ export function AuditSection({ onError }: AuditSectionProps) {
               <dl className="grid gap-4 sm:grid-cols-2">
                 {[
                   ['Admin', selectedLog.adminEmail ?? 'System'],
-                  ['Target', `${selectedLog.targetType ?? ''} ${selectedLog.targetId ?? ''}`.trim() || '—'],
+                  ['Target', selectedLog.targetType || selectedLog.targetId
+                    ? [
+                        selectedLog.targetType ? getDisplayLabel(selectedLog.targetType, 'targetType') : null,
+                        selectedLog.targetId ?? null,
+                      ].filter(Boolean).join(' · ')
+                    : '—'],
                   ['Reason', selectedLog.reason ?? '—'],
                   ['IP address', selectedLog.ipAddress ?? '—'],
                 ].map(([label, value]) => (

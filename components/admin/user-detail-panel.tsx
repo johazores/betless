@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminPatchJson } from '@/lib/admin-api-client';
 import { AppUserStatus, AppUserVerificationStatus } from '@/lib/domain';
+import { enumToSelectOptions, getDisplayLabel } from '@/lib/display-labels';
 import { fetchTabData } from '@/components/admin/admin-utils';
+import { StatusBadge } from '@/components/admin/status-badge';
 import { FormActions } from '@/components/admin/section-header';
 import { formatNumber, formatPeso } from '@/components/admin/types';
 import { Button } from '@/components/ui/button';
@@ -93,12 +95,12 @@ export function UserDetailPanel({ open, userId, canManage, onClose, onUpdated, o
   const stellarRows = user
     ? user.vaults.flatMap((vault) =>
         vault.stellarOperations.map((op) => [
-          `${op.kind} (${vault.id.slice(0, 8)}…)`,
-          op.state,
+          `${getDisplayLabel(op.kind, 'stellarOperationKind')} · ${vault.id.slice(0, 8)}…`,
+          <StatusBadge key={`${op.id}-state`} status={op.state} context="stellarOperationState" />,
           formatPeso(op.amount),
           op.explorerUrl ? (
-            <a key={op.id} className="font-semibold text-ink transition-colors hover:text-brand-600" href={op.explorerUrl} target="_blank" rel="noreferrer">
-              Explorer
+            <a key={op.id} className="font-medium text-ink underline-offset-2 hover:text-brand-700 hover:underline" href={op.explorerUrl} target="_blank" rel="noreferrer">
+              View transaction
             </a>
           ) : '—',
         ]),
@@ -127,93 +129,106 @@ export function UserDetailPanel({ open, userId, canManage, onClose, onUpdated, o
       >
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {[
-                ['Points', formatNumber(user.pointsBalance)],
-                ['Locked', formatPeso(user.lockedBalance)],
-                ['Status', user.status],
-                ['Verification', user.verificationStatus],
-              ].map(([label, value]) => (
-                <Card key={label} padding="md">
-                  <p className="text-sm font-bold text-ink-muted">{label}</p>
-                  <p className="mt-2 text-lg font-black text-ink">{value}</p>
-                </Card>
-              ))}
-            </div>
-
-            {canManage ? (
-              <div className="space-y-4 rounded-2xl border border-line bg-surface-muted p-4">
-                <p className="text-sm font-black text-ink">Update account</p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Select
-                    label="Account status"
-                    value={status}
-                    onChange={(event) => setStatus(event.target.value)}
-                    options={Object.values(AppUserStatus).map((value) => ({ label: value, value }))}
-                  />
-                  <Select
-                    label="Verification status"
-                    value={verificationStatus}
-                    onChange={(event) => setVerificationStatus(event.target.value)}
-                    options={Object.values(AppUserVerificationStatus).map((value) => ({ label: value, value }))}
-                  />
-                </div>
-                <FormActions className="pt-0">
-                  <Button
-                    onClick={() => setConfirmOpen(true)}
-                    disabled={status === user.status && verificationStatus === user.verificationStatus}
-                  >
-                    Save changes
-                  </Button>
-                </FormActions>
+            <Card padding="md">
+              <p className="text-sm font-medium text-ink-muted">Points</p>
+              <p className="mt-2 text-lg font-semibold tabular-nums text-ink">{formatNumber(user.pointsBalance)}</p>
+            </Card>
+            <Card padding="md">
+              <p className="text-sm font-medium text-ink-muted">Locked balance</p>
+              <p className="mt-2 text-lg font-semibold text-ink">{formatPeso(user.lockedBalance)}</p>
+            </Card>
+            <Card padding="md">
+              <p className="text-sm font-medium text-ink-muted">Account status</p>
+              <div className="mt-2">
+                <StatusBadge status={user.status} context="userStatus" />
               </div>
-            ) : null}
+            </Card>
+            <Card padding="md">
+              <p className="text-sm font-medium text-ink-muted">Verification</p>
+              <div className="mt-2">
+                <StatusBadge status={user.verificationStatus} context="verificationStatus" />
+              </div>
+            </Card>
+          </div>
 
-            <div>
-              <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Vaults</h4>
-              <div className="mt-3">
-                <DataTable
-                  headers={['Vault', 'Amount', 'Status', 'Matures', 'Claimable']}
-                  rows={user.vaults.map((vault) => [
-                    vault.id,
-                    formatPeso(vault.principal),
-                    vault.status,
-                    new Date(vault.maturesAt).toLocaleDateString(),
-                    vault.claimableBalanceId ?? 'None',
-                  ])}
+          {canManage ? (
+            <div className="space-y-4 rounded-xl border border-line bg-surface-muted/60 p-4">
+              <p className="text-sm font-semibold text-ink">Update account</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Select
+                  label="Account status"
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  options={enumToSelectOptions(Object.values(AppUserStatus), 'userStatus')}
+                />
+                <Select
+                  label="Verification status"
+                  value={verificationStatus}
+                  onChange={(event) => setVerificationStatus(event.target.value)}
+                  options={enumToSelectOptions(Object.values(AppUserVerificationStatus), 'verificationStatus')}
                 />
               </div>
+              <FormActions className="pt-0">
+                <Button
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={status === user.status && verificationStatus === user.verificationStatus}
+                >
+                  Save changes
+                </Button>
+              </FormActions>
             </div>
+          ) : null}
 
+          <div>
+            <h4 className="text-sm font-medium text-ink-muted">Vaults</h4>
+            <div className="mt-3">
+              <DataTable
+                headers={['Vault', 'Amount', 'Status', 'Matures', 'Claimable']}
+                rows={user.vaults.map((vault) => [
+                  `${vault.id.slice(0, 8)}…`,
+                  formatPeso(vault.principal),
+                  <StatusBadge key={`${vault.id}-status`} status={vault.status} context="vaultStatus" />,
+                  new Date(vault.maturesAt).toLocaleDateString(),
+                  vault.claimableBalanceId ? 'Yes' : 'No',
+                ])}
+              />
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium text-ink-muted">Points transactions</h4>
+            <div className="mt-3">
+              <DataTable
+                headers={['Type', 'Points', 'Description', 'Date']}
+                rows={user.pointsTransactions.map((tx) => [
+                  getDisplayLabel(tx.type, 'pointsTransactionType'),
+                  formatNumber(tx.points),
+                  tx.description ?? '—',
+                  new Date(tx.createdAt).toLocaleString(),
+                ])}
+              />
+            </div>
+          </div>
+
+          {stellarRows.length > 0 ? (
             <div>
-              <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Points transactions</h4>
+              <h4 className="text-sm font-medium text-ink-muted">On-chain operations</h4>
               <div className="mt-3">
-                <DataTable
-                  headers={['Type', 'Points', 'Description', 'Date']}
-                  rows={user.pointsTransactions.map((tx) => [
-                    tx.type,
-                    formatNumber(tx.points),
-                    tx.description ?? '—',
-                    new Date(tx.createdAt).toLocaleString(),
-                  ])}
-                />
+                <DataTable headers={['Operation', 'State', 'Amount', 'Link']} rows={stellarRows} />
               </div>
             </div>
-
-            {stellarRows.length > 0 ? (
-              <div>
-                <h4 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Stellar operations</h4>
-                <div className="mt-3">
-                  <DataTable headers={['Operation', 'State', 'Amount', 'Link']} rows={stellarRows} />
-                </div>
-              </div>
-            ) : null}
+          ) : null}
         </div>
       </Modal>
 
       <ConfirmDialog
         open={confirmOpen}
         title="Update user status"
-        description={user ? `Apply status "${status}" and verification "${verificationStatus}" to ${user.email ?? user.id}?` : undefined}
+        description={
+          user
+            ? `Set account status to "${getDisplayLabel(status, 'userStatus')}" and verification to "${getDisplayLabel(verificationStatus, 'verificationStatus')}" for ${user.email ?? user.id}?`
+            : undefined
+        }
         confirmLabel="Update user"
         tone="danger"
         isLoading={isSaving}

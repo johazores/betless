@@ -103,8 +103,8 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
                 {user.email ?? user.id}
                 {user.displayName ? <span className="mt-0.5 block text-xs font-normal text-ink-muted">{user.displayName}</span> : null}
               </button>,
-              <StatusBadge key={`${user.id}-status`} status={user.status} />,
-              <StatusBadge key={`${user.id}-verification`} status={user.verificationStatus} />,
+              <StatusBadge key={`${user.id}-status`} status={user.status} context="userStatus" />,
+              <StatusBadge key={`${user.id}-verification`} status={user.verificationStatus} context="verificationStatus" />,
               formatPeso(user.lockedBalance),
               formatNumber(user.pointsBalance),
               new Date(user.createdAt).toLocaleDateString(),

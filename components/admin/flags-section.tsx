@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { fetchTabData } from '@/components/admin/admin-utils';
 import { FormActions, FormFieldGrid, SectionHeader } from '@/components/admin/section-header';
+import { getDisplayLabel, humanizeIdentifier } from '@/lib/display-labels';
 import { adminApiRequest, adminDelete } from '@/lib/admin-api-client';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -152,9 +153,12 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
       <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
         <DataTable
           className="rounded-none border-0 shadow-none"
-          headers={['Key', 'Status', 'Description', 'Updated', '']}
+          headers={['Flag', 'Status', 'Description', 'Updated', '']}
           rows={flags.map((flag) => [
-            <span key={`${flag.key}-name`} className="font-mono text-xs">{flag.key}</span>,
+            <div key={`${flag.key}-label`}>
+              <p className="font-medium text-ink">{humanizeIdentifier(flag.key)}</p>
+              <p className="mt-0.5 font-mono text-[11px] text-ink-muted">{flag.key}</p>
+            </div>,
             flag.enabled ? (
               <span key={`${flag.key}-on`} className="inline-flex rounded-md border border-success/20 bg-success-surface px-2 py-0.5 text-xs font-medium text-success">Enabled</span>
             ) : (
@@ -177,7 +181,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
       <Modal
         open={formOpen}
         onClose={closeForm}
-        title={formMode === 'create' ? 'Create feature flag' : `Edit ${form.key}`}
+        title={formMode === 'create' ? 'Create feature flag' : `Edit ${humanizeIdentifier(form.key)}`}
         description={formMode === 'create' ? 'Add a new runtime feature flag.' : 'Update flag settings.'}
         size="md"
         isDirty={isDirty}
@@ -193,10 +197,11 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
         <form id="flag-form" onSubmit={submitFlag} className="space-y-4">
           <FormFieldGrid columns={2}>
             <Input
-              label="Key"
+              label="Flag key"
               value={form.key}
               onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
-              placeholder="flag_key"
+              placeholder="user_profile"
+              hint="Internal identifier — shown as a readable label in the UI"
               readOnly={formMode === 'edit'}
               required
             />
@@ -221,7 +226,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
       <ConfirmDialog
         open={toggleTarget !== null}
         title={toggleTarget?.enabled ? 'Disable feature flag' : 'Enable feature flag'}
-        description={toggleTarget ? `${toggleTarget.enabled ? 'Disable' : 'Enable'} flag "${toggleTarget.key}"?` : undefined}
+        description={toggleTarget ? `${toggleTarget.enabled ? 'Disable' : 'Enable'} "${humanizeIdentifier(toggleTarget.key)}"?` : undefined}
         confirmLabel={toggleTarget?.enabled ? 'Disable' : 'Enable'}
         isLoading={isSubmitting}
         onConfirm={() => void confirmToggle()}
@@ -231,7 +236,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
       <ConfirmDialog
         open={deleteKey !== null}
         title="Delete feature flag"
-        description={`Permanently delete flag "${deleteKey}"? This cannot be undone.`}
+        description={`Permanently delete "${humanizeIdentifier(deleteKey ?? '')}"? This cannot be undone.`}
         confirmLabel="Delete flag"
         tone="danger"
         isLoading={isSubmitting}

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { adminContainerClass } from '@/components/admin/section-header';
 import { Logo } from '@/components/layout/logo';
 import { Button } from '@/components/ui/button';
+import { getDisplayLabel } from '@/lib/display-labels';
 import { cn } from '@/lib/class-names';
 
 export type AdminTab = 'dashboard' | 'users' | 'points' | 'chain' | 'config' | 'flags' | 'audit' | 'admins';
@@ -19,10 +20,7 @@ type AdminLayoutProps = {
 };
 
 function formatRoleLabel(role: string) {
-  return role
-    .split('_')
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(' ');
+  return getDisplayLabel(role, 'adminRole');
 }
 
 export function AdminLayout({
@@ -87,9 +85,9 @@ export function AdminLayout({
             ))}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-            <aside className="hidden lg:block">
-              <nav className="sticky top-[4.25rem] space-y-0.5" aria-label="Admin sections">
+          <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8">
+            <aside className="hidden lg:sticky lg:top-[4.5rem] lg:z-20 lg:block lg:max-h-[calc(100vh-4.5rem)] lg:self-start lg:overflow-y-auto">
+              <nav className="space-y-0.5 pr-1" aria-label="Admin sections">
                 <p className="mb-2 px-3 text-xs font-medium text-ink-muted">Workspace</p>
                 {navItems.map((item) => (
                   <button

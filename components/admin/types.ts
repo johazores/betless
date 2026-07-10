@@ -48,10 +48,10 @@ export const TAB_LABELS: Record<AdminTab, string> = {
   users: 'Users',
   points: 'Points',
   chain: 'On-chain',
-  config: 'Config',
-  flags: 'Flags',
-  audit: 'Audit',
-  admins: 'Admins',
+  config: 'Configuration',
+  flags: 'Feature flags',
+  audit: 'Audit logs',
+  admins: 'Administrators',
 };
 
 export function formatNumber(value: number) {
