@@ -110,7 +110,7 @@ export function UserDetailPanel({ open, userId, canManage, onClose, onUpdated, o
   if (isLoading || !user) {
     return (
       <Modal open={open && Boolean(userId)} onClose={onClose} title="User details" size="xl">
-        <LoadingState label="Loading user detail..." />
+        <LoadingState label="Loading user detail..." variant="compact" />
       </Modal>
     );
   }

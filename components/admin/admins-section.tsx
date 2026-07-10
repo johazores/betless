@@ -165,7 +165,7 @@ export function AdminsSection({ currentAdminId, onSuccess, onError }: AdminsSect
 
   const roleOptions = enumToSelectOptions(Object.values(AdminRole), 'adminRole');
 
-  if (isLoading) return <LoadingState label="Loading administrators..." />;
+  if (isLoading) return <LoadingState label="Loading administrators..." variant="table" />;
 
   return (
     <div className="space-y-5">

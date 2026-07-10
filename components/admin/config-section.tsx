@@ -94,7 +94,7 @@ export function ConfigSection({ onSuccess, onError }: ConfigSectionProps) {
     }
   }
 
-  if (isLoading) return <LoadingState label="Loading config..." />;
+  if (isLoading) return <LoadingState label="Loading config..." variant="table" />;
 
   return (
     <div className="space-y-5">

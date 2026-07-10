@@ -139,7 +139,7 @@ export function FlagsSection({ onSuccess, onError }: FlagsSectionProps) {
     }
   }
 
-  if (isLoading) return <LoadingState label="Loading feature flags..." />;
+  if (isLoading) return <LoadingState label="Loading feature flags..." variant="table" />;
 
   return (
     <div className="space-y-5">

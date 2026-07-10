@@ -128,7 +128,7 @@ export function OnChainSection({ can, onSuccess, onError }: OnChainSectionProps)
         <FilterSubmit>Filter</FilterSubmit>
       </FilterToolbar>
 
-      {isLoading ? <LoadingState label="Loading operations..." /> : data ? (
+      {isLoading ? <LoadingState label="Loading operations..." variant="table" /> : data ? (
         <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
           <DataTable
             className="rounded-none border-0 shadow-none"

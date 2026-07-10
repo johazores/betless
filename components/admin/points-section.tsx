@@ -141,7 +141,7 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
         ? `Grant ${bulkPoints} points to ${bulkPreview.length} user(s)? Reason: ${bulkReason.trim()}`
         : '';
 
-  if (isLoading) return <LoadingState label="Loading points..." />;
+  if (isLoading) return <LoadingState label="Loading points..." variant="table" />;
 
   return (
     <div className="space-y-5">

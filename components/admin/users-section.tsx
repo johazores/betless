@@ -88,7 +88,7 @@ export function UsersSection({ can, onSuccess, onError }: UsersSectionProps) {
         <FilterSubmit>Search</FilterSubmit>
       </FilterToolbar>
 
-      {isLoading ? <LoadingState label="Loading users..." /> : (
+      {isLoading ? <LoadingState label="Loading users..." variant="table" /> : (
         <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
           <DataTable
             className="rounded-none border-0 shadow-none"
