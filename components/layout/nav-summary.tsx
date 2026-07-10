@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { apiRequest } from '@/lib/api-client';
@@ -27,12 +26,11 @@ function StarIcon() {
 }
 
 /**
- * Locked Balance and Available Points pills. Always visible in the top-right
- * navigation for signed-in users, refreshed on navigation and after mutations.
+ * Locked balance and available points pills for signed-in users.
+ * Loads once on mount and refreshes after balance-changing mutations only.
  */
 export function NavSummary() {
   const { isLoaded, isSignedIn } = useUser();
-  const pathname = usePathname();
   const [summary, setSummary] = useState<SummaryView | null>(null);
 
   useEffect(() => {
@@ -57,7 +55,7 @@ export function NavSummary() {
       cancelled = true;
       unsubscribe();
     };
-  }, [isLoaded, isSignedIn, pathname]);
+  }, [isLoaded, isSignedIn]);
 
   if (!isLoaded || !isSignedIn) return null;
 

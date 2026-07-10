@@ -23,7 +23,7 @@ export class AdminPlatformService {
     const since = sinceDays(30);
     const [
       totalUsers,
-      recentUsers,
+      registrationRows,
       activeUsers,
       activeVaults,
       allVaults,
@@ -34,7 +34,12 @@ export class AdminPlatformService {
       failedOps,
     ] = await Promise.all([
       prisma.appUser.count(),
-      prisma.appUser.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.$queryRaw<Array<{ day: Date; count: number }>>`
+        SELECT date_trunc('day', "createdAt") AS day, COUNT(*)::int AS count
+        FROM "AppUser"
+        WHERE "createdAt" >= ${since}
+        GROUP BY 1
+      `,
       prisma.appUser.count({ where: { OR: [{ lastSeenAt: { gte: since } }, { updatedAt: { gte: since } }] } }),
       prisma.vault.count({ where: { status: VaultStatus.ACTIVE } }),
       prisma.vault.count(),
@@ -45,14 +50,17 @@ export class AdminPlatformService {
       prisma.stellarOperation.count({ where: { state: 'FAILED' } }),
     ]);
 
+    const registrationsByDay = new Map(
+      registrationRows.map((row: { day: Date; count: number }) => [startOfDay(row.day).toISOString().slice(0, 10), row.count]),
+    );
+
     const userGrowth = Array.from({ length: 30 }, (_, index) => {
       const day = startOfDay(since);
       day.setDate(day.getDate() + index);
-      const next = new Date(day);
-      next.setDate(next.getDate() + 1);
+      const key = day.toISOString().slice(0, 10);
       return {
-        date: day.toISOString().slice(0, 10),
-        registrations: recentUsers.filter((user: any) => user.createdAt >= day && user.createdAt < next).length,
+        date: key,
+        registrations: registrationsByDay.get(key) ?? 0,
       };
     });
 
@@ -98,12 +106,23 @@ export class AdminPlatformService {
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
         include: {
-          vaults: { select: { principal: true, status: true } },
-          pointsTransactions: { select: { points: true } },
+          vaults: { where: { status: VaultStatus.ACTIVE }, select: { principal: true } },
         },
       }),
       prisma.appUser.count({ where }),
     ]);
+
+    const userIds = users.map((user: { id: string }) => user.id);
+    const pointTotals = userIds.length
+      ? await prisma.pointsTransaction.groupBy({
+          by: ['appUserId'],
+          where: { appUserId: { in: userIds } },
+          _sum: { points: true },
+        })
+      : [];
+    const pointsByUser = new Map(
+      pointTotals.map((row: { appUserId: string; _sum: { points: number | null } }) => [row.appUserId, row._sum.points ?? 0]),
+    );
 
     return {
       users: users.map((user: any) => ({
@@ -114,10 +133,8 @@ export class AdminPlatformService {
         verificationStatus: user.verificationStatus,
         createdAt: user.createdAt.toISOString(),
         lastSeenAt: user.lastSeenAt?.toISOString() ?? null,
-        lockedBalance: user.vaults
-          .filter((vault: any) => vault.status === VaultStatus.ACTIVE)
-          .reduce((sum: number, vault: any) => sum + decimalToNumber(vault.principal), 0),
-        pointsBalance: user.pointsTransactions.reduce((sum: number, tx: any) => sum + tx.points, 0),
+        lockedBalance: user.vaults.reduce((sum: number, vault: any) => sum + decimalToNumber(vault.principal), 0),
+        pointsBalance: pointsByUser.get(user.id) ?? 0,
       })),
       total,
       page,

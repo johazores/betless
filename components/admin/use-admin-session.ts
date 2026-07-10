@@ -10,6 +10,13 @@ import {
 } from '@/lib/admin-api-client';
 import type { AdminProfile } from '@/components/admin/types';
 
+function sameAdminSession(current: AdminProfile | null, next: AdminProfile) {
+  if (!current) return false;
+  if (current.id !== next.id || current.email !== next.email || current.role !== next.role) return false;
+  if (current.permissions.length !== next.permissions.length) return false;
+  return current.permissions.every((permission, index) => permission === next.permissions[index]);
+}
+
 export function useAdminSession() {
   const router = useRouter();
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
@@ -21,7 +28,7 @@ export function useAdminSession() {
     try {
       const session = await fetchAdminSession();
       setAdminAccessToken(session.accessToken);
-      setAdmin(session.admin);
+      setAdmin((current) => (sameAdminSession(current, session.admin) ? current : session.admin));
       return session.admin;
     } catch (loadError) {
       router.replace('/admin/login');
@@ -41,7 +48,7 @@ export function useAdminSession() {
       void fetchAdminSession()
         .then((session) => {
           setAdminAccessToken(session.accessToken);
-          setAdmin(session.admin);
+          setAdmin((current) => (sameAdminSession(current, session.admin) ? current : session.admin));
         })
         .catch(() => router.replace('/admin/login'));
     }, ADMIN_REFRESH_INTERVAL_MS);

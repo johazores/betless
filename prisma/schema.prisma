@@ -27,6 +27,9 @@ model AppUser {
 
   vaults             Vault[]
   pointsTransactions PointsTransaction[]
+
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model Vault {
@@ -120,6 +123,7 @@ model PointsTransaction {
 
   @@unique([vaultId, monthIndex])
   @@index([appUserId, createdAt])
+  @@index([type, createdAt])
 }
 
 enum PointsTransactionType {

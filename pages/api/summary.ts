@@ -14,7 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const clerkUserId = requireApiUserId(req);
     const appUser = await UserService.ensureAppUser(clerkUserId);
-    await VaultService.syncVaults(appUser.id);
 
     const [lockedBalance, availablePoints] = await Promise.all([
       VaultService.getLockedBalance(appUser.id),

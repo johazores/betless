@@ -59,10 +59,15 @@ export function PointsSection({ onSuccess, onError }: PointsSectionProps) {
 
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([loadUsers(), loadHistory()])
+    loadHistory()
       .catch((error) => onError('Points data could not be loaded', error instanceof Error ? error.message : undefined))
       .finally(() => setIsLoading(false));
-  }, [loadUsers, loadHistory, onError]);
+  }, [loadHistory, onError]);
+
+  useEffect(() => {
+    if (adjustModal !== 'single' || users.length > 0) return;
+    void loadUsers().catch((error) => onError('Users could not be loaded', error instanceof Error ? error.message : undefined));
+  }, [adjustModal, users.length, loadUsers, onError]);
 
   const bulkPreview = useMemo(() => {
     const emails = bulkEmails.split(/[\n,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean);

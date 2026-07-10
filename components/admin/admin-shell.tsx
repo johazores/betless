@@ -1,21 +1,51 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { adminContainerClass } from '@/components/admin/section-header';
 import { AdminLayout, type AdminTab } from '@/components/layout/admin-layout';
 import { useAdminFeedback } from '@/components/admin/admin-utils';
 import { useAdminSession } from '@/components/admin/use-admin-session';
 import { TAB_LABELS, TAB_PERMISSIONS } from '@/components/admin/types';
-import { DashboardSection } from '@/components/admin/dashboard-section';
-import { UsersSection } from '@/components/admin/users-section';
-import { PointsSection } from '@/components/admin/points-section';
-import { OnChainSection } from '@/components/admin/on-chain-section';
-import { ConfigSection } from '@/components/admin/config-section';
-import { FlagsSection } from '@/components/admin/flags-section';
-import { AuditSection } from '@/components/admin/audit-section';
-import { AdminsSection } from '@/components/admin/admins-section';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+
+const sectionLoading = (label: string) => function SectionLoader() {
+  return <LoadingState label={label} variant="centered" />;
+};
+
+const DashboardSection = dynamic(
+  () => import('@/components/admin/dashboard-section').then((m) => ({ default: m.DashboardSection })),
+  { loading: sectionLoading('Loading dashboard...') },
+);
+const UsersSection = dynamic(
+  () => import('@/components/admin/users-section').then((m) => ({ default: m.UsersSection })),
+  { loading: sectionLoading('Loading users...') },
+);
+const PointsSection = dynamic(
+  () => import('@/components/admin/points-section').then((m) => ({ default: m.PointsSection })),
+  { loading: sectionLoading('Loading points...') },
+);
+const OnChainSection = dynamic(
+  () => import('@/components/admin/on-chain-section').then((m) => ({ default: m.OnChainSection })),
+  { loading: sectionLoading('Loading on-chain...') },
+);
+const ConfigSection = dynamic(
+  () => import('@/components/admin/config-section').then((m) => ({ default: m.ConfigSection })),
+  { loading: sectionLoading('Loading configuration...') },
+);
+const FlagsSection = dynamic(
+  () => import('@/components/admin/flags-section').then((m) => ({ default: m.FlagsSection })),
+  { loading: sectionLoading('Loading feature flags...') },
+);
+const AuditSection = dynamic(
+  () => import('@/components/admin/audit-section').then((m) => ({ default: m.AuditSection })),
+  { loading: sectionLoading('Loading audit logs...') },
+);
+const AdminsSection = dynamic(
+  () => import('@/components/admin/admins-section').then((m) => ({ default: m.AdminsSection })),
+  { loading: sectionLoading('Loading administrators...') },
+);
 
 export function AdminShell() {
   const { admin, isLoading, logout, can } = useAdminSession();

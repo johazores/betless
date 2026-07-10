@@ -20,9 +20,14 @@ export class PointsService {
     return result._sum.points ?? 0;
   }
 
-  static async listTransactions(clerkUserId: string): Promise<PointsTransactionView[]> {
+  static async listTransactions(
+    clerkUserId: string,
+    options?: { sync?: boolean },
+  ): Promise<PointsTransactionView[]> {
     const appUser = await UserService.ensureAppUser(clerkUserId);
-    await VaultService.syncVaults(appUser.id);
+    if (options?.sync !== false) {
+      await VaultService.syncVaults(appUser.id);
+    }
 
     const transactions = await prisma.pointsTransaction.findMany({
       where: { appUserId: appUser.id },

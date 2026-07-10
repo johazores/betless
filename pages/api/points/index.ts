@@ -10,7 +10,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const clerkUserId = requireApiUserId(req);
-    const transactions = await PointsService.listTransactions(clerkUserId);
+    const skipSync = req.query.skipSync === '1';
+    const transactions = await PointsService.listTransactions(clerkUserId, { sync: !skipSync });
     return sendSuccess(res, transactions);
   } catch (error) {
     const message = getApiErrorMessage(error);

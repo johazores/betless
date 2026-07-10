@@ -38,10 +38,11 @@ export function DashboardClient() {
     setError('');
 
     try {
-      const [loadedVaults, loadedSummary, loadedTransactions] = await Promise.all([
-        apiRequest<VaultView[]>('/api/vaults'),
+      // Sync vaults once via /api/vaults, then read summary + history without duplicate sync work.
+      const loadedVaults = await apiRequest<VaultView[]>('/api/vaults');
+      const [loadedSummary, loadedTransactions] = await Promise.all([
         apiRequest<SummaryView>('/api/summary'),
-        apiRequest<PointsTransactionView[]>('/api/points'),
+        apiRequest<PointsTransactionView[]>('/api/points?skipSync=1'),
       ]);
       setVaults(loadedVaults);
       setSummary(loadedSummary);
