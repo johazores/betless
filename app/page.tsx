@@ -75,12 +75,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-10 sm:px-6 lg:px-8" id="how-it-works">
+      <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-16" id="how-it-works">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-6 max-w-2xl">
+          <div className="mb-10 max-w-2xl">
             <Badge>How it works</Badge>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink">Five simple steps.</h2>
-            <p className="mt-3 text-sm leading-7 text-ink-muted">Everything Betless does, in plain language.</p>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">
+              Five simple steps to start saving.
+            </h2>
+            <p className="mt-3 text-base leading-7 text-ink-muted">
+              Everything Betless does, in plain language — from your first deposit to getting your money back.
+            </p>
           </div>
           <HowItWorks />
         </div>
