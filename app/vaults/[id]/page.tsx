@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { VaultDetailClient } from './vault-detail-client';
+import { privatePageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = privatePageMetadata(
+  'Vault details',
+  'View your Betless vault balance, lock period, points earned, and on-chain status.',
+  '/vaults',
+);
 
 export default async function VaultDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

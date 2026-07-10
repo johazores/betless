@@ -1,5 +1,13 @@
 import { SignUp } from '@clerk/nextjs';
+import type { Metadata } from 'next';
 import { AuthPageShell } from '@/components/layout/auth-page-shell';
+import { createMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createMetadata({
+  title: 'Get started',
+  description: 'Create your Betless account, lock a deposit, earn monthly points, and redeem real-world rewards.',
+  path: '/sign-up',
+});
 
 const highlights: Array<[string, string]> = [
   ['Takes under a minute', 'Create your account, open your first vault, and start earning points after your first full month.'],

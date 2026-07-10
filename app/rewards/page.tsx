@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { RewardsClient } from './rewards-client';
+import { privatePageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = privatePageMetadata(
+  'Rewards',
+  'Redeem your Betless points for groceries, travel, gadgets, and partner merchant rewards.',
+  '/rewards',
+);
 
 export default function RewardsPage() {
   return (

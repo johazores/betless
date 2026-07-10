@@ -1,5 +1,13 @@
 import { SignIn } from '@clerk/nextjs';
+import type { Metadata } from 'next';
 import { AuthPageShell } from '@/components/layout/auth-page-shell';
+import { createMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = createMetadata({
+  title: 'Sign in',
+  description: 'Sign in to Betless to view your vaults, track points, redeem rewards, and manage your savings.',
+  path: '/sign-in',
+});
 
 const highlights: Array<[string, string]> = [
   ['Your savings, waiting', 'Pick up right where you left off — vaults, points, and rewards are tied to your account.'],

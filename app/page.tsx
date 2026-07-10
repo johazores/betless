@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { HeroSection } from '@/components/marketing/hero-section';
+import { MarketingJsonLd } from '@/components/seo/marketing-json-ld';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +15,14 @@ import {
   FLAT_WITHDRAWAL_FEE_PHP,
   MIN_DEPOSIT_PHP,
 } from '@/lib/vault-rules';
+import { createMetadata } from '@/lib/seo';
+import { siteConfig } from '@/lib/site';
+
+export const metadata: Metadata = createMetadata({
+  absoluteTitle: siteConfig.title,
+  description: siteConfig.description,
+  path: '/',
+});
 
 const featuredDepositAmount = 50_000;
 
@@ -25,6 +35,7 @@ const promises = [
 export default function HomePage() {
   return (
     <PublicLayout>
+      <MarketingJsonLd />
       <HeroSection featuredDepositAmount={featuredDepositAmount} />
 
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-16" id="how-it-works">

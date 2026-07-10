@@ -1,9 +1,17 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { CreateVaultForm } from '@/components/vault/create-vault-form';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { Badge } from '@/components/ui/badge';
 import { formatPeso } from '@/lib/money';
 import { ANNUAL_REWARD_RATE, MIN_DEPOSIT_PHP } from '@/lib/vault-rules';
+import { privatePageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = privatePageMetadata(
+  'Create a vault',
+  'Lock a deposit, choose your commitment period, and start earning monthly points on Betless.',
+  '/create-vault',
+);
 
 const guidance = [
   ['1. Deposit', `Lock ${formatPeso(MIN_DEPOSIT_PHP)} or more. Your money is held with licensed custodial partners.`],
