@@ -38,6 +38,23 @@ There is no cron job. Monthly rewards are accrued lazily: whenever a user's data
 - TypeScript, Tailwind CSS.
 - Prisma + PostgreSQL.
 - Clerk for authentication (required for all vault features).
+- Stellar (optional) for on-chain custody of vault principal — see below.
+
+## Stellar On-Chain Settlement (optional)
+
+When configured, each vault's principal is locked on Stellar in a claimable balance whose time predicate the network itself enforces until maturity (see `docs/stellar-architecture.md` for the full design). The layer is entirely optional: with no Stellar environment variables set, every on-chain call is a no-op and the app runs off-chain only.
+
+```bash
+npm run stellar:setup   # creates testnet issuer/treasury/ops accounts, mints test PHPC
+# paste the printed STELLAR_* variables into .env, restart the dev server
+```
+
+How it works:
+
+- **Lock** — on vault creation the treasury creates a claimable balance for the principal with two claimants: the treasury itself (claimable only after `maturesAt`) and an ops account (unconditional, the early-withdrawal escape hatch).
+- **Release** — at maturity the treasury claims the balance; on early withdrawal the ops account claims it and settles it back to the treasury in one atomic transaction.
+- **Reliability** — every on-chain write goes through the `StellarOperation` outbox: intent is recorded before submission, signed XDR and the expected hash are persisted, and unresolved operations are retried lazily on vault reads (no cron). Failures never block the product flow.
+- **UI** — the vault detail page shows the lock status, the claimable balance ID, and stellar.expert links to the lock/release transactions.
 
 ## Routes
 
@@ -70,6 +87,11 @@ npm run dev
 ```
 
 The database schema was rebuilt for the commitment savings model, so existing development databases must be reset with `npm run db:reset:force`.
+
+## Documentation
+
+- `docs/business-model.md` — product rules and implementation notes.
+- `docs/stellar-architecture.md` — audit of the previous Stellar integration and the on-chain custody architecture (claimable-balance vault locks, anchor rails, diagrams for all core flows). Phases 1–2 (outbox + claimable-balance locks) are implemented; anchor rails remain future work.
 
 ## QA Commands
 

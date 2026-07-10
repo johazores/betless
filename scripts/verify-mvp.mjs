@@ -20,6 +20,9 @@ const requiredFiles = [
   'services/vault-service.ts',
   'services/points-service.ts',
   'services/user-service.ts',
+  'services/stellar-service.ts',
+  'lib/stellar-config.ts',
+  'scripts/setup-stellar-testnet.mjs',
   'lib/vault-rules.ts',
   'lib/rewards.ts',
   'lib/validators.ts',
@@ -49,8 +52,8 @@ const bannedUiPatterns = [
   /casino/i,
   /guaranteed yield/i,
   /investment product/i,
-  /stellar/i,
   /wallet address/i,
+  /secret key/i,
   /top-up/i,
   /lorem ipsum/i,
   /\bTODO\b/,
@@ -77,7 +80,7 @@ for (const file of uiFilesToScan) {
 }
 
 const schema = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
-for (const block of ['model AppUser', 'model Vault', 'model PointsTransaction', 'enum VaultStatus', 'enum PointsTransactionType']) {
+for (const block of ['model AppUser', 'model Vault', 'model PointsTransaction', 'model StellarOperation', 'enum VaultStatus', 'enum PointsTransactionType']) {
   if (!schema.includes(block)) {
     failures.push(`Missing Prisma schema block: ${block}`);
   }

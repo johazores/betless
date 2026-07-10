@@ -4,6 +4,7 @@ import { formatPeso } from '@/lib/money';
 import { prisma } from '@/lib/prisma';
 import { calculateEarlyWithdrawalFee, calculateMonthlyPoints, calculateTotalPoints } from '@/lib/vault-rules';
 import type { CreateVaultInput } from '@/lib/validators';
+import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
 import type { VaultView } from '@/types/vault';
 
@@ -17,14 +18,20 @@ type VaultRecord = {
   closedAt: Date | null;
   withdrawalFee: unknown | null;
   returnedAmount: unknown | null;
+  claimableBalanceId: string | null;
   createdAt: Date;
   pointsTransactions: Array<{ points: number }>;
+  stellarOperations: Array<{ kind: string; state: string; txHash: string | null }>;
 };
 
 const vaultInclude = {
   pointsTransactions: {
     where: { type: PointsTransactionType.MONTHLY_REWARD },
     select: { points: true },
+  },
+  stellarOperations: {
+    select: { kind: true, state: true, txHash: true },
+    orderBy: { createdAt: 'asc' },
   },
 } as const;
 
@@ -77,7 +84,7 @@ export class VaultService {
       }
 
       if (vault.maturesAt.getTime() <= now.getTime()) {
-        await prisma.vault.updateMany({
+        const matured = await prisma.vault.updateMany({
           where: { id: vault.id, status: VaultStatus.ACTIVE },
           data: {
             status: VaultStatus.MATURED,
@@ -85,6 +92,11 @@ export class VaultService {
             returnedAmount: vault.principal,
           },
         });
+
+        // Best-effort on-chain claim; a failure leaves a retryable outbox row.
+        if (matured.count > 0) {
+          await StellarService.releaseVaultPrincipal(vault, 'CLAIM_MATURITY').catch(() => {});
+        }
       }
     }
   }
@@ -112,10 +124,18 @@ export class VaultService {
         maturesAt: addMonths(startAt, input.lockMonths),
         idempotencyKey: input.idempotencyKey ?? null,
       },
+    });
+
+    // Best-effort on-chain lock; a failure leaves a retryable outbox row and
+    // never blocks vault creation.
+    await StellarService.lockVaultPrincipal(vault).catch(() => {});
+
+    const refreshed = await prisma.vault.findUniqueOrThrow({
+      where: { id: vault.id },
       include: vaultInclude,
     });
 
-    return this.toView(vault);
+    return this.toView(refreshed);
   }
 
   static async listVaults(clerkUserId: string): Promise<VaultView[]> {
@@ -134,6 +154,8 @@ export class VaultService {
   static async getVaultDetail(id: string, clerkUserId: string): Promise<VaultView> {
     const appUser = await UserService.ensureAppUser(clerkUserId);
     await this.syncVaults(appUser.id);
+    // Re-drive any unresolved on-chain operations for this vault (lazy outbox sweep).
+    await StellarService.processPendingForVault(id).catch(() => {});
 
     const vault = await prisma.vault.findFirst({
       where: { id, appUserId: appUser.id },
@@ -184,6 +206,9 @@ export class VaultService {
       throw new Error('This vault is already closed.');
     }
 
+    // Best-effort on-chain claim + settlement back to the treasury.
+    await StellarService.releaseVaultPrincipal(vault, 'CLAIM_EARLY').catch(() => {});
+
     const refreshed = await prisma.vault.findUniqueOrThrow({
       where: { id: vault.id },
       include: vaultInclude,
@@ -223,6 +248,7 @@ export class VaultService {
       totalPointsAtMaturity: calculateTotalPoints(principal, vault.lockMonths),
       progressPercent: Math.min(100, Math.round((monthsCompleted / vault.lockMonths) * 100)),
       earlyWithdrawalFee: vault.status === VaultStatus.ACTIVE ? calculateEarlyWithdrawalFee(principal) : null,
+      stellar: StellarService.toStellarView(vault),
       createdAt: vault.createdAt.toISOString(),
     };
   }

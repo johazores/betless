@@ -16,11 +16,13 @@
     "check": "npm run typecheck && npm run verify:mvp",
     "db:reset": "prisma migrate reset",
     "db:reset:force": "prisma migrate reset --force",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "stellar:setup": "node scripts/setup-stellar-testnet.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.16",
     "@prisma/client": "^6.19.0",
+    "@stellar/stellar-sdk": "^16.0.1",
     "next": "^16.2.10",
     "prisma": "^6.19.0",
     "react": "^19.1.2",

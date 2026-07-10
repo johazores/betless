@@ -17,7 +17,18 @@ export type VaultView = {
   progressPercent: number;
   /** Fee charged if the vault is withdrawn early right now. Null once closed. */
   earlyWithdrawalFee: number | null;
+  /** On-chain settlement state. Null when the Stellar layer is not configured. */
+  stellar: VaultStellarView | null;
   createdAt: string;
+};
+
+export type VaultStellarView = {
+  status: 'PENDING' | 'LOCKED' | 'RELEASED' | 'FAILED';
+  claimableBalanceId: string | null;
+  lockTxHash: string | null;
+  releaseTxHash: string | null;
+  lockExplorerUrl: string | null;
+  releaseExplorerUrl: string | null;
 };
 
 export type PointsTransactionView = {

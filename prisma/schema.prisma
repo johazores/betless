@@ -33,14 +33,56 @@ model Vault {
   withdrawalFee  Decimal?
   returnedAmount Decimal?
 
+  // On-chain anchor point: the claimable balance holding this vault's principal.
+  claimableBalanceId String? @unique
+
   idempotencyKey String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   appUser            AppUser             @relation(fields: [appUserId], references: [id], onDelete: Cascade)
   pointsTransactions PointsTransaction[]
+  stellarOperations  StellarOperation[]
 
   @@index([appUserId, status, createdAt])
+}
+
+/// Outbox for on-chain writes. Intent is recorded before submission so a crash
+/// or network failure never loses track of money movement.
+model StellarOperation {
+  id      String                @id @default(cuid())
+  vaultId String
+  kind    StellarOperationKind
+  state   StellarOperationState @default(PENDING)
+
+  amount             Decimal
+  claimableBalanceId String?
+  // Signed envelope + expected hash are persisted before first submission so
+  // retries and confirmation checks are idempotent.
+  xdr          String?
+  txHash       String? @unique
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vault Vault @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+
+  @@index([vaultId, kind])
+  @@index([state, createdAt])
+}
+
+enum StellarOperationKind {
+  LOCK
+  CLAIM_MATURITY
+  CLAIM_EARLY
+}
+
+enum StellarOperationState {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
 }
 
 enum VaultStatus {
