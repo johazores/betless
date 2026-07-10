@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { SignInButton, useAuth } from '@clerk/nextjs';
+import { SignInButton, useAuth, useUser } from '@clerk/nextjs';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/api-client';
@@ -88,6 +88,8 @@ function getStepError(step: number, form: FormState, walletChoice: WalletChoice,
 export function CreateVaultForm() {
   const router = useRouter();
   const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
+  const accountLabel = user?.primaryEmailAddress?.emailAddress ?? user?.fullName ?? user?.username ?? 'your account';
   const [form, setForm] = useState<FormState>(defaultVaultForm);
   const [walletChoice, setWalletChoice] = useState<WalletChoice>('create');
   const [generatedSecret, setGeneratedSecret] = useState('');
@@ -293,6 +295,22 @@ export function CreateVaultForm() {
 
   return (
     <div className="space-y-5">
+      {isLoaded ? (
+        isSignedIn ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-950">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">✓</span>
+            <span>Signed in as <span className="font-black">{accountLabel}</span>. This vault will be saved to your account automatically.</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-6 text-slate-700 sm:flex-row sm:items-center sm:justify-between">
+            <span>You are not signed in. Your vault saves in this browser — sign in anytime to access it everywhere.</span>
+            <SignInButton mode="modal">
+              <button type="button" className="w-fit rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white">Sign in</button>
+            </SignInButton>
+          </div>
+        )
+      ) : null}
+
       <Stepper steps={steps} currentStep={currentStep} />
 
       <Card>
@@ -380,7 +398,10 @@ export function CreateVaultForm() {
               )}
 
               <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold leading-6 text-blue-950">
-                Never enter your recovery phrase or private key. Already have an account? <SignInButton mode="modal"><button type="button" className="font-black underline decoration-2 underline-offset-4">Sign in</button></SignInButton>. You can also continue now and connect your account later.
+                Never enter your recovery phrase or private key. Betless only ever needs your public address.
+                {isLoaded && !isSignedIn ? (
+                  <> Already have an account? <SignInButton mode="modal"><button type="button" className="font-black underline decoration-2 underline-offset-4">Sign in</button></SignInButton>, or continue now and connect your account later.</>
+                ) : null}
               </div>
             </div>
           ) : null}
