@@ -12,6 +12,9 @@ model AppUser {
   clerkUserId String   @unique
   email       String?
   displayName String?
+  status      AppUserStatus @default(ACTIVE)
+  verificationStatus AppUserVerificationStatus @default(UNVERIFIED)
+  lastSeenAt  DateTime?
   // Shareable invite code, assigned the first time the user opens the referral card.
   referralCode String? @unique
   // Set once when the user claims a friend's code; enforces the one-claim-per-user rule.
@@ -123,4 +126,104 @@ enum PointsTransactionType {
   MONTHLY_REWARD
   REDEMPTION
   REFERRAL_BONUS
+  ADMIN_ADJUSTMENT
+}
+
+enum AppUserStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum AppUserVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  displayName  String?
+  passwordHash String
+  role         AdminRole @default(READ_ONLY)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  refreshTokens AdminRefreshToken[]
+  auditLogs     AdminAuditLog[]
+  featureFlags  FeatureFlag[] @relation("FeatureFlagUpdatedBy")
+  managedConfigs ManagedConfig[] @relation("ManagedConfigUpdatedBy")
+}
+
+model AdminRefreshToken {
+  id          String    @id @default(cuid())
+  adminUserId String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  replacedByTokenHash String?
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  ipAddress   String?
+  userAgent   String?
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, expiresAt])
+}
+
+model AdminAuditLog {
+  id            String   @id @default(cuid())
+  adminUserId   String?
+  action        String
+  targetType    String?
+  targetId      String?
+  reason        String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  adminUser AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([adminUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  updatedBy AdminUser? @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+model ManagedConfig {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  value        String?
+  encryptedValue String?
+  isSecret     Boolean  @default(false)
+  description  String?
+  updatedById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  updatedBy AdminUser? @relation("ManagedConfigUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  READ_ONLY
 }

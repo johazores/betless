@@ -201,6 +201,38 @@ export class StellarService {
     };
   }
 
+  static async retryOperation(operationId: string) {
+    if (!this.isEnabled()) {
+      throw new Error('Stellar is not configured.');
+    }
+
+    const row: OperationRow | null = await prisma.stellarOperation.findUnique({
+      where: { id: operationId },
+      select: {
+        id: true,
+        vaultId: true,
+        kind: true,
+        state: true,
+        txHash: true,
+        claimableBalanceId: true,
+        createdAt: true,
+      },
+    });
+
+    if (!row) throw new Error('Stellar operation not found.');
+    if (row.state === StellarOperationState.CONFIRMED) {
+      throw new Error('Confirmed operations do not need a retry.');
+    }
+
+    if (row.state === StellarOperationState.SUBMITTED) {
+      await this.confirmSubmitted(row);
+    } else {
+      await this.retryPending(row);
+    }
+
+    return prisma.stellarOperation.findUniqueOrThrow({ where: { id: operationId } });
+  }
+
   // ---------------------------------------------------------------------------
 
   private static async attemptLock(operationId: string, vault: LockableVault) {

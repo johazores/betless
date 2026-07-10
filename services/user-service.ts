@@ -20,7 +20,12 @@ export class UserService {
 
   static async ensureAppUser(clerkUserId: string) {
     const existing = await prisma.appUser.findUnique({ where: { clerkUserId } });
-    if (existing) return existing;
+    if (existing) {
+      return prisma.appUser.update({
+        where: { id: existing.id },
+        data: { lastSeenAt: new Date() },
+      });
+    }
 
     const profile = await this.fetchClerkProfile(clerkUserId);
 
@@ -30,6 +35,7 @@ export class UserService {
         clerkUserId,
         email: profile.email,
         displayName: profile.displayName,
+        lastSeenAt: new Date(),
       },
       update: {},
     });

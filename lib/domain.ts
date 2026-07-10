@@ -10,9 +10,32 @@ export const PointsTransactionType = {
   MONTHLY_REWARD: 'MONTHLY_REWARD',
   REDEMPTION: 'REDEMPTION',
   REFERRAL_BONUS: 'REFERRAL_BONUS',
+  ADMIN_ADJUSTMENT: 'ADMIN_ADJUSTMENT',
 } as const;
 
 export type PointsTransactionType = (typeof PointsTransactionType)[keyof typeof PointsTransactionType];
+
+export const AdminRole = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  SUPPORT: 'SUPPORT',
+  READ_ONLY: 'READ_ONLY',
+} as const;
+
+export type AdminRole = (typeof AdminRole)[keyof typeof AdminRole];
+
+export const AppUserStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  CLOSED: 'CLOSED',
+} as const;
+
+export const AppUserVerificationStatus = {
+  UNVERIFIED: 'UNVERIFIED',
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+} as const;
 
 export type DecimalLike = {
   toNumber?: () => number;

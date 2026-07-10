@@ -27,6 +27,16 @@ const requiredFiles = [
   'lib/rewards.ts',
   'lib/validators.ts',
   'lib/auth.ts',
+  'lib/admin-crypto.ts',
+  'lib/admin-permissions.ts',
+  'services/admin-auth-service.ts',
+  'services/admin-platform-service.ts',
+  'services/managed-config-service.ts',
+  'app/admin/page.tsx',
+  'app/admin/login/page.tsx',
+  'pages/api/admin/auth/login.ts',
+  'pages/api/admin/analytics.ts',
+  'pages/api/admin/config/index.ts',
   'components/layout/nav-summary.tsx',
   'prisma/schema.prisma',
   'proxy.ts',
@@ -83,6 +93,26 @@ const schema = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
 for (const block of ['model AppUser', 'model Vault', 'model PointsTransaction', 'model StellarOperation', 'enum VaultStatus', 'enum PointsTransactionType']) {
   if (!schema.includes(block)) {
     failures.push(`Missing Prisma schema block: ${block}`);
+  }
+}
+
+for (const block of ['model AdminUser', 'model AdminRefreshToken', 'model AdminAuditLog', 'model FeatureFlag', 'model ManagedConfig', 'enum AdminRole', 'ADMIN_ADJUSTMENT']) {
+  if (!schema.includes(block)) {
+    failures.push(`Missing admin schema block or enum value: ${block}`);
+  }
+}
+
+const adminAuth = readFileSync(join(root, 'services/admin-auth-service.ts'), 'utf8');
+for (const marker of ['signAdminJwt', 'adminRefreshToken', 'ADMIN_BOOTSTRAP_EMAIL', 'requireAdmin']) {
+  if (!adminAuth.includes(marker)) {
+    failures.push(`Admin auth marker missing: ${marker}`);
+  }
+}
+
+const managedConfig = readFileSync(join(root, 'services/managed-config-service.ts'), 'utf8');
+for (const marker of ['encryptConfigValue', 'DATABASE_URL', 'bootCritical', 'STELLAR_TREASURY_SECRET']) {
+  if (!managedConfig.includes(marker)) {
+    failures.push(`Managed config marker missing: ${marker}`);
   }
 }
 
