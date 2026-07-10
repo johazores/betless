@@ -79,12 +79,22 @@ export function AdminClient() {
     localStorage.setItem('betless_admin_access', payload.data.accessToken);
     setAccessToken(payload.data.accessToken);
     setAdmin(payload.data.admin);
+    return payload.data;
   }, []);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      if (!localStorage.getItem('betless_admin_access')) await refresh();
+      let currentAdmin: AdminSession['admin'] | null = null;
+      if (!localStorage.getItem('betless_admin_access')) {
+        const session = await refresh();
+        currentAdmin = session.admin;
+      } else {
+        const me = await api<{ admin: AdminSession['admin'] }>('/api/admin/auth/me');
+        currentAdmin = me.admin;
+        setAdmin(me.admin);
+      }
+
       const loaded = await Promise.all([
         api<Analytics>('/api/admin/analytics'),
         api<{ users: UserRow[] }>('/api/admin/users'),
@@ -99,7 +109,7 @@ export function AdminClient() {
       setConfig(loaded[3]);
       setFlags(loaded[4]);
       setAudit(loaded[5]);
-      if (can('MANAGE_ADMINS')) {
+      if (currentAdmin?.permissions.includes('MANAGE_ADMINS')) {
         setAdmins(await api<any[]>('/api/admin/admin-users'));
       }
     } catch (loadError) {
@@ -111,7 +121,7 @@ export function AdminClient() {
       }
       setError(loadError instanceof Error ? loadError.message : 'Admin data could not be loaded.');
     }
-  }, [api, can, refresh, router]);
+  }, [api, refresh, router]);
 
   useEffect(() => {
     const token = localStorage.getItem('betless_admin_access');
