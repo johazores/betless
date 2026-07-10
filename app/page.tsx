@@ -5,12 +5,7 @@ import { Card } from '@/components/ui/card';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { Progress } from '@/components/ui/progress';
 import { Stat } from '@/components/ui/stat';
-
-const steps = [
-  ['Create a vault', 'Choose a wallet, set a goal, and pick a lock period.'],
-  ['Follow the plan', 'Complete scheduled top-ups and track progress.'],
-  ['Claim rewards', 'Receive fixed milestone rewards for staying on track.'],
-];
+import { HowItWorks } from '@/components/marketing/how-it-works';
 
 const rewardExamples = ['Jollibee meal voucher', 'Transport voucher', 'Grocery voucher', 'SM eGift voucher'];
 
@@ -61,14 +56,12 @@ export default function HomePage() {
 
       <section className="px-4 py-10 sm:px-6 lg:px-8" id="how-it-works">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-5 lg:grid-cols-3">
-            {steps.map(([title, body]) => (
-              <Card key={title}>
-                <p className="text-xl font-black text-slate-950">{title}</p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-              </Card>
-            ))}
+          <div className="mb-6 max-w-2xl">
+            <Badge>How it works</Badge>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Four simple steps to start saving.</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">New here? This is everything Betless does, in plain language.</p>
           </div>
+          <HowItWorks />
         </div>
       </section>
 

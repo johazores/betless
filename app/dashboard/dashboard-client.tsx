@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Progress } from '@/components/ui/progress';
 import { Stat } from '@/components/ui/stat';
+import { HowItWorks } from '@/components/marketing/how-it-works';
 import { apiRequest, postJson } from '@/lib/api-client';
 import { formatDateTime, formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -235,11 +236,16 @@ export function DashboardClient() {
           </div>
 
           {vaults.length === 0 ? (
-            <Card>
-              <h2 className="text-2xl font-black text-slate-950">No vaults yet</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Create your first vault now. You can connect an account later.</p>
-              <Link href="/create-vault" className="mt-5 inline-flex"><Button>Create Vault</Button></Link>
-            </Card>
+            <div className="space-y-5">
+              <Card>
+                <h2 className="text-2xl font-black text-slate-950">Let&apos;s create your first vault</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  A vault is a savings goal you commit to. Here is exactly how it works — you can connect an account later.
+                </p>
+                <Link href="/create-vault" className="mt-5 inline-flex"><Button>Create Vault</Button></Link>
+              </Card>
+              <HowItWorks />
+            </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {vaults.map((vault) => (

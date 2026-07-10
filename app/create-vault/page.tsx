@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
 const guidance = [
-  ['Start now', 'Create a vault before signing up.'],
-  ['Save later', 'Connect an account when you want dashboard access.'],
-  ['Stay safe', 'Recovery keys stay with the user. Betless only stores the public address.'],
+  ['1. Create or paste a wallet', 'We can generate a free Stellar wallet in your browser, or paste your own address.'],
+  ['2. Set your goal', 'Choose a peso target, top-up schedule, and lock period. Pesos track your savings plan.'],
+  ['3. We activate it on Stellar', 'Betless funds your wallet on the free test network and saves a verifiable receipt.'],
+  ['4. Track & claim', 'Mark top-ups, claim milestone rewards, and unlock when you reach your goal.'],
 ];
 
 export default function CreateVaultPage() {
@@ -22,6 +23,9 @@ export default function CreateVaultPage() {
               <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Build your commitment plan.</h1>
               <p className="mt-5 text-lg leading-8 text-slate-700">
                 Create a wallet, set a savings target, choose a reward, and start tracking progress in minutes.
+              </p>
+              <p className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold leading-6 text-blue-950">
+                No real money is used — Betless runs on the Stellar test network. Peso amounts are your savings plan.
               </p>
             </div>
 
