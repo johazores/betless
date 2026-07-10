@@ -18,6 +18,9 @@ const requiredFiles = [
   'pages/api/vaults/[id]/create-stellar-proof.ts',
   'pages/api/receipts/index.ts',
   'pages/api/receipts/[id].ts',
+  'app/activity/activity-client.tsx',
+  'pages/api/activity/index.ts',
+  'pages/api/analytics/index.ts',
   'services/vault-service.ts',
   'services/vault-access-service.ts',
   'services/top-up-service.ts',
@@ -26,6 +29,9 @@ const requiredFiles = [
   'services/stellar-proof-service.ts',
   'services/receipt-service.ts',
   'services/config-service.ts',
+  'services/activity-service.ts',
+  'services/activity-event-service.ts',
+  'services/analytics-service.ts',
   'lib/api-client.ts',
   'lib/api-methods.ts',
   'lib/domain.ts',
@@ -37,10 +43,12 @@ const requiredFiles = [
   'prisma/seed.ts',
   'prisma/migrations/migration_lock.toml',
   'prisma/migrations/20260710000000_fresh_schema/migration.sql',
+  'prisma/migrations/20260710040000_activity_events/migration.sql',
   'docs/project-plan.md',
   'docs/implementation-checklist.md',
   'docs/production-ux-refinement.md',
   'docs/auth-and-stellar-workflow.md',
+  'docs/transaction-activity-analytics.md',
   'README.md',
 ];
 
@@ -50,6 +58,7 @@ const uiFilesToScan = [
   'app/vaults/[id]/vault-detail-client.tsx',
   'app/receipts/[id]/receipt-client.tsx',
   'app/dashboard/dashboard-client.tsx',
+  'app/activity/activity-client.tsx',
   'components/layout/public-layout.tsx',
   'components/layout/auth-nav.tsx',
   'components/ui/empty-state.tsx',
@@ -145,14 +154,14 @@ for (const file of forbiddenFiles) {
 }
 
 const schema = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
-for (const model of ['model AppConfig', 'model AppUser', 'model Vault', 'model TopUp', 'model RewardClaim', 'model ProofReceipt']) {
+for (const model of ['model AppConfig', 'model AppUser', 'model Vault', 'model TopUp', 'model RewardClaim', 'model ProofReceipt', 'model ActivityEvent']) {
   if (!schema.includes(model)) {
     failures.push(`Missing Prisma schema block: ${model}`);
   }
 }
 
 const migrationSql = readFileSync(join(root, 'prisma/migrations/20260710000000_fresh_schema/migration.sql'), 'utf8');
-for (const requiredTable of ['"AppUser"', '"Vault"', '"TopUp"', '"RewardClaim"', '"ProofReceipt"']) {
+for (const requiredTable of ['"AppUser"', '"Vault"', '"TopUp"', '"RewardClaim"', '"ProofReceipt"', '"ActivityEvent"']) {
   if (!migrationSql.includes(`CREATE TABLE ${requiredTable}`)) {
     failures.push(`Fresh baseline migration is missing table: ${requiredTable}`);
   }
@@ -173,6 +182,28 @@ if (!schemaForGuestToken.includes('guestAccessTokenHash')) {
 const guestTokenMigration = readFileSync(join(root, 'prisma/migrations/20260710030000_guest_access_tokens/migration.sql'), 'utf8');
 if (!guestTokenMigration.includes('guestAccessTokenHash')) {
   failures.push('Missing guestAccessTokenHash repair migration.');
+}
+
+
+const activityMigration = readFileSync(join(root, 'prisma/migrations/20260710040000_activity_events/migration.sql'), 'utf8');
+for (const required of ['ActivityStatus', 'ActivityEventType', 'ActivityRail', 'ActivityEvent']) {
+  if (!activityMigration.includes(required)) {
+    failures.push(`Activity migration is missing: ${required}`);
+  }
+}
+
+const activityClient = readFileSync(join(root, 'app/activity/activity-client.tsx'), 'utf8');
+for (const requiredCopy of ['Status', 'Transaction hash', 'Operation ID', 'Verify on Stellar']) {
+  if (!activityClient.includes(requiredCopy)) {
+    failures.push(`Activity timeline is missing required transaction UX copy: ${requiredCopy}`);
+  }
+}
+
+const dashboardClient = readFileSync(join(root, 'app/dashboard/dashboard-client.tsx'), 'utf8');
+for (const requiredCopy of ['Total balance', 'Total deposits', 'Rewards earned', 'Monthly activity', 'Vault growth']) {
+  if (!dashboardClient.includes(requiredCopy)) {
+    failures.push(`Analytics dashboard is missing required metric: ${requiredCopy}`);
+  }
 }
 
 if (failures.length > 0) {

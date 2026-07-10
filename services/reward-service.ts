@@ -1,5 +1,6 @@
-import { RewardStatus, decimalToNumber } from '@/lib/domain';
+import { ActivityEventType, ActivityRail, ActivityStatus, RewardStatus, decimalToNumber } from '@/lib/domain';
 import { prisma } from '@/lib/prisma';
+import { ActivityEventService } from '@/services/activity-event-service';
 import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 import { VoucherService } from '@/services/voucher-service';
 
@@ -75,6 +76,21 @@ export class RewardService {
           status: RewardStatus.CLAIMED,
           claimedAt: new Date(),
         },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: vault.appUserId,
+        vaultId,
+        type: ActivityEventType.REWARD_ISSUED,
+        rail: ActivityRail.APP,
+        status: ActivityStatus.COMPLETED,
+        title: 'Reward issued',
+        description: `${voucher.name} worth ${voucher.value.toLocaleString('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 })}`,
+        walletAddress: vault.walletAddress,
+        amount: voucher.value,
+        assetCode: 'PHP',
+        reference: voucher.code,
+        metadata: { rewardId: reward.id, voucherCode: voucher.code },
       });
 
       return voucher;

@@ -26,6 +26,7 @@ model AppUser {
 
   vaults      Vault[]
   receipts    ProofReceipt[]
+  activityEvents ActivityEvent[]
 
   @@index([createdAt])
 }
@@ -60,6 +61,7 @@ model Vault {
   rewards          RewardClaim[]
   topUps           TopUp[]
   receipts         ProofReceipt[]
+  activityEvents   ActivityEvent[]
 
   @@index([appUserId, status, createdAt])
   @@index([guestAccessTokenHash])
@@ -151,6 +153,7 @@ model ProofReceipt {
 
   appUser         AppUser?           @relation(fields: [appUserId], references: [id], onDelete: SetNull)
   vault           Vault              @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  activityEvents  ActivityEvent[]
 
   @@index([appUserId, createdAt])
   @@index([vaultId, createdAt])
@@ -162,3 +165,56 @@ enum ProofReceiptStatus {
   NETWORK_CONFIRMED
   FAILED
 }
+
+enum ActivityStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ActivityEventType {
+  VAULT_CREATED
+  TOP_UP_RECORDED
+  REWARD_ISSUED
+  RECEIPT_SAVED
+  STELLAR_PAYMENT_SUBMITTED
+  ACCOUNT_CONNECTED
+}
+
+enum ActivityRail {
+  APP
+  STELLAR
+}
+
+model ActivityEvent {
+  id              String            @id @default(cuid())
+  appUserId       String?
+  vaultId         String?
+  receiptId       String?
+  type            ActivityEventType
+  rail            ActivityRail      @default(APP)
+  status          ActivityStatus    @default(COMPLETED)
+  title           String
+  description     String
+  walletAddress   String?
+  amount          Decimal?
+  assetCode       String?
+  transactionHash String?
+  operationId     String?
+  ledger          Int?
+  reference       String?
+  explorerUrl     String?
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+
+  appUser         AppUser?          @relation(fields: [appUserId], references: [id], onDelete: SetNull)
+  vault           Vault?            @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  receipt         ProofReceipt?     @relation(fields: [receiptId], references: [id], onDelete: SetNull)
+
+  @@index([appUserId, createdAt])
+  @@index([vaultId, createdAt])
+  @@index([status, createdAt])
+  @@index([transactionHash])
+}
+

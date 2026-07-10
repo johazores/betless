@@ -71,7 +71,7 @@ export function ReceiptClient({ id }: { id: string }) {
     );
   }
 
-  const receiptLabel = receipt.status === 'NETWORK_CONFIRMED' ? 'Network receipt' : 'Saved receipt';
+  const receiptLabel = receipt.status === 'NETWORK_CONFIRMED' ? 'Stellar receipt' : 'Saved receipt';
   const vaultHref = vaultIdFromUrl ? `/vaults/${receipt.vaultId}` : `/vaults/${receipt.vaultId}`;
 
   return (
@@ -111,6 +111,12 @@ export function ReceiptClient({ id }: { id: string }) {
                   <p className="mt-1 break-all font-mono text-sm font-black text-emerald-950">{receipt.transactionHash}</p>
                 </div>
               ) : null}
+              {receipt.operationId ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                  <p className="text-sm font-bold text-slate-500">Operation ID</p>
+                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.operationId}</p>
+                </div>
+              ) : null}
               {receipt.ledger ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-bold text-slate-500">Ledger</p>
@@ -127,9 +133,9 @@ export function ReceiptClient({ id }: { id: string }) {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {receipt.explorerUrl ? (
-                <a href={receipt.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar</Button></a>
+                <a href={receipt.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar Explorer</Button></a>
               ) : (
-                <Button disabled>Network verification pending</Button>
+                <Button disabled>Network confirmation pending</Button>
               )}
               <PrintReceiptButton />
             </div>

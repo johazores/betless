@@ -69,3 +69,31 @@ export const ProofReceiptStatus = {
 } as const;
 
 export type ProofReceiptStatus = (typeof ProofReceiptStatus)[keyof typeof ProofReceiptStatus];
+
+
+export const ActivityStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+
+export type ActivityStatus = (typeof ActivityStatus)[keyof typeof ActivityStatus];
+
+export const ActivityEventType = {
+  VAULT_CREATED: 'VAULT_CREATED',
+  TOP_UP_RECORDED: 'TOP_UP_RECORDED',
+  REWARD_ISSUED: 'REWARD_ISSUED',
+  RECEIPT_SAVED: 'RECEIPT_SAVED',
+  STELLAR_PAYMENT_SUBMITTED: 'STELLAR_PAYMENT_SUBMITTED',
+  ACCOUNT_CONNECTED: 'ACCOUNT_CONNECTED',
+} as const;
+
+export type ActivityEventType = (typeof ActivityEventType)[keyof typeof ActivityEventType];
+
+export const ActivityRail = {
+  APP: 'APP',
+  STELLAR: 'STELLAR',
+} as const;
+
+export type ActivityRail = (typeof ActivityRail)[keyof typeof ActivityRail];

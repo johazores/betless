@@ -1,8 +1,9 @@
 import { Asset, BASE_FEE, Horizon, Keypair, Memo, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
-import { ProofReceiptStatus, StellarStatus } from '@/lib/domain';
+import { ActivityEventType, ActivityRail, ActivityStatus, ProofReceiptStatus, StellarStatus } from '@/lib/domain';
 import { ConfigService } from '@/services/config-service';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { prisma } from '@/lib/prisma';
+import { ActivityEventService } from '@/services/activity-event-service';
 import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 
 function buildLocalProofReference(vaultId: string) {
@@ -26,12 +27,24 @@ type ProofAttempt = {
   explorerUrl?: string | null;
   memo: string;
   message: string;
+  rail: typeof ActivityRail.APP | typeof ActivityRail.STELLAR;
+  activityType: typeof ActivityEventType.RECEIPT_SAVED | typeof ActivityEventType.STELLAR_PAYMENT_SUBMITTED;
+  activityTitle: string;
 };
 
 export class StellarProofService {
   static validatePublicKey(walletAddress: string) {
     if (!isValidStellarPublicKey(walletAddress)) {
       throw new Error('Add a valid Stellar public address that starts with G.');
+    }
+  }
+
+  private static async getFirstOperationId(server: Horizon.Server, transactionHash: string) {
+    try {
+      const operations = await server.operations().forTransaction(transactionHash).call();
+      return operations.records?.[0]?.id ?? null;
+    } catch {
+      return null;
     }
   }
 
@@ -44,7 +57,10 @@ export class StellarProofService {
         status: ProofReceiptStatus.LOCAL_RECEIPT,
         proofReference: buildLocalProofReference(vault.id),
         memo,
-        message: 'Receipt saved. Network verification will be attached when a funded Stellar signer is connected.',
+        rail: ActivityRail.APP,
+        activityType: ActivityEventType.RECEIPT_SAVED,
+        activityTitle: 'Receipt saved',
+        message: 'Receipt saved. Stellar network confirmation can be added when network signing is enabled.',
       };
     }
 
@@ -73,30 +89,36 @@ export class StellarProofService {
       const result = await server.submitTransaction(transaction) as {
         hash?: string;
         ledger?: number;
-        successful?: boolean;
-        _links?: { transaction?: { href?: string } };
       };
 
       if (!result.hash) {
         throw new Error('Stellar did not return a transaction hash.');
       }
 
+      const operationId = await this.getFirstOperationId(server, result.hash);
+
       return {
         status: ProofReceiptStatus.NETWORK_CONFIRMED,
         proofReference: result.hash,
         transactionHash: result.hash,
-        operationId: null,
+        operationId,
         ledger: result.ledger ?? null,
         explorerUrl: getExplorerUrl(result.hash),
         memo,
-        message: 'Network receipt created and linked to this vault.',
+        rail: ActivityRail.STELLAR,
+        activityType: ActivityEventType.STELLAR_PAYMENT_SUBMITTED,
+        activityTitle: 'Stellar payment confirmed',
+        message: 'Stellar payment confirmed and linked to this vault.',
       };
     } catch {
       return {
         status: ProofReceiptStatus.LOCAL_RECEIPT,
         proofReference: buildLocalProofReference(vault.id),
         memo,
-        message: 'Receipt saved. Network verification can be attached when Stellar submission is available.',
+        rail: ActivityRail.APP,
+        activityType: ActivityEventType.RECEIPT_SAVED,
+        activityTitle: 'Receipt saved',
+        message: 'Receipt saved. Stellar network confirmation can be added when network submission is available.',
       };
     }
   }
@@ -131,7 +153,7 @@ export class StellarProofService {
           appUserId: vault.appUserId,
           vaultId: vault.id,
           status: proof.status,
-          network: 'Stellar',
+          network: 'Stellar Testnet',
           publicAddress: vault.walletAddress,
           proofReference: proof.proofReference,
           transactionHash: proof.transactionHash ?? null,
@@ -141,6 +163,28 @@ export class StellarProofService {
           explorerUrl: proof.explorerUrl ?? null,
           message: proof.message,
         },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: vault.appUserId,
+        vaultId: vault.id,
+        receiptId: receipt.id,
+        type: proof.activityType,
+        rail: proof.rail,
+        status: ActivityStatus.COMPLETED,
+        title: proof.activityTitle,
+        description: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED
+          ? 'Payment operation recorded on Stellar Testnet.'
+          : 'Vault receipt saved for this commitment.',
+        walletAddress: vault.walletAddress,
+        amount: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED ? 0.0000001 : null,
+        assetCode: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED ? 'XLM' : null,
+        transactionHash: proof.transactionHash ?? null,
+        operationId: proof.operationId ?? null,
+        ledger: proof.ledger ?? null,
+        reference: proof.proofReference,
+        explorerUrl: proof.explorerUrl ?? null,
+        metadata: { memo: proof.memo, network: 'Stellar Testnet' },
       });
 
       await tx.vault.update({

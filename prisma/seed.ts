@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma';
 import { VaultService } from '../services/vault-service';
 
 async function main() {
+  await prisma.activityEvent.deleteMany();
   await prisma.proofReceipt.deleteMany();
   await prisma.rewardClaim.deleteMany();
   await prisma.topUp.deleteMany();

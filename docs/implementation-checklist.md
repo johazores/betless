@@ -56,3 +56,13 @@
 - [x] TypeScript check passes
 - [x] MVP verification passes
 - [x] Next build passes
+
+## Loop 20 — Transaction Activity and Analytics
+- [x] Added stored activity events.
+- [x] Added Stellar-aware transaction references.
+- [x] Added Activity timeline.
+- [x] Added Analytics API.
+- [x] Added dashboard metrics and simple charts.
+- [x] Added migration for ActivityEvent.
+- [x] Updated transaction and analytics documentation.
+

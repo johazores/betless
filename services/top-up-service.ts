@@ -1,7 +1,8 @@
-import { RewardStatus, TopUpFrequency, TopUpStatus, VaultStatus } from '@/lib/domain';
+import { ActivityEventType, ActivityRail, ActivityStatus, RewardStatus, TopUpFrequency, TopUpStatus, VaultStatus, decimalToNumber } from '@/lib/domain';
 import { addMonths, addWeeks } from '@/lib/dates';
 import { getMaxTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
+import { ActivityEventService } from '@/services/activity-event-service';
 import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
 
 type DbClient = any;
@@ -92,6 +93,21 @@ export class TopUpService {
           currentAmount: nextAmount,
           status: goalReached ? VaultStatus.UNLOCK_READY : VaultStatus.ACTIVE,
         },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: vault.appUserId,
+        vaultId,
+        type: ActivityEventType.TOP_UP_RECORDED,
+        rail: ActivityRail.APP,
+        status: ActivityStatus.COMPLETED,
+        title: 'Top-up recorded',
+        description: `${decimalToNumber(topUp.amount).toLocaleString('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 })} added to your vault`,
+        walletAddress: vault.walletAddress,
+        amount: decimalToNumber(topUp.amount),
+        assetCode: 'PHP',
+        reference: topUp.id,
+        metadata: { topUpId: topUp.id, goalReached },
       });
 
       const nextLockedReward = await tx.rewardClaim.findFirst({

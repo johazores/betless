@@ -1,10 +1,11 @@
-import { VaultMode, decimalToNumber } from '@/lib/domain';
+import { ActivityEventType, ActivityRail, ActivityStatus, VaultMode, decimalToNumber } from '@/lib/domain';
 import { addWeeks } from '@/lib/dates';
 import { getPlannedTopUpCount } from '@/lib/planning';
 import { prisma } from '@/lib/prisma';
 import type { CreateVaultInput } from '@/lib/validators';
 import { ConfigService } from '@/services/config-service';
 import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
+import { ActivityEventService } from '@/services/activity-event-service';
 import { RewardService } from '@/services/reward-service';
 import { TopUpService } from '@/services/top-up-service';
 import { UserService } from '@/services/user-service';
@@ -117,6 +118,21 @@ export class VaultService {
           reason: input.reason,
           unlockAt,
         },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: appUser?.id ?? null,
+        vaultId: createdVault.id,
+        type: ActivityEventType.VAULT_CREATED,
+        rail: ActivityRail.APP,
+        status: ActivityStatus.COMPLETED,
+        title: 'Vault created',
+        description: ActivityEventService.buildVaultCreatedDescription(input.currentAmount, input.targetAmount),
+        walletAddress: input.walletAddress,
+        amount: input.currentAmount,
+        assetCode: 'PHP',
+        reference: createdVault.id,
+        metadata: { mode: input.mode, targetAmount: input.targetAmount },
       });
 
       if (input.mode === VaultMode.PERIODIC_TOP_UP && input.topUpAmount && input.topUpFrequency) {
@@ -235,6 +251,22 @@ export class VaultService {
         where: { vaultId: id },
         data: { appUserId: appUser.id },
       });
+
+      await tx.activityEvent.updateMany({
+        where: { vaultId: id },
+        data: { appUserId: appUser.id },
+      });
+
+      await ActivityEventService.create(tx, {
+        appUserId: appUser.id,
+        vaultId: id,
+        type: ActivityEventType.ACCOUNT_CONNECTED,
+        rail: ActivityRail.APP,
+        status: ActivityStatus.COMPLETED,
+        title: 'Account connected',
+        description: 'Vault history is now saved to your account.',
+        reference: id,
+      });
     });
 
     return this.getVaultDetail(id, { clerkUserId });
@@ -269,6 +301,24 @@ export class VaultService {
         where: { vaultId: { in: vaultIds } },
         data: { appUserId: appUser.id },
       });
+
+      await tx.activityEvent.updateMany({
+        where: { vaultId: { in: vaultIds } },
+        data: { appUserId: appUser.id },
+      });
+
+      for (const vaultId of vaultIds) {
+        await ActivityEventService.create(tx, {
+          appUserId: appUser.id,
+          vaultId,
+          type: ActivityEventType.ACCOUNT_CONNECTED,
+          rail: ActivityRail.APP,
+          status: ActivityStatus.COMPLETED,
+          title: 'Account connected',
+          description: 'Vault history is now saved to your account.',
+          reference: vaultId,
+        });
+      }
 
       return { connectedVaults: vaultUpdate.count, connectedReceipts: receiptUpdate.count };
     });

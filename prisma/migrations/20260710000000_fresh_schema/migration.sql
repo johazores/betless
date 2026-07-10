@@ -22,6 +22,15 @@ CREATE TYPE "RewardStatus" AS ENUM ('LOCKED', 'AVAILABLE', 'CLAIMED');
 -- CreateEnum
 CREATE TYPE "ProofReceiptStatus" AS ENUM ('LOCAL_RECEIPT', 'NETWORK_CONFIRMED', 'FAILED');
 
+-- CreateEnum
+CREATE TYPE "ActivityStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "ActivityEventType" AS ENUM ('VAULT_CREATED', 'TOP_UP_RECORDED', 'REWARD_ISSUED', 'RECEIPT_SAVED', 'STELLAR_PAYMENT_SUBMITTED', 'ACCOUNT_CONNECTED');
+
+-- CreateEnum
+CREATE TYPE "ActivityRail" AS ENUM ('APP', 'STELLAR');
+
 -- CreateTable
 CREATE TABLE "AppConfig" (
     "id" TEXT NOT NULL,
@@ -120,6 +129,32 @@ CREATE TABLE "ProofReceipt" (
     CONSTRAINT "ProofReceipt_pkey" PRIMARY KEY ("id")
 );
 
+
+-- CreateTable
+CREATE TABLE "ActivityEvent" (
+    "id" TEXT NOT NULL,
+    "appUserId" TEXT,
+    "vaultId" TEXT,
+    "receiptId" TEXT,
+    "type" "ActivityEventType" NOT NULL,
+    "rail" "ActivityRail" NOT NULL DEFAULT 'APP',
+    "status" "ActivityStatus" NOT NULL DEFAULT 'COMPLETED',
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "walletAddress" TEXT,
+    "amount" DECIMAL(65,30),
+    "assetCode" TEXT,
+    "transactionHash" TEXT,
+    "operationId" TEXT,
+    "ledger" INTEGER,
+    "reference" TEXT,
+    "explorerUrl" TEXT,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ActivityEvent_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "AppConfig_key_key" ON "AppConfig"("key");
 
@@ -162,6 +197,19 @@ CREATE INDEX "ProofReceipt_vaultId_createdAt_idx" ON "ProofReceipt"("vaultId", "
 -- CreateIndex
 CREATE INDEX "ProofReceipt_transactionHash_idx" ON "ProofReceipt"("transactionHash");
 
+
+-- CreateIndex
+CREATE INDEX "ActivityEvent_appUserId_createdAt_idx" ON "ActivityEvent"("appUserId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ActivityEvent_vaultId_createdAt_idx" ON "ActivityEvent"("vaultId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ActivityEvent_status_createdAt_idx" ON "ActivityEvent"("status", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ActivityEvent_transactionHash_idx" ON "ActivityEvent"("transactionHash");
+
 -- AddForeignKey
 ALTER TABLE "Vault" ADD CONSTRAINT "Vault_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -176,3 +224,12 @@ ALTER TABLE "ProofReceipt" ADD CONSTRAINT "ProofReceipt_appUserId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "ProofReceipt" ADD CONSTRAINT "ProofReceipt_vaultId_fkey" FOREIGN KEY ("vaultId") REFERENCES "Vault"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey
+ALTER TABLE "ActivityEvent" ADD CONSTRAINT "ActivityEvent_appUserId_fkey" FOREIGN KEY ("appUserId") REFERENCES "AppUser"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ActivityEvent" ADD CONSTRAINT "ActivityEvent_vaultId_fkey" FOREIGN KEY ("vaultId") REFERENCES "Vault"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ActivityEvent" ADD CONSTRAINT "ActivityEvent_receiptId_fkey" FOREIGN KEY ("receiptId") REFERENCES "ProofReceipt"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

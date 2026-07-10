@@ -135,3 +135,17 @@ See `docs/database-guest-token-fix.md` for details.
 Users can create a vault before signing in. Betless saves guest progress in this browser using a secure guest session token. The token is sent through `x-vault-token`, and only its hash is stored in the database.
 
 When a guest signs in, `/api/session/connect` links all browser-saved vaults and receipts to the Clerk account. The dashboard works before and after sign-in, so users do not lose vaults, receipts, rewards, or activity.
+
+## Activity and analytics
+
+Betless now records a clear activity timeline for vault creation, top-ups, rewards, receipts, account connection, and Stellar payment confirmation.
+
+Run the latest database migration before testing:
+
+```bash
+npm run prisma:migrate
+npm run prisma:generate
+npm run dev
+```
+
+The dashboard includes balance, deposits, rewards, progress, monthly activity, vault growth, and recent activity. Stellar explorer links appear only when a real Stellar transaction hash exists.

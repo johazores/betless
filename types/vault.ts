@@ -1,4 +1,15 @@
-import type { ProofReceiptStatus, RewardStatus, StellarStatus, TopUpFrequency, TopUpStatus, VaultMode, VaultStatus } from '@/lib/domain';
+import type {
+  ActivityEventType,
+  ActivityRail,
+  ActivityStatus,
+  ProofReceiptStatus,
+  RewardStatus,
+  StellarStatus,
+  TopUpFrequency,
+  TopUpStatus,
+  VaultMode,
+  VaultStatus,
+} from '@/lib/domain';
 
 export type TopUpView = {
   id: string;
@@ -17,7 +28,6 @@ export type RewardClaimView = {
   status: RewardStatus;
   claimedAt: string | null;
 };
-
 
 export type ProofReceiptView = {
   id: string;
@@ -85,9 +95,44 @@ export type DashboardVaultView = {
 
 export type ActivityItemView = {
   id: string;
-  type: 'VAULT_CREATED' | 'TOP_UP_COMPLETED' | 'REWARD_CLAIMED' | 'RECEIPT_CREATED';
+  type: ActivityEventType;
+  rail: ActivityRail;
+  status: ActivityStatus;
   title: string;
   description: string;
+  walletAddress: string | null;
+  amount: number | null;
+  assetCode: string | null;
+  transactionHash: string | null;
+  operationId: string | null;
+  ledger: number | null;
+  reference: string | null;
+  explorerUrl: string | null;
+  vaultId: string | null;
+  receiptId: string | null;
   href: string;
   createdAt: string;
+};
+
+export type MonthlyActivityPoint = {
+  month: string;
+  count: number;
+};
+
+export type VaultGrowthPoint = {
+  label: string;
+  value: number;
+};
+
+export type AnalyticsView = {
+  totalBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  rewardsEarned: number;
+  rewardsRedeemed: number;
+  completedTransactions: number;
+  savingsProgressPercent: number;
+  vaultGrowth: VaultGrowthPoint[];
+  monthlyActivity: MonthlyActivityPoint[];
+  recentActivity: ActivityItemView[];
 };

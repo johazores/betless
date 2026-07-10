@@ -11,15 +11,50 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Progress } from '@/components/ui/progress';
 import { apiRequest, postJson } from '@/lib/api-client';
-import { formatShortDate } from '@/lib/dates';
+import { formatDateTime, formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
 import { clearGuestSessionToken, getGuestSessionToken } from '@/lib/vault-session';
-import type { DashboardVaultView, ProofReceiptView } from '@/types/vault';
+import type { AnalyticsView, DashboardVaultView, ProofReceiptView } from '@/types/vault';
+
+function MetricCard({ label, value, helper }: { label: string; value: string | number; helper?: string }) {
+  return (
+    <Card>
+      <p className="text-sm font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+      {helper ? <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">{helper}</p> : null}
+    </Card>
+  );
+}
+
+function BarList({ items, valueFormatter = (value: number) => String(value) }: { items: { label: string; value: number }[]; valueFormatter?: (value: number) => string }) {
+  const max = Math.max(1, ...items.map((item) => item.value));
+
+  if (items.length === 0) {
+    return <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">No activity yet.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {items.map((item) => (
+        <div key={`${item.label}-${item.value}`}>
+          <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+            <span className="font-bold text-slate-600">{item.label}</span>
+            <span className="font-black text-slate-950">{valueFormatter(item.value)}</span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-slate-900" style={{ width: `${Math.max(8, (item.value / max) * 100)}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function DashboardClient() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [vaults, setVaults] = useState<DashboardVaultView[]>([]);
   const [receipts, setReceipts] = useState<ProofReceiptView[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnectingSession, setIsConnectingSession] = useState(false);
   const [error, setError] = useState('');
@@ -46,15 +81,18 @@ export function DashboardClient() {
       if (!isSignedIn && !vaultAccessToken) {
         setVaults([]);
         setReceipts([]);
+        setAnalytics(null);
         return;
       }
 
-      const [loadedVaults, loadedReceipts] = await Promise.all([
+      const [loadedVaults, loadedReceipts, loadedAnalytics] = await Promise.all([
         apiRequest<DashboardVaultView[]>('/api/vaults', undefined, accessOptions),
         apiRequest<ProofReceiptView[]>('/api/receipts', undefined, accessOptions),
+        apiRequest<AnalyticsView>('/api/analytics', undefined, accessOptions),
       ]);
       setVaults(loadedVaults);
       setReceipts(loadedReceipts);
+      setAnalytics(loadedAnalytics);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Dashboard could not be loaded.');
     } finally {
@@ -82,12 +120,15 @@ export function DashboardClient() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <Badge>{isSignedIn ? 'Account dashboard' : 'Saved in this browser'}</Badge>
-              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Your commitment history</h1>
+              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950">Your vault overview</h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                View vaults, receipts, rewards, and verification links. Create an account to keep access across devices.
+                Track savings, rewards, receipts, and network verification in one place.
               </p>
             </div>
-            <Link href="/create-vault"><Button>Create new vault</Button></Link>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/activity"><Button variant="secondary">View activity</Button></Link>
+              <Link href="/create-vault"><Button>Create Vault</Button></Link>
+            </div>
           </div>
 
           {isConnectingSession ? (
@@ -112,18 +153,76 @@ export function DashboardClient() {
             </Card>
           ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Total balance" value={formatPeso(analytics?.totalBalance ?? 0)} helper="Across active vaults" />
+            <MetricCard label="Total deposits" value={formatPeso(analytics?.totalDeposits ?? 0)} helper="Starting amounts plus recorded top-ups" />
+            <MetricCard label="Rewards earned" value={formatPeso(analytics?.rewardsEarned ?? 0)} helper={`${analytics?.rewardsRedeemed ?? 0} rewards redeemed`} />
+            <MetricCard label="Completed activity" value={analytics?.completedTransactions ?? 0} helper="Vault, reward, receipt, and Stellar records" />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
             <Card>
-              <p className="text-sm font-bold text-slate-500">Vaults</p>
-              <p className="mt-2 text-3xl font-black text-slate-950">{vaults.length}</p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-950">Savings progress</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Progress across all active vaults.</p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-black text-slate-800">{analytics?.savingsProgressPercent ?? 0}%</span>
+              </div>
+              <div className="mt-6"><Progress value={analytics?.savingsProgressPercent ?? 0} /></div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-bold text-slate-500">Withdrawals</p>
+                  <p className="mt-1 text-xl font-black text-slate-950">{formatPeso(analytics?.totalWithdrawals ?? 0)}</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-bold text-slate-500">Network receipts</p>
+                  <p className="mt-1 text-xl font-black text-slate-950">{receipts.filter((receipt) => receipt.status === 'NETWORK_CONFIRMED').length}</p>
+                </div>
+              </div>
             </Card>
+
             <Card>
-              <p className="text-sm font-bold text-slate-500">Receipts</p>
-              <p className="mt-2 text-3xl font-black text-slate-950">{receipts.length}</p>
+              <h2 className="text-2xl font-black text-slate-950">Monthly activity</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Completed actions by month.</p>
+              <div className="mt-6">
+                <BarList items={(analytics?.monthlyActivity ?? []).map((item) => ({ label: item.month, value: item.count }))} />
+              </div>
             </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1fr]">
             <Card>
-              <p className="text-sm font-bold text-slate-500">Network verified</p>
-              <p className="mt-2 text-3xl font-black text-slate-950">{receipts.filter((receipt) => receipt.status === 'NETWORK_CONFIRMED').length}</p>
+              <h2 className="text-2xl font-black text-slate-950">Vault growth</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Balance growth across recent vaults.</p>
+              <div className="mt-6">
+                <BarList items={analytics?.vaultGrowth ?? []} valueFormatter={formatPeso} />
+              </div>
+            </Card>
+
+            <Card>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-950">Recent account activity</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Latest saved records.</p>
+                </div>
+                <Link href="/activity" className="text-sm font-black text-orange-800 hover:text-orange-900">Open timeline →</Link>
+              </div>
+              <div className="mt-5 space-y-3">
+                {(analytics?.recentActivity ?? []).length === 0 ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">No activity yet. Create a vault to get started.</p>
+                ) : analytics?.recentActivity.map((item) => (
+                  <Link key={item.id} href={item.href} className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-black text-slate-950">{item.title}</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-600">{item.rail === 'STELLAR' ? 'Stellar' : 'App'} · {item.status.replaceAll('_', ' ')}</p>
+                      </div>
+                      <p className="text-sm font-bold text-slate-500">{formatDateTime(item.createdAt)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </Card>
           </div>
 

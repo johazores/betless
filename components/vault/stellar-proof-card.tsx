@@ -19,7 +19,7 @@ export function StellarProofCard({ vault, onCreateProof, isLoading }: StellarPro
   const receipt = vault.latestReceipt;
   const hasReceipt = Boolean(receipt);
   const isNetworkVerified = receipt?.status === 'NETWORK_CONFIRMED';
-  const status = hasReceipt ? (isNetworkVerified ? 'Network receipt saved' : 'Receipt saved') : getStellarStatusLabel(vault.stellarStatus);
+  const status = hasReceipt ? (isNetworkVerified ? 'Stellar receipt saved' : 'Receipt saved') : getStellarStatusLabel(vault.stellarStatus);
 
   return (
     <Card>
@@ -46,7 +46,7 @@ export function StellarProofCard({ vault, onCreateProof, isLoading }: StellarPro
             <p className="mt-2 font-semibold leading-6">{receipt.message}</p>
             {receipt.explorerUrl ? (
               <a href={receipt.explorerUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex font-black text-emerald-800 underline decoration-2 underline-offset-4">
-                Verify on Stellar
+                Verify on Stellar Explorer
               </a>
             ) : null}
           </div>

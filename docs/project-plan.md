@@ -59,3 +59,13 @@ Betless is a money-protection and commitment tool. It does not use chance mechan
 Betless allows users to start immediately without sign-in. To prevent lost progress, the app creates one browser-held guest session token and reuses it across guest vaults, receipts, rewards, and activity.
 
 When the user signs in, Betless automatically connects every browser-saved vault and receipt to the Clerk-backed account through `/api/session/connect`. This keeps onboarding fast while giving users a safe path to permanent account access.
+
+## Loop 20 — Transaction Activity and Analytics
+- [x] Added stored activity events.
+- [x] Added Stellar-aware transaction references.
+- [x] Added Activity timeline.
+- [x] Added Analytics API.
+- [x] Added dashboard metrics and simple charts.
+- [x] Added migration for ActivityEvent.
+- [x] Updated transaction and analytics documentation.
+
