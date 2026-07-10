@@ -35,12 +35,15 @@ type ProofReceiptRecord = {
   status: ProofReceiptView['status'];
   network: string;
   publicAddress: string;
+  sourceAccount: string | null;
+  destinationAccount: string | null;
   proofReference: string;
   transactionHash: string | null;
   operationId: string | null;
   ledger: number | null;
   memo: string | null;
   explorerUrl: string | null;
+  accountExplorerUrl: string | null;
   message: string;
   createdAt: Date;
 };
@@ -355,12 +358,15 @@ export class VaultService {
       status: receipt.status,
       network: receipt.network,
       publicAddress: receipt.publicAddress,
+      sourceAccount: receipt.sourceAccount ?? null,
+      destinationAccount: receipt.destinationAccount ?? null,
       proofReference: receipt.proofReference,
       transactionHash: receipt.transactionHash,
       operationId: receipt.operationId,
       ledger: receipt.ledger,
       memo: receipt.memo,
       explorerUrl: receipt.explorerUrl,
+      accountExplorerUrl: receipt.accountExplorerUrl ?? null,
       message: receipt.message,
       createdAt: receipt.createdAt.toISOString(),
     };

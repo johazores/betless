@@ -211,17 +211,27 @@ export function DashboardClient() {
               <div className="mt-5 space-y-3">
                 {(analytics?.recentActivity ?? []).length === 0 ? (
                   <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-600">No activity yet. Create a vault to get started.</p>
-                ) : analytics?.recentActivity.map((item) => (
-                  <Link key={item.id} href={item.href} className="block rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="font-black text-slate-950">{item.title}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-600">{item.rail === 'STELLAR' ? 'Stellar' : 'App'} · {item.status.replaceAll('_', ' ')}</p>
-                      </div>
-                      <p className="text-sm font-bold text-slate-500">{formatDateTime(item.createdAt)}</p>
+                ) : analytics?.recentActivity.map((item) => {
+                  const explorerUrl = item.explorerUrl ?? item.accountExplorerUrl;
+                  return (
+                    <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white">
+                      <Link href={item.href} className="block">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-black text-slate-950">{item.title}</p>
+                            <p className="mt-1 text-sm font-semibold text-slate-600">{item.network ?? (item.rail === 'STELLAR' ? 'Stellar' : 'App')} · {item.status.replaceAll('_', ' ')}</p>
+                          </div>
+                          <p className="text-sm font-bold text-slate-500">{formatDateTime(item.createdAt)}</p>
+                        </div>
+                      </Link>
+                      {explorerUrl ? (
+                        <a href={explorerUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-sm font-black text-orange-800 hover:text-orange-900">
+                          View on Stellar Explorer →
+                        </a>
+                      ) : null}
                     </div>
-                  </Link>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>

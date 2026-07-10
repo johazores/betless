@@ -14,6 +14,9 @@ type ActivityEventInput = {
   title: string;
   description: string;
   walletAddress?: string | null;
+  sourceAccount?: string | null;
+  destinationAccount?: string | null;
+  network?: string | null;
   amount?: number | null;
   assetCode?: string | null;
   transactionHash?: string | null;
@@ -21,6 +24,7 @@ type ActivityEventInput = {
   ledger?: number | null;
   reference?: string | null;
   explorerUrl?: string | null;
+  accountExplorerUrl?: string | null;
   metadata?: Record<string, unknown> | null;
 };
 
@@ -37,6 +41,9 @@ export class ActivityEventService {
         title: input.title,
         description: input.description,
         walletAddress: input.walletAddress ?? null,
+        sourceAccount: input.sourceAccount ?? null,
+        destinationAccount: input.destinationAccount ?? null,
+        network: input.network ?? null,
         amount: input.amount ?? null,
         assetCode: input.assetCode ?? null,
         transactionHash: input.transactionHash ?? null,
@@ -44,6 +51,7 @@ export class ActivityEventService {
         ledger: input.ledger ?? null,
         reference: input.reference ?? null,
         explorerUrl: input.explorerUrl ?? null,
+        accountExplorerUrl: input.accountExplorerUrl ?? null,
         metadata: input.metadata ?? undefined,
       },
     });
@@ -62,6 +70,9 @@ export class ActivityEventService {
       title: event.title,
       description: event.description,
       walletAddress: event.walletAddress ?? null,
+      sourceAccount: event.sourceAccount ?? null,
+      destinationAccount: event.destinationAccount ?? null,
+      network: event.network ?? null,
       amount: event.amount == null ? null : decimalToNumber(event.amount),
       assetCode: event.assetCode ?? null,
       transactionHash: event.transactionHash ?? null,
@@ -69,6 +80,7 @@ export class ActivityEventService {
       ledger: event.ledger ?? null,
       reference: event.reference ?? null,
       explorerUrl: event.explorerUrl ?? null,
+      accountExplorerUrl: event.accountExplorerUrl ?? null,
       vaultId,
       receiptId,
       href,

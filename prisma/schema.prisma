@@ -142,12 +142,15 @@ model ProofReceipt {
   status          ProofReceiptStatus @default(LOCAL_RECEIPT)
   network         String             @default("Stellar")
   publicAddress   String
+  sourceAccount   String?
+  destinationAccount String?
   proofReference  String             @unique
   transactionHash String?
   operationId     String?
   ledger          Int?
   memo            String?
   explorerUrl     String?
+  accountExplorerUrl String?
   message         String
   createdAt       DateTime           @default(now())
 
@@ -198,6 +201,9 @@ model ActivityEvent {
   title           String
   description     String
   walletAddress   String?
+  sourceAccount   String?
+  destinationAccount String?
+  network         String?
   amount          Decimal?
   assetCode       String?
   transactionHash String?
@@ -205,6 +211,7 @@ model ActivityEvent {
   ledger          Int?
   reference       String?
   explorerUrl     String?
+  accountExplorerUrl String?
   metadata        Json?
   createdAt       DateTime          @default(now())
 

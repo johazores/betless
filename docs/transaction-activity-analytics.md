@@ -25,15 +25,28 @@ Each event includes:
 - transaction hash when available
 - operation ID when available
 - ledger when available
-- explorer link when available
+- **View on Stellar Explorer** link when a Stellar wallet or transaction reference exists
 
-## Stellar terminology
+## Stellar verification
 
 The app only uses Stellar transaction wording when there is a real Stellar network record.
 
-When a server-side signer is configured, Betless submits a small Stellar Testnet payment operation with a memo. The receipt stores the transaction hash, ledger, operation ID when available, and Stellar Expert explorer URL.
+Every confirmed Stellar transaction displays:
 
-When network signing is not configured, Betless stores a receipt and marks network confirmation as pending. It does not pretend that an on-chain transaction exists.
+- transaction hash
+- source account
+- destination account
+- active network
+- status
+- ledger when available
+- operation ID when available
+- **View on Stellar Explorer** link
+
+The explorer URL is generated from the active Stellar network. Testnet records link to Stellar Expert Testnet. Mainnet records link to Stellar Expert Public.
+
+When a server-side signer is configured, Betless submits a small Stellar payment operation with a memo. The receipt stores the transaction hash, ledger, operation ID when available, source account, destination account, and explorer URL.
+
+When network signing is not configured, Betless stores a wallet receipt and shows an account-level Stellar Explorer link. It does not claim that an on-chain transaction exists unless a transaction hash exists.
 
 ## Activity page
 
@@ -47,7 +60,7 @@ The Activity page shows a chronological timeline grouped by date. Each item show
 - wallet
 - reference
 - details panel
-- explorer link when available
+- **View on Stellar Explorer** link when a Stellar wallet or transaction reference exists
 
 ## Dashboard analytics
 

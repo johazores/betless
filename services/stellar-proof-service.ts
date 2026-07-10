@@ -1,10 +1,15 @@
-import { Asset, BASE_FEE, Horizon, Keypair, Memo, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import { Asset, BASE_FEE, Horizon, Keypair, Memo, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
 import { ActivityEventType, ActivityRail, ActivityStatus, ProofReceiptStatus, StellarStatus } from '@/lib/domain';
 import { ConfigService } from '@/services/config-service';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { prisma } from '@/lib/prisma';
 import { ActivityEventService } from '@/services/activity-event-service';
 import { buildVaultAccessWhere, type VaultAccess } from '@/services/vault-access-service';
+import {
+  buildStellarAccountExplorerUrl,
+  buildStellarOperationExplorerUrl,
+  buildStellarTransactionExplorerUrl,
+} from '@/lib/stellar-explorer';
 
 function buildLocalProofReference(vaultId: string) {
   return `betless-receipt-${vaultId.slice(0, 8)}-${Date.now().toString(36)}`;
@@ -14,17 +19,16 @@ function buildMemo(vaultId: string) {
   return `BTLS-${vaultId.slice(0, 20)}`;
 }
 
-function getExplorerUrl(transactionHash: string) {
-  return `https://stellar.expert/explorer/testnet/tx/${transactionHash}`;
-}
-
 type ProofAttempt = {
   status: typeof ProofReceiptStatus.LOCAL_RECEIPT | typeof ProofReceiptStatus.NETWORK_CONFIRMED;
   proofReference: string;
+  sourceAccount?: string | null;
+  destinationAccount: string;
   transactionHash?: string | null;
   operationId?: string | null;
   ledger?: number | null;
-  explorerUrl?: string | null;
+  explorerUrl: string;
+  accountExplorerUrl: string;
   memo: string;
   message: string;
   rail: typeof ActivityRail.APP | typeof ActivityRail.STELLAR;
@@ -48,20 +52,35 @@ export class StellarProofService {
     }
   }
 
+  private static buildAccountOnlyProof(vault: { id: string; walletAddress: string }, message: string): ProofAttempt {
+    const network = ConfigService.getStellarNetwork();
+    const memo = buildMemo(vault.id);
+    const accountExplorerUrl = buildStellarAccountExplorerUrl(vault.walletAddress, network);
+
+    return {
+      status: ProofReceiptStatus.LOCAL_RECEIPT,
+      proofReference: buildLocalProofReference(vault.id),
+      destinationAccount: vault.walletAddress,
+      explorerUrl: accountExplorerUrl,
+      accountExplorerUrl,
+      memo,
+      rail: ActivityRail.APP,
+      activityType: ActivityEventType.RECEIPT_SAVED,
+      activityTitle: 'Receipt saved',
+      message,
+    };
+  }
+
   private static async attemptNetworkProof(vault: { id: string; walletAddress: string }): Promise<ProofAttempt> {
     const sourceSecret = process.env.STELLAR_PROOF_SOURCE_SECRET;
+    const network = ConfigService.getStellarNetwork();
     const memo = buildMemo(vault.id);
 
     if (!sourceSecret) {
-      return {
-        status: ProofReceiptStatus.LOCAL_RECEIPT,
-        proofReference: buildLocalProofReference(vault.id),
-        memo,
-        rail: ActivityRail.APP,
-        activityType: ActivityEventType.RECEIPT_SAVED,
-        activityTitle: 'Receipt saved',
-        message: 'Receipt saved. Stellar network confirmation can be added when network signing is enabled.',
-      };
+      return this.buildAccountOnlyProof(
+        vault,
+        'Receipt saved. Open the Stellar Explorer link to verify the wallet address.'
+      );
     }
 
     try {
@@ -74,7 +93,7 @@ export class StellarProofService {
 
       const transaction = new TransactionBuilder(sourceAccount, {
         fee: String(fee),
-        networkPassphrase: Networks.TESTNET,
+        networkPassphrase: ConfigService.getStellarNetworkPassphrase(),
       })
         .addOperation(Operation.payment({
           destination: vault.walletAddress,
@@ -96,30 +115,30 @@ export class StellarProofService {
       }
 
       const operationId = await this.getFirstOperationId(server, result.hash);
+      const transactionExplorerUrl = buildStellarTransactionExplorerUrl(result.hash, network);
+      const accountExplorerUrl = buildStellarAccountExplorerUrl(vault.walletAddress, network);
 
       return {
         status: ProofReceiptStatus.NETWORK_CONFIRMED,
         proofReference: result.hash,
+        sourceAccount: sourceKeypair.publicKey(),
+        destinationAccount: vault.walletAddress,
         transactionHash: result.hash,
         operationId,
         ledger: result.ledger ?? null,
-        explorerUrl: getExplorerUrl(result.hash),
+        explorerUrl: transactionExplorerUrl,
+        accountExplorerUrl,
         memo,
         rail: ActivityRail.STELLAR,
         activityType: ActivityEventType.STELLAR_PAYMENT_SUBMITTED,
-        activityTitle: 'Stellar payment confirmed',
-        message: 'Stellar payment confirmed and linked to this vault.',
+        activityTitle: 'Stellar transaction confirmed',
+        message: 'Stellar transaction confirmed. You can verify it on Stellar Explorer.',
       };
     } catch {
-      return {
-        status: ProofReceiptStatus.LOCAL_RECEIPT,
-        proofReference: buildLocalProofReference(vault.id),
-        memo,
-        rail: ActivityRail.APP,
-        activityType: ActivityEventType.RECEIPT_SAVED,
-        activityTitle: 'Receipt saved',
-        message: 'Receipt saved. Stellar network confirmation can be added when network submission is available.',
-      };
+      return this.buildAccountOnlyProof(
+        vault,
+        'Receipt saved. Network transaction confirmation is not available yet; the wallet can still be viewed on Stellar Explorer.'
+      );
     }
   }
 
@@ -146,6 +165,10 @@ export class StellarProofService {
     });
 
     const proof = await this.attemptNetworkProof({ id: vault.id, walletAddress: vault.walletAddress });
+    const networkLabel = ConfigService.getStellarNetworkLabel();
+    const operationExplorerUrl = proof.operationId
+      ? buildStellarOperationExplorerUrl(proof.operationId, ConfigService.getStellarNetwork())
+      : null;
 
     return prisma.$transaction(async (tx: any) => {
       const receipt = await tx.proofReceipt.create({
@@ -153,14 +176,17 @@ export class StellarProofService {
           appUserId: vault.appUserId,
           vaultId: vault.id,
           status: proof.status,
-          network: 'Stellar Testnet',
+          network: networkLabel,
           publicAddress: vault.walletAddress,
+          sourceAccount: proof.sourceAccount ?? null,
+          destinationAccount: proof.destinationAccount,
           proofReference: proof.proofReference,
           transactionHash: proof.transactionHash ?? null,
           operationId: proof.operationId ?? null,
           ledger: proof.ledger ?? null,
           memo: proof.memo,
-          explorerUrl: proof.explorerUrl ?? null,
+          explorerUrl: proof.explorerUrl,
+          accountExplorerUrl: proof.accountExplorerUrl,
           message: proof.message,
         },
       });
@@ -174,17 +200,21 @@ export class StellarProofService {
         status: ActivityStatus.COMPLETED,
         title: proof.activityTitle,
         description: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED
-          ? 'Payment operation recorded on Stellar Testnet.'
-          : 'Vault receipt saved for this commitment.',
+          ? `Payment operation recorded on ${networkLabel}.`
+          : 'Vault receipt saved. Wallet verification is available on Stellar Explorer.',
         walletAddress: vault.walletAddress,
+        sourceAccount: proof.sourceAccount ?? null,
+        destinationAccount: proof.destinationAccount,
+        network: networkLabel,
         amount: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED ? 0.0000001 : null,
         assetCode: proof.status === ProofReceiptStatus.NETWORK_CONFIRMED ? 'XLM' : null,
         transactionHash: proof.transactionHash ?? null,
         operationId: proof.operationId ?? null,
         ledger: proof.ledger ?? null,
         reference: proof.proofReference,
-        explorerUrl: proof.explorerUrl ?? null,
-        metadata: { memo: proof.memo, network: 'Stellar Testnet' },
+        explorerUrl: proof.explorerUrl,
+        accountExplorerUrl: proof.accountExplorerUrl,
+        metadata: { memo: proof.memo, network: networkLabel, operationExplorerUrl },
       });
 
       await tx.vault.update({

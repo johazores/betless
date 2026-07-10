@@ -71,7 +71,8 @@ export function ReceiptClient({ id }: { id: string }) {
     );
   }
 
-  const receiptLabel = receipt.status === 'NETWORK_CONFIRMED' ? 'Stellar receipt' : 'Saved receipt';
+  const receiptLabel = receipt.status === 'NETWORK_CONFIRMED' ? 'Stellar transaction' : 'Wallet receipt';
+  const explorerUrl = receipt.explorerUrl ?? receipt.accountExplorerUrl;
   const vaultHref = vaultIdFromUrl ? `/vaults/${receipt.vaultId}` : `/vaults/${receipt.vaultId}`;
 
   return (
@@ -94,13 +95,29 @@ export function ReceiptClient({ id }: { id: string }) {
                 <p className="mt-1 font-black text-slate-950">{formatShortDate(receipt.createdAt)}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold text-slate-500">Receipt type</p>
-                <p className="mt-1 font-black text-slate-950">{receiptLabel}</p>
+                <p className="text-sm font-bold text-slate-500">Network</p>
+                <p className="mt-1 font-black text-slate-950">{receipt.network}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-bold text-slate-500">Status</p>
+                <p className="mt-1 font-black text-slate-950">{receipt.status === 'NETWORK_CONFIRMED' ? 'Confirmed' : 'Saved'}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
                 <p className="text-sm font-bold text-slate-500">Wallet address</p>
                 <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.publicAddress}</p>
               </div>
+              {receipt.sourceAccount ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                  <p className="text-sm font-bold text-slate-500">Source account</p>
+                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.sourceAccount}</p>
+                </div>
+              ) : null}
+              {receipt.destinationAccount ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                  <p className="text-sm font-bold text-slate-500">Destination account</p>
+                  <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.destinationAccount}</p>
+                </div>
+              ) : null}
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
                 <p className="text-sm font-bold text-slate-500">Receipt reference</p>
                 <p className="mt-1 break-all font-mono text-sm font-black text-slate-950">{receipt.proofReference}</p>
@@ -132,10 +149,10 @@ export function ReceiptClient({ id }: { id: string }) {
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {receipt.explorerUrl ? (
-                <a href={receipt.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar Explorer</Button></a>
+              {explorerUrl ? (
+                <a href={explorerUrl} target="_blank" rel="noreferrer"><Button>View on Stellar Explorer</Button></a>
               ) : (
-                <Button disabled>Network confirmation pending</Button>
+                <Button disabled>Stellar Explorer unavailable</Button>
               )}
               <PrintReceiptButton />
             </div>

@@ -69,3 +69,13 @@ When the user signs in, Betless automatically connects every browser-saved vault
 - [x] Added migration for ActivityEvent.
 - [x] Updated transaction and analytics documentation.
 
+
+## Stellar Explorer Verification
+
+Every Stellar-related record provides a direct **View on Stellar Explorer** path.
+
+- Confirmed transactions link to the transaction page.
+- Wallet receipts link to the Stellar account page.
+- Explorer URLs switch automatically between Testnet and Mainnet based on the active network.
+- Receipts store source account, destination account, transaction hash, operation ID, ledger, and explorer URLs when available.
+- The app does not claim that an on-chain transaction exists unless a transaction hash is stored.

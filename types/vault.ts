@@ -35,12 +35,15 @@ export type ProofReceiptView = {
   status: ProofReceiptStatus;
   network: string;
   publicAddress: string;
+  sourceAccount: string | null;
+  destinationAccount: string | null;
   proofReference: string;
   transactionHash: string | null;
   operationId: string | null;
   ledger: number | null;
   memo: string | null;
   explorerUrl: string | null;
+  accountExplorerUrl: string | null;
   message: string;
   createdAt: string;
 };
@@ -101,6 +104,9 @@ export type ActivityItemView = {
   title: string;
   description: string;
   walletAddress: string | null;
+  sourceAccount: string | null;
+  destinationAccount: string | null;
+  network: string | null;
   amount: number | null;
   assetCode: string | null;
   transactionHash: string | null;
@@ -108,6 +114,7 @@ export type ActivityItemView = {
   ledger: number | null;
   reference: string | null;
   explorerUrl: string | null;
+  accountExplorerUrl: string | null;
   vaultId: string | null;
   receiptId: string | null;
   href: string;

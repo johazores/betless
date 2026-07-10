@@ -120,6 +120,7 @@ export function ActivityClient() {
                   {dayItems.map((item) => {
                     const status = statusStyle[item.status] ?? statusStyle.COMPLETED;
                     const primaryRef = item.transactionHash ?? item.operationId ?? item.reference;
+                    const explorerUrl = item.explorerUrl ?? item.accountExplorerUrl;
                     return (
                       <article key={item.id} className="relative grid gap-3 pl-10">
                         <span className="absolute left-[9px] top-6 z-10 h-3 w-3 rounded-full border-2 border-white bg-slate-900 shadow" />
@@ -129,7 +130,7 @@ export function ActivityClient() {
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className={`rounded-full border px-3 py-1 text-xs font-black ${status.className}`}>{status.label}</span>
                                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-black text-slate-600">
-                                  {item.rail === 'STELLAR' ? 'Stellar' : 'App'}
+                                  {item.rail === 'STELLAR' ? (item.network ?? 'Stellar') : 'App'}
                                 </span>
                               </div>
                               <h2 className="mt-3 text-xl font-black text-slate-950">{item.title}</h2>
@@ -145,6 +146,12 @@ export function ActivityClient() {
                                 <p className="mt-1 font-black text-slate-950">
                                   {item.assetCode === 'PHP' ? formatPeso(item.amount) : `${item.amount} ${item.assetCode ?? ''}`}
                                 </p>
+                              </div>
+                            ) : null}
+                            {item.network ? (
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Network</p>
+                                <p className="mt-1 font-black text-slate-950">{item.network}</p>
                               </div>
                             ) : null}
                             {item.walletAddress ? (
@@ -169,16 +176,18 @@ export function ActivityClient() {
                                 <dd className="mt-1 font-black text-slate-950">{status.label}</dd>
                               </div>
                               <div>
-                                <dt className="font-bold text-slate-500">Rail</dt>
-                                <dd className="mt-1 font-black text-slate-950">{item.rail === 'STELLAR' ? 'Stellar network' : 'Betless app'}</dd>
+                                <dt className="font-bold text-slate-500">Network</dt>
+                                <dd className="mt-1 font-black text-slate-950">{item.network ?? (item.rail === 'STELLAR' ? 'Stellar' : 'Betless app')}</dd>
                               </div>
+                              {item.sourceAccount ? <div className="sm:col-span-2"><dt className="font-bold text-slate-500">Source account</dt><dd className="mt-1 break-all font-mono text-xs font-black text-slate-950">{item.sourceAccount}</dd></div> : null}
+                              {item.destinationAccount ? <div className="sm:col-span-2"><dt className="font-bold text-slate-500">Destination account</dt><dd className="mt-1 break-all font-mono text-xs font-black text-slate-950">{item.destinationAccount}</dd></div> : null}
                               {item.ledger ? <div><dt className="font-bold text-slate-500">Ledger</dt><dd className="mt-1 font-black text-slate-950">{item.ledger}</dd></div> : null}
                               {item.operationId ? <div><dt className="font-bold text-slate-500">Operation ID</dt><dd className="mt-1 break-all font-mono text-xs font-black text-slate-950">{item.operationId}</dd></div> : null}
                               {item.transactionHash ? <div className="sm:col-span-2"><dt className="font-bold text-slate-500">Transaction hash</dt><dd className="mt-1 break-all font-mono text-xs font-black text-slate-950">{item.transactionHash}</dd></div> : null}
                             </dl>
                             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                               <Link href={item.href}><Button variant="secondary">Open record</Button></Link>
-                              {item.explorerUrl ? <a href={item.explorerUrl} target="_blank" rel="noreferrer"><Button>Verify on Stellar</Button></a> : null}
+                              {explorerUrl ? <a href={explorerUrl} target="_blank" rel="noreferrer"><Button>View on Stellar Explorer</Button></a> : null}
                             </div>
                           </details>
                         </Card>

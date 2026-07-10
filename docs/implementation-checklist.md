@@ -66,3 +66,19 @@
 - [x] Added migration for ActivityEvent.
 - [x] Updated transaction and analytics documentation.
 
+
+## Loop 21 — Stellar Explorer Verification
+- [x] Added shared Stellar Explorer URL builder.
+- [x] Added automatic Testnet/Mainnet explorer selection.
+- [x] Added source account and destination account fields to receipts.
+- [x] Added source account and destination account fields to activity events.
+- [x] Added account-level explorer links when no transaction hash exists.
+- [x] Added transaction-level explorer links when a transaction hash exists.
+- [x] Updated Receipt page with **View on Stellar Explorer**.
+- [x] Updated Vault receipt card with **View on Stellar Explorer**.
+- [x] Updated Activity timeline with **View on Stellar Explorer**.
+- [x] Updated Dashboard recent activity with Stellar Explorer links.
+- [x] Added database migration for Stellar explorer fields.
+- [x] TypeScript check passes.
+- [x] Product verifier passes.
+- [x] Next production build passes.

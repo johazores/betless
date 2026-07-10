@@ -49,6 +49,9 @@ const requiredFiles = [
   'docs/production-ux-refinement.md',
   'docs/auth-and-stellar-workflow.md',
   'docs/transaction-activity-analytics.md',
+  'docs/stellar-explorer-verification.md',
+  'lib/stellar-explorer.ts',
+  'prisma/migrations/20260710050000_stellar_explorer_fields/migration.sql',
   'README.md',
 ];
 
@@ -193,9 +196,30 @@ for (const required of ['ActivityStatus', 'ActivityEventType', 'ActivityRail', '
 }
 
 const activityClient = readFileSync(join(root, 'app/activity/activity-client.tsx'), 'utf8');
-for (const requiredCopy of ['Status', 'Transaction hash', 'Operation ID', 'Verify on Stellar']) {
+for (const requiredCopy of ['Status', 'Transaction hash', 'Operation ID', 'View on Stellar Explorer', 'Source account', 'Destination account']) {
   if (!activityClient.includes(requiredCopy)) {
     failures.push(`Activity timeline is missing required transaction UX copy: ${requiredCopy}`);
+  }
+}
+
+const stellarExplorerLib = readFileSync(join(root, 'lib/stellar-explorer.ts'), 'utf8');
+for (const required of ['buildStellarTransactionExplorerUrl', 'buildStellarAccountExplorerUrl', 'getStellarNetworkSlug']) {
+  if (!stellarExplorerLib.includes(required)) {
+    failures.push(`Stellar explorer helper is missing: ${required}`);
+  }
+}
+
+const stellarExplorerMigration = readFileSync(join(root, 'prisma/migrations/20260710050000_stellar_explorer_fields/migration.sql'), 'utf8');
+for (const required of ['sourceAccount', 'destinationAccount', 'accountExplorerUrl']) {
+  if (!stellarExplorerMigration.includes(required)) {
+    failures.push(`Stellar explorer migration is missing: ${required}`);
+  }
+}
+
+const receiptClient = readFileSync(join(root, 'app/receipts/[id]/receipt-client.tsx'), 'utf8');
+for (const requiredCopy of ['Transaction hash', 'Source account', 'Destination account', 'View on Stellar Explorer']) {
+  if (!receiptClient.includes(requiredCopy)) {
+    failures.push(`Receipt page is missing required Stellar verification copy: ${requiredCopy}`);
   }
 }
 

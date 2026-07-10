@@ -1,7 +1,8 @@
-import { Networks, StrKey } from '@stellar/stellar-sdk';
+import { StrKey } from '@stellar/stellar-sdk';
+import { getConfiguredStellarNetwork, getStellarNetworkLabel, getStellarNetworkPassphrase } from '@/lib/stellar-explorer';
 
-export const STELLAR_NETWORK_LABEL = 'Stellar';
-export const STELLAR_NETWORK_PASSPHRASE = Networks.TESTNET;
+export const STELLAR_NETWORK_LABEL = getStellarNetworkLabel(getConfiguredStellarNetwork());
+export const STELLAR_NETWORK_PASSPHRASE = getStellarNetworkPassphrase(getConfiguredStellarNetwork());
 
 export function isValidStellarPublicKey(value: string) {
   try {
