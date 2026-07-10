@@ -16,7 +16,7 @@ import { UnlockCard } from '@/components/vault/unlock-card';
 import { VaultSummaryCard } from '@/components/vault/vault-summary-card';
 import { VaultNextStepCard } from '@/components/vault/vault-next-step-card';
 import { Card } from '@/components/ui/card';
-import { clearVaultToken, getVaultToken } from '@/lib/vault-session';
+import { clearGuestSessionToken, clearVaultToken, getGuestSessionToken, getVaultToken } from '@/lib/vault-session';
 import type { VaultDetailView, VoucherResult } from '@/types/vault';
 
 type VaultDetailClientProps = {
@@ -57,11 +57,12 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
 
     try {
       const token = await getToken();
-      const vaultAccessToken = getVaultToken(id);
-      const updatedVault = await postJson<VaultDetailView>(`/api/vaults/${id}/connect-account`, {}, { token, vaultAccessToken });
+      const vaultAccessToken = getGuestSessionToken() ?? getVaultToken(id);
+      await postJson('/api/session/connect', {}, { token, vaultAccessToken });
       clearVaultToken(id);
-      setVault(updatedVault);
+      clearGuestSessionToken();
       setIsConnected(true);
+      await loadVault();
     } catch (connectError) {
       setError(connectError instanceof Error ? connectError.message : 'Vault could not be connected to your account.');
     } finally {
@@ -156,7 +157,7 @@ export function VaultDetailClient({ id }: VaultDetailClientProps) {
         <Link href="/create-vault" className="text-sm font-bold text-slate-600 hover:text-slate-950">Create another vault</Link>
       </div>
 
-      {isSignedIn && connectLoading ? <Alert title="Saving vault" tone="success">Connecting this vault to your account…</Alert> : null}
+      {isSignedIn && connectLoading ? <Alert title="Saving vault" tone="success">Connecting your vaults and receipts to your account…</Alert> : null}
       {!isSignedIn ? (
         <Card className="border-blue-200 bg-blue-50">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

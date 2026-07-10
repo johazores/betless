@@ -109,3 +109,29 @@ npm run check
 - Guest vault access uses a browser-held access token and server-side hash.
 - Signed-in vaults are protected by Clerk session verification.
 - Receipts are visible only to the account owner or the browser that created the vault.
+
+### Fix missing guest access token column
+
+If vault creation fails with `guestAccessTokenHash does not exist`, run:
+
+```bash
+npm run prisma:migrate
+npm run prisma:generate
+npm run dev
+```
+
+For a clean development reset:
+
+```bash
+npm run db:reset:force
+npm run prisma:generate
+npm run dev
+```
+
+See `docs/database-guest-token-fix.md` for details.
+
+## Guest-to-Account Continuity
+
+Users can create a vault before signing in. Betless saves guest progress in this browser using a secure guest session token. The token is sent through `x-vault-token`, and only its hash is stored in the database.
+
+When a guest signs in, `/api/session/connect` links all browser-saved vaults and receipts to the Clerk account. The dashboard works before and after sign-in, so users do not lose vaults, receipts, rewards, or activity.

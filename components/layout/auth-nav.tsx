@@ -13,8 +13,11 @@ export function AuthNav() {
   if (!isSignedIn) {
     return (
       <div className="flex items-center gap-3">
+        <Link href="/dashboard" className="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 sm:inline-flex">
+          Dashboard
+        </Link>
         <SignInButton mode="modal">
-          <button className="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 sm:inline-flex">
+          <button className="hidden rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 md:inline-flex">
             Sign in
           </button>
         </SignInButton>

@@ -42,3 +42,17 @@
 - [x] TypeScript check passes.
 - [x] Product verifier passes.
 - [x] Next production build passes with Clerk environment values.
+
+## Loop 19 — Guest Session Continuity
+- [x] Browser guest session token added
+- [x] Guest vaults reuse one session token
+- [x] Dashboard works before sign-in
+- [x] Receipt history works before sign-in
+- [x] Activity page added
+- [x] Bulk guest progress connection added
+- [x] `/api/session/connect` added
+- [x] Guest progress connects to Clerk account after sign-in
+- [x] Guest token is cleared after account connection
+- [x] TypeScript check passes
+- [x] MVP verification passes
+- [x] Next build passes

@@ -165,6 +165,16 @@ for (const script of ['verify:mvp', 'check', 'build:next', 'db:reset:force']) {
   }
 }
 
+const schemaForGuestToken = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
+if (!schemaForGuestToken.includes('guestAccessTokenHash')) {
+  failures.push('Missing guestAccessTokenHash in Prisma schema.');
+}
+
+const guestTokenMigration = readFileSync(join(root, 'prisma/migrations/20260710030000_guest_access_tokens/migration.sql'), 'utf8');
+if (!guestTokenMigration.includes('guestAccessTokenHash')) {
+  failures.push('Missing guestAccessTokenHash repair migration.');
+}
+
 if (failures.length > 0) {
   console.error('Product verification failed:');
   for (const failure of failures) {

@@ -143,9 +143,25 @@ export class VaultService {
     return this.getVaultDetail(vault.id, access);
   }
 
-  static async listVaults(clerkUserId: string): Promise<DashboardVaultView[]> {
+  static async listVaults(accessOrClerkUserId: VaultAccess | string): Promise<DashboardVaultView[]> {
+    const access: VaultAccess = typeof accessOrClerkUserId === 'string'
+      ? { clerkUserId: accessOrClerkUserId }
+      : accessOrClerkUserId;
+
+    const conditions: Array<Record<string, unknown>> = [];
+
+    if (access.clerkUserId) {
+      conditions.push({ appUser: { clerkUserId: access.clerkUserId } });
+    }
+
+    if (access.vaultAccessTokenHash) {
+      conditions.push({ guestAccessTokenHash: access.vaultAccessTokenHash });
+    }
+
+    if (conditions.length === 0) return [];
+
     const vaults = await prisma.vault.findMany({
-      where: { appUser: { clerkUserId } },
+      where: { OR: conditions },
       include: { receipts: { orderBy: { createdAt: 'desc' }, take: 1 } },
       orderBy: { createdAt: 'desc' },
     });
@@ -222,6 +238,42 @@ export class VaultService {
     });
 
     return this.getVaultDetail(id, { clerkUserId });
+  }
+
+
+  static async connectGuestSessionToUser(clerkUserId: string, vaultAccessTokenHash?: string | null) {
+    if (!vaultAccessTokenHash) {
+      return { connectedVaults: 0, connectedReceipts: 0 };
+    }
+
+    const appUser = await UserService.ensureAppUser({ clerkUserId });
+
+    const guestVaults = await prisma.vault.findMany({
+      where: { guestAccessTokenHash: vaultAccessTokenHash },
+      select: { id: true },
+    });
+
+    if (guestVaults.length === 0) {
+      return { connectedVaults: 0, connectedReceipts: 0 };
+    }
+
+    const vaultIds = guestVaults.map((vault: { id: string }) => vault.id);
+
+    const result = await prisma.$transaction(async (tx: any) => {
+      const vaultUpdate = await tx.vault.updateMany({
+        where: { id: { in: vaultIds } },
+        data: { appUserId: appUser.id, guestAccessTokenHash: null },
+      });
+
+      const receiptUpdate = await tx.proofReceipt.updateMany({
+        where: { vaultId: { in: vaultIds } },
+        data: { appUserId: appUser.id },
+      });
+
+      return { connectedVaults: vaultUpdate.count, connectedReceipts: receiptUpdate.count };
+    });
+
+    return result;
   }
 
   private static toTopUpView(topUp: VaultWithRelations['topUps'][number]): TopUpView {

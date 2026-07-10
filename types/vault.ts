@@ -82,3 +82,12 @@ export type DashboardVaultView = {
   stellarStatus: StellarStatus;
   latestReceipt: ProofReceiptView | null;
 };
+
+export type ActivityItemView = {
+  id: string;
+  type: 'VAULT_CREATED' | 'TOP_UP_COMPLETED' | 'REWARD_CLAIMED' | 'RECEIPT_CREATED';
+  title: string;
+  description: string;
+  href: string;
+  createdAt: string;
+};

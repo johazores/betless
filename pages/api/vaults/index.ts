@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createVaultAccessToken, getApiVaultAccess, hashVaultAccessToken, requireApiUserId } from '@/lib/auth';
+import { createVaultAccessToken, getApiVaultAccess, getVaultAccessToken, hashVaultAccessToken } from '@/lib/auth';
 import { requireMethod } from '@/lib/api-methods';
 import { getApiErrorMessage, sendError, sendSuccess } from '@/lib/api-response';
 import { validateCreateVaultRequest } from '@/lib/validators';
@@ -9,8 +9,8 @@ import { VaultService } from '@/services/vault-service';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method === 'GET') {
-      const clerkUserId = await requireApiUserId(req);
-      const vaults = await VaultService.listVaults(clerkUserId);
+      const access = await getApiVaultAccess(req);
+      const vaults = await VaultService.listVaults(access);
       return sendSuccess(res, vaults);
     }
 
@@ -18,7 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const input = validateCreateVaultRequest(req.body);
     const requestAccess = await getApiVaultAccess(req);
-    const guestAccessToken = requestAccess.clerkUserId ? null : createVaultAccessToken();
+    const existingGuestToken = requestAccess.clerkUserId ? null : getVaultAccessToken(req);
+    const guestAccessToken = requestAccess.clerkUserId ? null : existingGuestToken ?? createVaultAccessToken();
     const access = {
       clerkUserId: requestAccess.clerkUserId,
       vaultAccessTokenHash: guestAccessToken ? hashVaultAccessToken(guestAccessToken) : null,

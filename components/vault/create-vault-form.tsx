@@ -14,7 +14,7 @@ import { defaultVaultForm, rewardOptions, topUpFrequencyOptions, vaultModeOption
 import { formatPeso } from '@/lib/money';
 import { isValidStellarPublicKey } from '@/lib/stellar';
 import { canPeriodicPlanReachTarget, getPlanReachMessage } from '@/lib/planning';
-import { saveVaultToken } from '@/lib/vault-session';
+import { getOrCreateGuestSessionToken, saveVaultToken } from '@/lib/vault-session';
 import type { VaultDetailView } from '@/types/vault';
 
 type FormState = VaultFormState;
@@ -193,6 +193,7 @@ export function CreateVaultForm() {
 
     try {
       const token = isSignedIn ? await getToken() : null;
+      const vaultAccessToken = isSignedIn ? null : getOrCreateGuestSessionToken();
       const vault = await apiRequest<CreateVaultResponse>('/api/vaults', {
         method: 'POST',
         body: JSON.stringify({
@@ -205,9 +206,9 @@ export function CreateVaultForm() {
           durationMonths: Number(form.durationMonths),
           reason: form.reason.trim(),
         }),
-      }, { token });
+      }, { token, vaultAccessToken });
 
-      saveVaultToken(vault.id, vault.accessToken);
+      saveVaultToken(vault.id, vault.accessToken ?? vaultAccessToken);
       router.push(`/vaults/${vault.id}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Vault could not be created.');

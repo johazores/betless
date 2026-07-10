@@ -39,14 +39,15 @@ function buildReceiptAccessWhere(access: VaultAccess) {
 }
 
 export class ReceiptService {
-  static async listReceipts(clerkUserId: string) {
+  static async listReceipts(accessOrClerkUserId: VaultAccess | string) {
+    const access: VaultAccess = typeof accessOrClerkUserId === 'string'
+      ? { clerkUserId: accessOrClerkUserId }
+      : accessOrClerkUserId;
+
+    const conditions = buildReceiptAccessWhere(access);
+
     const receipts = await prisma.proofReceipt.findMany({
-      where: {
-        OR: [
-          { appUser: { clerkUserId } },
-          { vault: { appUser: { clerkUserId } } },
-        ],
-      },
+      where: { OR: conditions },
       orderBy: { createdAt: 'desc' },
       include: { vault: true },
     });

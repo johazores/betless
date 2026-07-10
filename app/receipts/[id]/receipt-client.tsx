@@ -12,7 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { apiRequest } from '@/lib/api-client';
 import { formatShortDate } from '@/lib/dates';
-import { getVaultToken } from '@/lib/vault-session';
+import { getGuestSessionToken, getVaultToken } from '@/lib/vault-session';
 import type { ProofReceiptView } from '@/types/vault';
 
 export function ReceiptClient({ id }: { id: string }) {
@@ -33,7 +33,7 @@ export function ReceiptClient({ id }: { id: string }) {
 
       try {
         const token = isSignedIn ? await getToken() : null;
-        const vaultAccessToken = vaultIdFromUrl ? getVaultToken(vaultIdFromUrl) : null;
+        const vaultAccessToken = vaultIdFromUrl ? getVaultToken(vaultIdFromUrl) : getGuestSessionToken();
         const loadedReceipt = await apiRequest<ProofReceiptView>(`/api/receipts/${id}`, undefined, { token, vaultAccessToken });
         setReceipt(loadedReceipt);
       } catch (loadError) {

@@ -18,6 +18,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <a href="/#how-it-works" className="hover:text-slate-950">How it works</a>
             <a href="/#stellar-proof" className="hover:text-slate-950">Receipt</a>
             <Link href="/dashboard" className="hover:text-slate-950">Dashboard</Link>
+            <Link href="/activity" className="hover:text-slate-950">Activity</Link>
           </nav>
           <AuthNav />
         </div>

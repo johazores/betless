@@ -53,3 +53,9 @@ Betless is a money-protection and commitment tool. It does not use chance mechan
 - Partner-managed fund custody.
 - Account recovery for lost guest vault access.
 - Email receipt delivery.
+
+## Guest-to-Account Continuity
+
+Betless allows users to start immediately without sign-in. To prevent lost progress, the app creates one browser-held guest session token and reuses it across guest vaults, receipts, rewards, and activity.
+
+When the user signs in, Betless automatically connects every browser-saved vault and receipt to the Clerk-backed account through `/api/session/connect`. This keeps onboarding fast while giving users a safe path to permanent account access.
