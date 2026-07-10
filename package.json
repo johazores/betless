@@ -13,7 +13,10 @@
     "prisma:seed": "prisma db seed",
     "build:next": "NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=true next build",
     "verify:mvp": "node scripts/verify-mvp.mjs",
-    "check": "npm run typecheck && npm run verify:mvp"
+    "check": "npm run typecheck && npm run verify:mvp",
+    "db:reset": "prisma migrate reset",
+    "db:reset:force": "prisma migrate reset --force",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.16",

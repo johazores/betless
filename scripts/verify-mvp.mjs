@@ -27,6 +27,8 @@ const requiredFiles = [
   'components/ui/stepper.tsx',
   'prisma/schema.prisma',
   'prisma/seed.ts',
+  'prisma/migrations/migration_lock.toml',
+  'prisma/migrations/20260710000000_fresh_schema/migration.sql',
   'docs/project-plan.md',
   'docs/implementation-checklist.md',
   'docs/demo-script.md',
@@ -127,14 +129,22 @@ for (const file of forbiddenFiles) {
 }
 
 const schema = readFileSync(join(root, 'prisma/schema.prisma'), 'utf8');
-for (const model of ['model AppConfig', 'model Vault', 'model TopUp', 'model RewardClaim']) {
+for (const model of ['model AppConfig', 'model AppUser', 'model Vault', 'model TopUp', 'model RewardClaim', 'model ProofReceipt']) {
   if (!schema.includes(model)) {
     failures.push(`Missing Prisma schema block: ${model}`);
   }
 }
 
+
+const migrationSql = readFileSync(join(root, 'prisma/migrations/20260710000000_fresh_schema/migration.sql'), 'utf8');
+for (const requiredTable of ['"AppUser"', '"Vault"', '"TopUp"', '"RewardClaim"', '"ProofReceipt"']) {
+  if (!migrationSql.includes(`CREATE TABLE ${requiredTable}`)) {
+    failures.push(`Fresh baseline migration is missing table: ${requiredTable}`);
+  }
+}
+
 const packageJson = readFileSync(join(root, 'package.json'), 'utf8');
-for (const script of ['verify:mvp', 'check', 'build:next']) {
+for (const script of ['verify:mvp', 'check', 'build:next', 'db:reset:force']) {
   if (!packageJson.includes(`"${script}"`)) {
     failures.push(`Missing package script: ${script}`);
   }

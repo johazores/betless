@@ -187,3 +187,14 @@
 - [x] TypeScript check passed
 - [x] MVP verification passed
 - [x] Next production build passed with Clerk env placeholders
+
+
+## Loop 15 — Fresh Database Reset Baseline
+- [x] Added fresh baseline migration including AppUser, Vault, TopUp, RewardClaim, and ProofReceipt
+- [x] Added migration lock file
+- [x] Added database reset documentation
+- [x] Added db:reset:force command
+- [x] Removed legacy repair command from package scripts
+- [x] Updated README reset flow
+- [x] Updated MVP verifier to check required migration tables
+- [ ] Local Neon reset must be run by developer using `npm run db:reset:force`

@@ -166,3 +166,14 @@ Notes:
 - Clerk requires real `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` for local runtime.
 - Live Stellar network receipts require `STELLAR_PROOF_SOURCE_SECRET` to be set to a funded testnet source account.
 - If the Stellar signer is not configured, the app creates a clearly labeled demo receipt instead of blocking the user.
+
+
+## Loop 15 — Fresh Database Reset Baseline
+- [x] Added fresh baseline migration including AppUser, Vault, TopUp, RewardClaim, and ProofReceipt
+- [x] Added migration lock file
+- [x] Added database reset documentation
+- [x] Added db:reset:force command
+- [x] Removed legacy repair command from package scripts
+- [x] Updated README reset flow
+- [x] Updated MVP verifier to check required migration tables
+- [ ] Local Neon reset must be run by developer using `npm run db:reset:force`

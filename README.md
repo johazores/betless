@@ -118,11 +118,26 @@ STELLAR_PROOF_SOURCE_SECRET="S...testnet-source-secret"
 ```bash
 npm install
 cp .env.example .env
-npm run prisma:generate
 npm run prisma:migrate
-npm run prisma:seed
+npm run prisma:generate
 npm run dev
 ```
+
+`npm run prisma:migrate` applies the current baseline migration and runs the configured seed command in development.
+
+## Fresh Database Reset
+
+If your Neon or local development database has drift from older Betless builds, reset it completely:
+
+```bash
+npm run db:reset:force
+npm run prisma:generate
+npm run dev
+```
+
+This deletes development data and recreates the full current schema, including `AppUser`, `Vault`, `TopUp`, `RewardClaim`, and `ProofReceipt`.
+
+See `docs/database-reset-from-scratch.md` for details.
 
 ## QA Commands
 
@@ -151,3 +166,14 @@ That runs `prisma generate && next build`.
 - `docs/engineering-loop-report.md`
 - `docs/qa-report.md`
 - `docs/end-to-end-audit.md`
+- `docs/database-reset-from-scratch.md`
+
+## Resetting older local databases
+
+Older Betless builds may have missing receipt tables or anonymous vault rows. For the current demo app, the cleanest fix is a full development reset:
+
+```bash
+npm run db:reset:force
+```
+
+This is safe for disposable demo data only. It recreates the schema from the fresh baseline migration and runs the seed.

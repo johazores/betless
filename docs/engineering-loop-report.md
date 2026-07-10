@@ -262,3 +262,47 @@ NEXT_PUBLIC_CLERK_KEYLESS_DISABLED=true NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_tes
 ```
 
 `npm run check` now runs the deterministic code checks only: TypeScript and MVP verification. The Next production build was run separately because the sandbox has previously been unstable when chaining Next build after TypeScript in one command.
+
+## Loop 15 — Clerk Migration Repair
+
+### Issue found
+Existing local databases created before Clerk can contain anonymous `Vault` rows. Prisma cannot add the required `Vault.appUserId` column while those rows have no owner.
+
+### Root cause
+The app architecture moved from anonymous demo vaults to account-owned vaults. The database needs a backfill step before enforcing the required ownership relationship.
+
+### Fix added
+- Added `scripts/sql/repair-legacy-vault-owners.sql`.
+- Added `npm run db:repair:legacy-vaults`.
+- Added `docs/database-migration-repair.md`.
+
+### Correct local upgrade path
+```bash
+npm run db:repair:legacy-vaults
+npm run prisma:migrate
+npm run prisma:generate
+```
+
+### Notes
+The repair assigns old anonymous demo vaults to a `legacy-demo-user`. New vaults are still required to belong to the signed-in Clerk user.
+
+## Loop 15 — Fresh Database Reset Baseline
+
+### Root cause
+
+The development database had drift because earlier migrations did not include the final Clerk ownership and `ProofReceipt` schema. After reset, Prisma replayed only the old migration history, so the generated Prisma Client expected `ProofReceipt` but the database did not contain that table.
+
+### Fix
+
+- Added a fresh baseline migration under `prisma/migrations/20260710000000_fresh_schema/migration.sql`.
+- The baseline includes `AppUser`, `Vault`, `TopUp`, `RewardClaim`, and `ProofReceipt`.
+- Added `prisma/migrations/migration_lock.toml`.
+- Added `npm run db:reset:force` for full development resets.
+- Removed the legacy repair script from `package.json` to avoid confusion when the goal is to reset everything.
+- Added `docs/database-reset-from-scratch.md`.
+- Updated README setup/reset instructions.
+- Expanded `npm run verify:mvp` to confirm the fresh migration includes all required tables.
+
+### Status
+
+Fresh reset is now the intended path for disposable local/Neon demo data.
