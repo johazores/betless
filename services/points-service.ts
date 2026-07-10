@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getRewardById } from '@/lib/rewards';
 import { UserService } from '@/services/user-service';
 import { VaultService } from '@/services/vault-service';
+import { NotificationService } from '@/services/notification-service';
 import type { PointsTransactionView, RedemptionResult } from '@/types/vault';
 
 function generateVoucherCode() {
@@ -85,6 +86,8 @@ export class PointsService {
 
       return balance - reward.points;
     });
+
+    NotificationService.notifyPointsRedeemed(appUser.id, reward.name, reward.points);
 
     return {
       rewardName: reward.name,

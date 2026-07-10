@@ -15,6 +15,7 @@ const isProtectedPage = createRouteMatcher([
   '/vaults(.*)',
   '/rewards(.*)',
   '/account(.*)',
+  '/notifications(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

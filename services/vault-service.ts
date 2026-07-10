@@ -6,6 +6,7 @@ import { calculateEarlyWithdrawalFee, calculateMonthlyPoints, calculateTotalPoin
 import type { CreateVaultInput } from '@/lib/validators';
 import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
+import { NotificationService } from '@/services/notification-service';
 import type { VaultView } from '@/types/vault';
 
 type VaultRecord = {
@@ -81,6 +82,13 @@ export class VaultService {
 
       if (missingAccruals.length > 0) {
         await prisma.pointsTransaction.createMany({ data: missingAccruals, skipDuplicates: true });
+        const totalPoints = missingAccruals.reduce((sum, row) => sum + row.points, 0);
+        NotificationService.notifyPointsEarned(
+          appUserId,
+          totalPoints,
+          `${missingAccruals.length} monthly reward${missingAccruals.length === 1 ? '' : 's'} posted`,
+          vault.id,
+        );
       }
 
       if (vault.maturesAt.getTime() <= now.getTime()) {
@@ -96,6 +104,7 @@ export class VaultService {
         // Best-effort on-chain claim; a failure leaves a retryable outbox row.
         if (matured.count > 0) {
           await StellarService.releaseVaultPrincipal(vault, 'CLAIM_MATURITY').catch(() => {});
+          NotificationService.notifyVaultMatured(appUserId, vault.id, principal);
         }
       }
     }
@@ -129,6 +138,9 @@ export class VaultService {
     // Best-effort on-chain lock; a failure leaves a retryable outbox row and
     // never blocks vault creation.
     await StellarService.lockVaultPrincipal(vault).catch(() => {});
+
+    NotificationService.notifyVaultCreated(appUser.id, vault.id, input.amount, input.lockMonths);
+    NotificationService.notifyVaultFunded(appUser.id, vault.id, input.amount);
 
     const refreshed = await prisma.vault.findUniqueOrThrow({
       where: { id: vault.id },

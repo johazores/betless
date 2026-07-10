@@ -29,16 +29,19 @@ export class UserService {
 
     const profile = await this.fetchClerkProfile(clerkUserId);
 
-    return prisma.appUser.upsert({
-      where: { clerkUserId },
-      create: {
+    const user = await prisma.appUser.create({
+      data: {
         clerkUserId,
         email: profile.email,
         displayName: profile.displayName,
         lastSeenAt: new Date(),
       },
-      update: {},
     });
+
+    const { NotificationService } = await import('@/services/notification-service');
+    NotificationService.notifyWelcome(user.id, user.displayName);
+
+    return user;
   }
 
   static async getAccountProfile(clerkUserId: string) {

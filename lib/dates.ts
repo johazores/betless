@@ -44,3 +44,21 @@ export function formatShortDate(value: string | Date) {
 export function formatDateTime(value: string | Date) {
   return dateTimeFormatter.format(new Date(value));
 }
+
+const relativeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+export function formatRelativeTime(value: string | Date) {
+  const date = new Date(value);
+  const diffMs = date.getTime() - Date.now();
+  const diffSec = Math.round(diffMs / 1000);
+  const absSec = Math.abs(diffSec);
+
+  if (absSec < 60) return relativeFormatter.format(diffSec, 'second');
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) return relativeFormatter.format(diffMin, 'minute');
+  const diffHour = Math.round(diffMin / 60);
+  if (Math.abs(diffHour) < 24) return relativeFormatter.format(diffHour, 'hour');
+  const diffDay = Math.round(diffHour / 24);
+  if (Math.abs(diffDay) < 7) return relativeFormatter.format(diffDay, 'day');
+  return formatShortDate(date);
+}

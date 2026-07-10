@@ -2,12 +2,13 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import type { ReactNode } from 'react';
+import { ToastProvider } from '@/components/notifications/toast-provider';
 import { clerkAppearance } from '@/lib/clerk-appearance';
 
 export function BetlessClerkProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider appearance={clerkAppearance} signInUrl="/sign-in" signUpUrl="/sign-up">
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </ClerkProvider>
   );
 }

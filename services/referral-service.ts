@@ -7,6 +7,7 @@ import {
   REFERRAL_CODE_LENGTH,
 } from "@/lib/referrals";
 import { UserService } from "@/services/user-service";
+import { NotificationService } from "@/services/notification-service";
 import type { ClaimReferralResult, ReferralInfoView } from "@/types/vault";
 
 function generateReferralCode() {
@@ -110,6 +111,9 @@ export class ReferralService {
         ],
       });
     });
+
+    NotificationService.notifyReferralWelcomeBonus(appUser.id, referrer.displayName, REFERRAL_BONUS_POINTS);
+    NotificationService.notifyReferralFriendJoined(referrer.id, appUser.displayName, REFERRAL_BONUS_POINTS);
 
     return {
       bonusPoints: REFERRAL_BONUS_POINTS,

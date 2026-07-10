@@ -18,6 +18,7 @@ import {
   isStellarEnabled,
 } from '@/lib/stellar-config';
 import type { VaultStellarView } from '@/types/vault';
+import { NotificationService } from '@/services/notification-service';
 
 const StellarOperationKind = {
   LOCK: 'LOCK',
@@ -368,6 +369,7 @@ export class StellarService {
     });
 
     if (onConfirmed) await onConfirmed();
+    await this.notifyOperationEvent(operationId, 'confirmed');
   }
 
   private static async confirmSubmitted(row: OperationRow) {
@@ -396,6 +398,12 @@ export class StellarService {
           where: { id: row.vaultId },
           data: { claimableBalanceId: row.claimableBalanceId },
         });
+      }
+
+      if (successful) {
+        await this.notifyOperationEvent(row.id, 'confirmed');
+      } else {
+        await this.notifyOperationEvent(row.id, 'failed');
       }
     } catch (error) {
       const notFound = (error as { response?: { status?: number } })?.response?.status === 404;
@@ -437,5 +445,20 @@ export class StellarService {
         errorMessage: extractErrorMessage(error).slice(0, 500),
       },
     });
+    await this.notifyOperationEvent(operationId, 'failed');
+  }
+
+  private static async notifyOperationEvent(operationId: string, event: 'confirmed' | 'failed') {
+    const row = await prisma.stellarOperation.findUnique({
+      where: { id: operationId },
+      include: { vault: { select: { id: true, appUserId: true } } },
+    });
+    if (!row?.vault) return;
+
+    if (event === 'confirmed') {
+      NotificationService.notifyOnChainConfirmed(row.vault.appUserId, row.vault.id, row.kind, row.txHash);
+    } else {
+      NotificationService.notifyOnChainFailed(row.vault.appUserId, row.vault.id, row.kind);
+    }
   }
 }

@@ -29,12 +29,18 @@
   --muted-foreground: 100 116 139;
 
   /* Feedback tones */
-  --success: 5 150 105;
+  --success: 5 120 87;
   --success-surface: 236 253 245;
-  --info: 37 99 235;
+  --info: 29 78 216;
   --info-surface: 239 246 255;
-  --danger: 220 38 38;
+  --warning: 180 83 9;
+  --warning-surface: 255 251 235;
+  --danger: 185 28 28;
   --danger-surface: 254 242 242;
+
+  /* On-chain / Stellar accent (distinct from brand orange) */
+  --chain: 79 70 229;
+  --chain-surface: 238 242 255;
 
   /* Radius scale */
   --radius-sm: 0.5rem;
@@ -174,8 +180,8 @@ textarea {
 }
 
 ::selection {
-  background: #fde68a;
-  color: #78350f;
+  background: rgb(var(--brand-200));
+  color: rgb(var(--brand-900));
 }
 
 input,

@@ -16,13 +16,13 @@ const accentStyles = {
     pill: 'bg-brand-50 text-brand-800 border-brand-200/80',
   },
   success: {
-    icon: 'from-emerald-400 to-emerald-700 text-white shadow-[0_6px_20px_-6px_rgba(16,185,129,0.4)]',
-    ring: 'ring-emerald-100',
+    icon: 'from-success/80 to-success text-white shadow-[0_6px_20px_-6px_rgba(5,120,87,0.35)]',
+    ring: 'ring-success/15',
     pill: 'bg-success-surface text-success border-success/20',
   },
   info: {
-    icon: 'from-sky-400 to-blue-700 text-white shadow-[0_6px_20px_-6px_rgba(59,130,246,0.4)]',
-    ring: 'ring-info/20',
+    icon: 'from-info/70 to-info text-white shadow-[0_6px_20px_-6px_rgba(29,78,216,0.35)]',
+    ring: 'ring-info/15',
     pill: 'bg-info-surface text-info border-info/20',
   },
 };
@@ -134,8 +134,8 @@ function StepCard({ step, index, compact }: { step: Step; index: number; compact
         className={cn(
           'pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r opacity-90',
           step.accent === 'brand' && 'from-brand-300 to-brand-600',
-          step.accent === 'success' && 'from-emerald-300 to-emerald-600',
-          step.accent === 'info' && 'from-sky-300 to-blue-600',
+          step.accent === 'success' && 'from-success/60 to-success',
+          step.accent === 'info' && 'from-info/60 to-info',
         )}
       />
 

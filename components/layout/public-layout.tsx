@@ -7,6 +7,7 @@ import { AuthNav } from '@/components/layout/auth-nav';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { Logo } from '@/components/layout/logo';
 import { NavSummary } from '@/components/layout/nav-summary';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { cn } from '@/lib/class-names';
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
@@ -63,6 +64,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <NavSummary />
+            <NotificationBell />
             <AuthNav />
           </div>
         </div>

@@ -44,6 +44,14 @@ const config: Config = {
           DEFAULT: withOpacity('--danger'),
           surface: withOpacity('--danger-surface'),
         },
+        warning: {
+          DEFAULT: withOpacity('--warning'),
+          surface: withOpacity('--warning-surface'),
+        },
+        chain: {
+          DEFAULT: withOpacity('--chain'),
+          surface: withOpacity('--chain-surface'),
+        },
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],

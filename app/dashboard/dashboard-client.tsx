@@ -10,10 +10,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { VaultCard } from '@/components/vault/vault-card';
 import { HowItWorks } from '@/components/marketing/how-it-works';
+import { OnChainPanel } from '@/components/dashboard/on-chain-panel';
+import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
 import { ReferralCard } from '@/components/referral/referral-card';
 import { apiRequest } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
+import type { OnChainOverviewView } from '@/types/notifications';
 import type { PointsTransactionView, SummaryView, VaultView } from '@/types/vault';
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number; helper?: string }) {
@@ -30,6 +33,7 @@ export function DashboardClient() {
   const [vaults, setVaults] = useState<VaultView[]>([]);
   const [summary, setSummary] = useState<SummaryView | null>(null);
   const [transactions, setTransactions] = useState<PointsTransactionView[]>([]);
+  const [onChain, setOnChain] = useState<OnChainOverviewView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -40,13 +44,15 @@ export function DashboardClient() {
     try {
       // Sync vaults once via /api/vaults, then read summary + history without duplicate sync work.
       const loadedVaults = await apiRequest<VaultView[]>('/api/vaults');
-      const [loadedSummary, loadedTransactions] = await Promise.all([
+      const [loadedSummary, loadedTransactions, loadedOnChain] = await Promise.all([
         apiRequest<SummaryView>('/api/summary'),
         apiRequest<PointsTransactionView[]>('/api/points?skipSync=1'),
+        apiRequest<OnChainOverviewView>('/api/on-chain/overview').catch(() => null),
       ]);
       setVaults(loadedVaults);
       setSummary(loadedSummary);
       setTransactions(loadedTransactions);
+      setOnChain(loadedOnChain);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Dashboard could not be loaded.');
     } finally {
@@ -109,6 +115,15 @@ export function DashboardClient() {
           </div>
 
           <ReferralCard variant="compact" onChanged={() => void loadDashboard()} />
+
+          {onChain ? <OnChainPanel overview={onChain} /> : null}
+
+          {(transactions.length > 0 || (onChain?.recentOperations.length ?? 0) > 0) ? (
+            <ActivityTimeline
+              transactions={transactions}
+              operations={onChain?.recentOperations ?? []}
+            />
+          ) : null}
 
           {vaults.length === 0 ? (
             <div className="space-y-8">

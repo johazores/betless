@@ -27,6 +27,7 @@ model AppUser {
 
   vaults             Vault[]
   pointsTransactions PointsTransaction[]
+  notifications      Notification[]
 
   @@index([createdAt])
   @@index([status, createdAt])
@@ -131,6 +132,33 @@ enum PointsTransactionType {
   REDEMPTION
   REFERRAL_BONUS
   ADMIN_ADJUSTMENT
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  appUserId String
+  category  NotificationCategory
+  title     String
+  body      String
+  readAt    DateTime?
+  actionUrl String?
+  metadata  Json?
+  createdAt DateTime             @default(now())
+
+  appUser AppUser @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@index([appUserId, readAt, createdAt])
+  @@index([appUserId, category, createdAt])
+}
+
+enum NotificationCategory {
+  ACCOUNT
+  VAULT
+  POINTS
+  ON_CHAIN
+  REWARDS
+  SECURITY
+  SYSTEM
 }
 
 enum AppUserStatus {

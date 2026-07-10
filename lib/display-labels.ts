@@ -67,11 +67,13 @@ const pointsTransactionTypeLabels: Record<string, string> = {
 const stellarOperationKindLabels: Record<string, string> = {
   LOCK: 'Lock deposit',
   CLAIM: 'Claim maturity',
-  EARLY_WITHDRAW: 'Early withdrawal',
+  CLAIM_MATURITY: 'Claim maturity',
+  CLAIM_EARLY: 'Early withdrawal',
 };
 
 const stellarOperationStateLabels: Record<string, string> = {
   PENDING: 'Pending',
+  SUBMITTED: 'Processing',
   CONFIRMED: 'Confirmed',
   FAILED: 'Failed',
 };

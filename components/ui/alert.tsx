@@ -4,17 +4,21 @@ import { cn } from '@/lib/class-names';
 type AlertProps = {
   title: string;
   children: ReactNode;
-  tone?: 'info' | 'success' | 'error';
+  tone?: 'info' | 'success' | 'warning' | 'error';
 };
 
 const tones = {
   info: {
     container: 'border-info/20 bg-info-surface text-info',
-    icon: 'M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z',
+    icon: 'M12 16v-4m0-4h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
   },
   success: {
     container: 'border-success/20 bg-success-surface text-success',
     icon: 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3',
+  },
+  warning: {
+    container: 'border-warning/25 bg-warning-surface text-warning',
+    icon: 'M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z',
   },
   error: {
     container: 'border-danger/20 bg-danger-surface text-danger',
