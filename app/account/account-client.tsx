@@ -10,6 +10,7 @@ import {
   type AccountSection,
 } from '@/components/account/account-settings-nav';
 import { ProfileAvatar } from '@/components/account/profile-avatar';
+import { PaymentMethodIcon } from '@/components/payment/payment-method-icon';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -240,10 +241,8 @@ export function AccountClient() {
                         <p className="pt-2 text-sm font-black text-ink">Cash-in methods</p>
                         <ul className="space-y-2">
                           {paymentMethods.map((method) => (
-                            <li key={method.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface-muted/80 px-3 py-2">
-                              <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-lg text-xs font-black text-white', method.markClassName)}>
-                                {method.mark}
-                              </span>
+                            <li key={method.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface-muted/80 px-3 py-2.5">
+                              <PaymentMethodIcon method={method} size="sm" />
                               <div className="min-w-0">
                                 <p className="text-sm font-semibold text-ink">{method.name}</p>
                                 <p className="text-xs text-ink-muted">{method.description}</p>

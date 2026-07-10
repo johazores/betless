@@ -1,14 +1,14 @@
 export type PaymentMethod = {
-  id: string;
+  id: PaymentMethodId;
   name: string;
   description: string;
-  /** Brand logo under `/public/payment-methods`. */
-  logoSrc?: string;
-  /** Fallback initial(s) when no logo is available. */
+  /** Fallback initial(s) if mark component is unavailable. */
   mark: string;
   /** Brand background for the fallback mark. */
   markClassName: string;
 };
+
+export type PaymentMethodId = 'gcash' | 'maya' | 'instapay';
 
 /**
  * Cash-in rails for vault deposits. In production these map to the SEP-24 anchor's
@@ -19,7 +19,6 @@ export const paymentMethods: PaymentMethod[] = [
     id: 'gcash',
     name: 'GCash',
     description: 'Instant · No fees',
-    logoSrc: '/payment-methods/gcash.png',
     mark: 'G',
     markClassName: 'bg-[#007CFF]',
   },
@@ -27,7 +26,6 @@ export const paymentMethods: PaymentMethod[] = [
     id: 'maya',
     name: 'Maya',
     description: 'Instant · No fees',
-    logoSrc: '/payment-methods/maya.svg',
     mark: 'M',
     markClassName: 'bg-[#0A0A0A]',
   },

@@ -21,6 +21,7 @@ import {
 } from '@/lib/deposit-otp';
 import { formatPeso } from '@/lib/money';
 import { getPaymentMethodById, paymentMethods } from '@/lib/payment-methods';
+import { PaymentMethodIcon } from '@/components/payment/payment-method-icon';
 import { refreshSummary } from '@/lib/summary-events';
 import {
   MIN_DEPOSIT_PHP,
@@ -335,18 +336,7 @@ export function CreateVaultForm() {
                         : 'border-line bg-surface hover:border-line-strong',
                     )}
                   >
-                    <span
-                      className={cn(
-                        'grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-lg font-black text-white',
-                        option.logoSrc ? 'bg-transparent' : option.markClassName,
-                      )}
-                    >
-                      {option.logoSrc ? (
-                        <img src={option.logoSrc} alt="" className="h-full w-full object-contain" />
-                      ) : (
-                        option.mark
-                      )}
-                    </span>
+                    <PaymentMethodIcon method={option} size="md" />
                     <span className="flex-1">
                       <span className="block font-black text-ink">{option.name}</span>
                       <span className="mt-0.5 block text-sm font-semibold text-ink-muted">{option.description}</span>
