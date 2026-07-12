@@ -2,12 +2,13 @@ import { addMonths, fullMonthsBetween } from '@/lib/dates';
 import { PointsTransactionType, VaultStatus, decimalToNumber } from '@/lib/domain';
 import { formatPeso } from '@/lib/money';
 import { prisma } from '@/lib/prisma';
+import { buildVaultVerificationUrl } from '@/lib/vault-verification';
 import { calculateEarlyWithdrawalFee, calculateMonthlyPoints, calculateTotalPoints } from '@/lib/vault-rules';
 import type { CreateVaultInput } from '@/lib/validators';
 import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
 import { NotificationService } from '@/services/notification-service';
-import type { VaultView } from '@/types/vault';
+import type { PublicVaultVerifyView, VaultView } from '@/types/vault';
 
 type VaultRecord = {
   id: string;
@@ -19,6 +20,10 @@ type VaultRecord = {
   closedAt: Date | null;
   withdrawalFee: unknown | null;
   returnedAmount: unknown | null;
+  goalName: string | null;
+  sourceAmount: unknown | null;
+  lockPercent: number | null;
+  verificationToken: string;
   claimableBalanceId: string | null;
   createdAt: Date;
   pointsTransactions: Array<{ points: number }>;
@@ -129,6 +134,9 @@ export class VaultService {
         appUserId: appUser.id,
         principal: input.amount,
         lockMonths: input.lockMonths,
+        goalName: input.goalName ?? null,
+        sourceAmount: input.sourceAmount ?? null,
+        lockPercent: input.lockPercent ?? null,
         startAt,
         maturesAt: addMonths(startAt, input.lockMonths),
         idempotencyKey: input.idempotencyKey ?? null,
@@ -238,6 +246,42 @@ export class VaultService {
     return decimalToNumber(result._sum.principal ?? 0);
   }
 
+  static async getPublicVerification(token: string): Promise<PublicVaultVerifyView | null> {
+    const vault = await prisma.vault.findUnique({
+      where: { verificationToken: token },
+      include: vaultInclude,
+    });
+
+    if (!vault) return null;
+
+    await StellarService.processPendingForVault(vault.id).catch(() => {});
+
+    const refreshed = await prisma.vault.findUnique({
+      where: { verificationToken: token },
+      include: vaultInclude,
+    });
+
+    if (!refreshed) return null;
+
+    const principal = decimalToNumber(refreshed.principal);
+    const sourceAmount = refreshed.sourceAmount == null ? null : decimalToNumber(refreshed.sourceAmount);
+
+    return {
+      goalName: refreshed.goalName,
+      principal,
+      lockMonths: refreshed.lockMonths,
+      status: refreshed.status,
+      maturesAt: refreshed.maturesAt.toISOString(),
+      sourceAmount,
+      lockPercent: refreshed.lockPercent,
+      spendableAmount:
+        sourceAmount != null && refreshed.lockPercent != null
+          ? sourceAmount - principal
+          : null,
+      stellar: StellarService.toStellarView(refreshed),
+    };
+  }
+
   private static toView(vault: VaultRecord): VaultView {
     const principal = decimalToNumber(vault.principal);
     const monthlyPoints = calculateMonthlyPoints(principal);
@@ -254,6 +298,11 @@ export class VaultService {
       closedAt: vault.closedAt ? vault.closedAt.toISOString() : null,
       withdrawalFee: vault.withdrawalFee == null ? null : decimalToNumber(vault.withdrawalFee),
       returnedAmount: vault.returnedAmount == null ? null : decimalToNumber(vault.returnedAmount),
+      goalName: vault.goalName,
+      sourceAmount: vault.sourceAmount == null ? null : decimalToNumber(vault.sourceAmount),
+      lockPercent: vault.lockPercent,
+      verificationToken: vault.verificationToken,
+      verificationUrl: buildVaultVerificationUrl(vault.verificationToken),
       monthlyPoints,
       monthsCompleted,
       pointsEarned,

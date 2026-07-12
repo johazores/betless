@@ -24,9 +24,13 @@ import { getPaymentMethodById, paymentMethods } from '@/lib/payment-methods';
 import { PaymentMethodIcon } from '@/components/payment/payment-method-icon';
 import { refreshSummary } from '@/lib/summary-events';
 import {
+  DEFAULT_LOCK_PERCENT,
+  GOAL_PRESETS,
   MIN_DEPOSIT_PHP,
+  REMITTANCE_MIN_LOCK_PHP,
   calculateEarlyWithdrawalFee,
   calculateMonthlyPoints,
+  calculateRemittanceSplit,
   calculateTotalPoints,
   lockPeriodOptions,
 } from '@/lib/vault-rules';
@@ -87,6 +91,10 @@ export function CreateVaultForm() {
   const [amount, setAmount] = useState(String(MIN_DEPOSIT_PHP));
   const [lockMonths, setLockMonths] = useState('12');
   const [methodId, setMethodId] = useState(paymentMethods[0].id);
+  const [goalName, setGoalName] = useState('');
+  const [fromRemittance, setFromRemittance] = useState(false);
+  const [sourceAmount, setSourceAmount] = useState('20000');
+  const [lockPercent, setLockPercent] = useState(String(DEFAULT_LOCK_PERCENT));
 
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
@@ -111,9 +119,21 @@ export function CreateVaultForm() {
     return () => clearTimeout(timer);
   }, [resendSeconds]);
 
-  const numericAmount = Number(amount);
+  const numericAmount = fromRemittance
+    ? calculateRemittanceSplit(Number(sourceAmount), Number(lockPercent)).lockedAmount
+    : Number(amount);
   const numericLockMonths = Number(lockMonths);
-  const amountValid = Number.isFinite(numericAmount) && numericAmount >= MIN_DEPOSIT_PHP;
+  const numericSourceAmount = Number(sourceAmount);
+  const numericLockPercent = Number(lockPercent);
+  const remittanceSplit = fromRemittance && Number.isFinite(numericSourceAmount) && Number.isFinite(numericLockPercent)
+    ? calculateRemittanceSplit(numericSourceAmount, numericLockPercent)
+    : null;
+  const amountValid = fromRemittance
+    ? remittanceSplit != null &&
+      Number.isFinite(numericSourceAmount) &&
+      numericSourceAmount >= REMITTANCE_MIN_LOCK_PHP &&
+      remittanceSplit.lockedAmount >= REMITTANCE_MIN_LOCK_PHP
+    : Number.isFinite(numericAmount) && numericAmount >= MIN_DEPOSIT_PHP;
   const method = getPaymentMethodById(methodId) ?? paymentMethods[0];
   const maskedContact = maskEmail(user?.primaryEmailAddress?.emailAddress);
 
@@ -134,7 +154,11 @@ export function CreateVaultForm() {
   function handleDetailsContinue(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!amountValid) {
-      setError(`The minimum deposit is ${formatPeso(MIN_DEPOSIT_PHP)}.`);
+      setError(
+        fromRemittance
+          ? `The locked portion must be at least ${formatPeso(REMITTANCE_MIN_LOCK_PHP)}. Adjust the incoming amount or lock percentage.`
+          : `The minimum deposit is ${formatPeso(MIN_DEPOSIT_PHP)}.`,
+      );
       return;
     }
     setError('');
@@ -177,13 +201,26 @@ export function CreateVaultForm() {
         return;
       }
 
+      const body: Record<string, unknown> = {
+        lockMonths: numericLockMonths,
+        idempotencyKey,
+      };
+
+      if (fromRemittance) {
+        body.sourceAmount = numericSourceAmount;
+        body.lockPercent = numericLockPercent;
+      } else {
+        body.amount = numericAmount;
+      }
+
+      const trimmedGoal = goalName.trim();
+      if (trimmedGoal) {
+        body.goalName = trimmedGoal;
+      }
+
       const vault = await apiRequest<VaultView>('/api/vaults', {
         method: 'POST',
-        body: JSON.stringify({
-          amount: numericAmount,
-          lockMonths: numericLockMonths,
-          idempotencyKey,
-        }),
+        body: JSON.stringify(body),
       });
       refreshSummary();
       setCreatedVault(vault);
@@ -208,7 +245,8 @@ export function CreateVaultForm() {
           </span>
           <h2 className="mt-5 text-2xl font-black tracking-tight text-ink">Deposit successful</h2>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
-            {formatPeso(createdVault.principal)} is now locked in your {createdVault.lockMonths}-month vault.
+            {formatPeso(createdVault.principal)} is now locked
+            {createdVault.goalName ? ` in your ${createdVault.goalName} vault` : ` in your ${createdVault.lockMonths}-month vault`}.
           </p>
         </div>
 
@@ -224,7 +262,8 @@ export function CreateVaultForm() {
         </dl>
 
         <p className="mt-4 text-xs font-semibold leading-5 text-ink-muted">
-          Your deposit lock is recorded on the Stellar network — you can verify it independently from your vault page.
+          Your deposit lock is recorded on the Stellar network — share the verification link from your vault page
+          so senders abroad can confirm it independently.
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -249,46 +288,128 @@ export function CreateVaultForm() {
         {step === 'details' ? (
           <form className="space-y-6" onSubmit={handleDetailsContinue}>
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-ink">Set up your vault</h2>
-              <p className="mt-1 text-sm leading-6 text-ink-muted">Choose how much to deposit and for how long.</p>
+              <h2 className="text-2xl font-black tracking-tight text-ink">Set up your lock pot</h2>
+              <p className="mt-1 text-sm leading-6 text-ink-muted">
+                Name your goal, choose how much to lock, and when it matures.
+              </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                label="Deposit amount"
-                type="number"
-                min={MIN_DEPOSIT_PHP}
-                step="1000"
-                value={amount}
-                onChange={(event) => {
-                  setAmount(event.target.value);
-                  setError('');
-                }}
-                hint={`Minimum ${formatPeso(MIN_DEPOSIT_PHP)}`}
-              />
-              <Select
-                label="Lock period"
-                options={lockPeriodOptions.map((months) => ({
-                  label: `${months} months (${months / 12} ${months === 12 ? 'year' : 'years'})`,
-                  value: String(months),
-                }))}
-                value={lockMonths}
-                onChange={(event) => setLockMonths(event.target.value)}
-                hint="Lock periods come in 12-month steps."
-              />
+            <Input
+              label="Savings goal (optional)"
+              value={goalName}
+              onChange={(event) => setGoalName(event.target.value)}
+              placeholder="e.g. College fund, Tuition 2027"
+              hint="Give your vault a name so senders and family know what it's for."
+            />
+
+            <div className="flex flex-wrap gap-2">
+              {GOAL_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setGoalName(preset)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-xs font-bold transition',
+                    goalName === preset
+                      ? 'border-brand-500 bg-brand-50 text-brand-800'
+                      : 'border-line bg-surface text-ink-muted hover:border-line-strong',
+                  )}
+                >
+                  {preset}
+                </button>
+              ))}
             </div>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface-muted p-4">
+              <input
+                type="checkbox"
+                checked={fromRemittance}
+                onChange={(event) => setFromRemittance(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-line text-brand-600"
+              />
+              <span>
+                <span className="block text-sm font-black text-ink">Lock a portion of incoming remittance</span>
+                <span className="mt-1 block text-sm leading-6 text-ink-muted">
+                  Simulate money arriving from abroad — a slice locks on Stellar, the rest stays spendable.
+                </span>
+              </span>
+            </label>
+
+            {fromRemittance ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Incoming amount"
+                  type="number"
+                  min={REMITTANCE_MIN_LOCK_PHP}
+                  step="1000"
+                  value={sourceAmount}
+                  onChange={(event) => {
+                    setSourceAmount(event.target.value);
+                    setError('');
+                  }}
+                  hint="Total remittance received"
+                />
+                <Input
+                  label="Lock percentage"
+                  type="number"
+                  min={10}
+                  max={90}
+                  step={5}
+                  value={lockPercent}
+                  onChange={(event) => {
+                    setLockPercent(event.target.value);
+                    setError('');
+                  }}
+                  hint={`Default ${DEFAULT_LOCK_PERCENT}% — rest stays spendable`}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Deposit amount"
+                  type="number"
+                  min={MIN_DEPOSIT_PHP}
+                  step="1000"
+                  value={amount}
+                  onChange={(event) => {
+                    setAmount(event.target.value);
+                    setError('');
+                  }}
+                  hint={`Minimum ${formatPeso(MIN_DEPOSIT_PHP)}`}
+                />
+              </div>
+            )}
+
+            <Select
+              label="Lock period"
+              options={lockPeriodOptions.map((months) => ({
+                label: `${months} months (${months / 12} ${months === 12 ? 'year' : 'years'})`,
+                value: String(months),
+              }))}
+              value={lockMonths}
+              onChange={(event) => setLockMonths(event.target.value)}
+              hint="Lock periods come in 12-month steps."
+            />
 
             {preview ? (
               <div className="rounded-2xl border border-line bg-surface-muted p-5">
                 <p className="text-sm font-black text-ink">Your plan</p>
+                {remittanceSplit ? (
+                  <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="font-semibold text-ink-muted">Spendable now</dt>
+                      <dd className="font-black text-ink">{formatPeso(remittanceSplit.spendableAmount)}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-ink-muted">Locked on Stellar</dt>
+                      <dd className="font-black text-brand-800">{formatPeso(remittanceSplit.lockedAmount)}</dd>
+                    </div>
+                  </dl>
+                ) : null}
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="font-semibold text-ink-muted">Points per month</dt>
                     <dd className="font-black text-ink">{preview.monthlyPoints.toLocaleString('en-PH')} points</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-ink-muted">Total points at maturity</dt>
-                    <dd className="font-black text-ink">{preview.totalPoints.toLocaleString('en-PH')} points</dd>
                   </div>
                   <div>
                     <dt className="font-semibold text-ink-muted">Deposit returned on</dt>
@@ -300,8 +421,7 @@ export function CreateVaultForm() {
                   </div>
                 </dl>
                 <p className="mt-4 text-xs font-semibold leading-5 text-ink-muted">
-                  Points start after your first full month. 1 point = ₱1. Your full deposit is returned automatically when the lock period ends.
-                  The lock is recorded on the Stellar network, so you can verify it independently at any time.
+                  The locked amount is recorded as a Stellar claimable balance — independently verifiable via a share link.
                 </p>
               </div>
             ) : null}
@@ -371,10 +491,20 @@ export function CreateVaultForm() {
 
             <dl className="divide-y divide-line rounded-2xl border border-line bg-surface-muted px-5">
               <SummaryRow label="From" value={method.name} />
-              <SummaryRow label="To" value={`Betless ${numericLockMonths}-month vault`} />
-              <SummaryRow label="Deposit amount" value={formatPeso(numericAmount)} />
+              <SummaryRow
+                label="To"
+                value={goalName.trim() ? `${goalName.trim()} vault` : `Betless ${numericLockMonths}-month vault`}
+              />
+              <SummaryRow label="Amount to lock" value={formatPeso(numericAmount)} />
+              {remittanceSplit ? (
+                <SummaryRow label="Spendable immediately" value={formatPeso(remittanceSplit.spendableAmount)} />
+              ) : null}
               <SummaryRow label="Convenience fee" value={formatPeso(0)} />
-              <SummaryRow label="Total to pay" value={formatPeso(numericAmount)} strong />
+              <SummaryRow
+                label="Total to pay"
+                value={formatPeso(fromRemittance ? numericSourceAmount : numericAmount)}
+                strong
+              />
             </dl>
 
             <dl className="divide-y divide-line rounded-2xl border border-line px-5">

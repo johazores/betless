@@ -11,20 +11,20 @@ export function getSiteUrl() {
 
 export const siteConfig = {
   name: 'Betless',
-  tagline: 'Commitment savings',
-  title: 'Betless — Commitment Savings',
+  tagline: 'Remittance lock pot',
+  title: 'Betless — Lock Remittance on Stellar',
   description:
-    'Lock your savings, earn monthly points, and redeem real-world rewards. Your full deposit comes back at maturity — verified on the Stellar network.',
+    'Auto-lock a slice of incoming remittance on Stellar for named savings goals. Senders verify independently. 100% returned at maturity.',
   locale: 'en_PH',
   themeColor: '#d97706',
   keywords: [
-    'commitment savings',
-    'savings vault',
-    'Philippines savings',
-    'earn points',
-    'rewards',
-    'Stellar',
-    'lock savings',
+    'remittance savings',
+    'lock pot',
+    'Philippines remittance',
+    'Stellar claimable balance',
+    'savings goal',
+    'OFW savings',
+    'verified lock',
     'Betless',
   ],
 } as const;

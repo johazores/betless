@@ -71,3 +71,9 @@ export function buildTransactionExplorerUrl(txHash: string) {
 export function buildAccountExplorerUrl(accountId: string) {
   return `${explorerBase()}/account/${accountId}`;
 }
+
+/** Public treasury address for proof-of-reserves pages. Null when Stellar is off. */
+export function getTreasuryPublicKey() {
+  if (!isStellarEnabled()) return null;
+  return getTreasuryKeypair().publicKey();
+}

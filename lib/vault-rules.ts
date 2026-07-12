@@ -5,9 +5,23 @@
  */
 
 export const MIN_DEPOSIT_PHP = 10_000;
+/** Lower minimum when locking a slice of an incoming remittance payment. */
+export const REMITTANCE_MIN_LOCK_PHP = 1_000;
 export const LOCK_MONTH_INCREMENT = 12;
 export const MAX_LOCK_MONTHS = 60;
 export const ANNUAL_REWARD_RATE = 0.04;
+
+export const DEFAULT_LOCK_PERCENT = 30;
+export const MIN_LOCK_PERCENT = 10;
+export const MAX_LOCK_PERCENT = 90;
+
+export const GOAL_PRESETS = [
+  'College fund',
+  'Emergency fund',
+  'Tuition',
+  'Appliance fund',
+  'Home down payment',
+] as const;
 
 export const FLAT_WITHDRAWAL_FEE_PHP = 500;
 export const FLAT_FEE_PRINCIPAL_LIMIT_PHP = 50_000;
@@ -46,4 +60,19 @@ export function calculateEarlyWithdrawalFee(principal: number) {
     return FLAT_WITHDRAWAL_FEE_PHP;
   }
   return Math.round(principal * PERCENT_WITHDRAWAL_FEE);
+}
+
+export function isValidLockPercent(value: number) {
+  return Number.isInteger(value) && value >= MIN_LOCK_PERCENT && value <= MAX_LOCK_PERCENT;
+}
+
+/** Locked amount and spendable remainder when splitting an incoming payment. */
+export function calculateRemittanceSplit(sourceAmount: number, lockPercent: number) {
+  const lockedAmount = Math.round((sourceAmount * lockPercent) / 100);
+  const spendableAmount = sourceAmount - lockedAmount;
+  return { lockedAmount, spendableAmount };
+}
+
+export function getMinimumDepositForVault(fromRemittance: boolean) {
+  return fromRemittance ? REMITTANCE_MIN_LOCK_PHP : MIN_DEPOSIT_PHP;
 }

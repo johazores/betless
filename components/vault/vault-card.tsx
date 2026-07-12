@@ -14,7 +14,7 @@ export function VaultCard({ vault }: { vault: VaultView }) {
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-black text-brand-700">{vault.lockMonths}-month vault</p>
+          <p className="text-sm font-black text-brand-700">{vault.goalName ?? `${vault.lockMonths}-month vault`}</p>
           <h2 className="mt-2 text-2xl font-black text-ink">{formatPeso(vault.principal)}</h2>
           <p className="mt-1 text-sm font-semibold text-ink-muted">
             {isActive
@@ -22,6 +22,9 @@ export function VaultCard({ vault }: { vault: VaultView }) {
               : vault.returnedAmount != null
                 ? `${formatPeso(vault.returnedAmount)} returned · ${vault.pointsEarned.toLocaleString('en-PH')} points earned`
                 : `${vault.pointsEarned.toLocaleString('en-PH')} points earned`}
+            {vault.sourceAmount != null && vault.lockPercent != null
+              ? ` · ${vault.lockPercent}% locked from remittance`
+              : ''}
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">

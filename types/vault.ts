@@ -10,6 +10,11 @@ export type VaultView = {
   closedAt: string | null;
   withdrawalFee: number | null;
   returnedAmount: number | null;
+  goalName: string | null;
+  sourceAmount: number | null;
+  lockPercent: number | null;
+  verificationToken: string;
+  verificationUrl: string;
   monthlyPoints: number;
   monthsCompleted: number;
   pointsEarned: number;
@@ -20,6 +25,37 @@ export type VaultView = {
   /** On-chain settlement state. Null when the Stellar layer is not configured. */
   stellar: VaultStellarView | null;
   createdAt: string;
+};
+
+export type PublicVaultVerifyView = {
+  goalName: string | null;
+  principal: number;
+  lockMonths: number;
+  status: VaultStatus;
+  maturesAt: string;
+  sourceAmount: number | null;
+  lockPercent: number | null;
+  spendableAmount: number | null;
+  stellar: VaultStellarView | null;
+};
+
+export type ReservesVaultItem = {
+  goalName: string | null;
+  principal: number;
+  maturesAt: string;
+  stellarStatus: VaultStellarView['status'] | null;
+  verifyPath: string;
+};
+
+export type ReservesView = {
+  stellarEnabled: boolean;
+  networkLabel: string;
+  treasuryExplorerUrl: string | null;
+  totalLocked: number;
+  activeVaultCount: number;
+  onChainConfirmedCount: number;
+  onChainLockedTotal: number;
+  vaults: ReservesVaultItem[];
 };
 
 export type VaultStellarView = {

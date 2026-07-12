@@ -29,56 +29,40 @@ const accentStyles = {
 
 const steps: Step[] = [
   {
-    title: 'Create your account',
-    body: 'Sign up in under a minute. Your vaults and points are saved to your account.',
+    title: 'Money arrives',
+    body: 'Remittance lands via GCash, InstaPay, or a Stellar anchor — familiar rails, no crypto vocabulary.',
     accent: 'brand',
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M19 8v6M22 11h-6" />
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
     ),
   },
   {
-    title: 'Fund a savings vault',
-    body: 'Deposit ₱10,000 or more and lock it for 12 to 60 months, in 12-month steps.',
+    title: 'Auto-lock a slice',
+    body: 'Choose a goal name and lock percentage. The rest stays spendable — the locked portion becomes a Stellar claimable balance.',
     accent: 'brand',
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <rect x="2" y="7" width="20" height="14" rx="2" />
-        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        <path d="M12 12v4" />
-        <circle cx="12" cy="12" r="0.5" fill="currentColor" />
+        <rect x="3" y="11" width="18" height="11" rx="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
       </svg>
     ),
   },
   {
-    title: 'Earn points every month',
-    body: 'After your first full month, you earn points monthly — about 4% of your deposit per year. 1 point = ₱1.',
-    accent: 'success',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M3 3v18h18" />
-        <path d="M7 16l4-4 4 4 5-6" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Redeem real rewards',
-    body: 'Spend points on groceries, travel, apparel, gadgets, and partner merchant rewards.',
+    title: 'Sender verifies',
+    body: 'Share a public link — senders abroad confirm the lock on stellar.expert without a Betless account.',
     accent: 'info',
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <rect x="3" y="8" width="18" height="12" rx="2" />
-        <path d="M12 8V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v3" />
-        <path d="M3 12h18" />
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
       </svg>
     ),
   },
   {
-    title: 'Automatically receive your locked funds in full',
-    body: 'When the lock period ends, your full deposit is returned to you automatically.',
+    title: '100% back at maturity',
+    body: 'The network enforces the time lock. When the period ends, your full deposit returns automatically.',
     accent: 'success',
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -181,7 +165,7 @@ export function HowItWorks({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {steps.map((step, index) => (
         <li key={step.title}>
           <StepCard step={step} index={index} compact={false} />

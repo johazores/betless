@@ -55,6 +55,7 @@ async function main() {
       appUserId: user.id,
       principal: 50_000,
       lockMonths: 12,
+      goalName: 'College fund',
       startAt: inProgressStart,
       maturesAt: addMonths(inProgressStart, 12),
       idempotencyKey: `demo-in-progress-${user.id}`,
@@ -62,6 +63,7 @@ async function main() {
     update: {
       principal: 50_000,
       lockMonths: 12,
+      goalName: 'College fund',
       status: VaultStatus.ACTIVE,
       startAt: inProgressStart,
       maturesAt: addMonths(inProgressStart, 12),
@@ -72,6 +74,37 @@ async function main() {
   });
   console.log(`Created in-progress vault (₱50,000, month 5 of 12): ${inProgress.id}`);
   await StellarService.lockVaultPrincipal(inProgress);
+
+  const remittanceStart = addMonths(now, -2);
+  const remittance = await prisma.vault.upsert({
+    where: { idempotencyKey: `demo-remittance-${user.id}` },
+    create: {
+      appUserId: user.id,
+      principal: 6_000,
+      lockMonths: 12,
+      goalName: 'Tuition',
+      sourceAmount: 20_000,
+      lockPercent: 30,
+      startAt: remittanceStart,
+      maturesAt: addMonths(remittanceStart, 12),
+      idempotencyKey: `demo-remittance-${user.id}`,
+    },
+    update: {
+      principal: 6_000,
+      lockMonths: 12,
+      goalName: 'Tuition',
+      sourceAmount: 20_000,
+      lockPercent: 30,
+      status: VaultStatus.ACTIVE,
+      startAt: remittanceStart,
+      maturesAt: addMonths(remittanceStart, 12),
+      closedAt: null,
+      withdrawalFee: null,
+      returnedAmount: null,
+    },
+  });
+  console.log(`Created remittance-split vault (₱6,000 locked from ₱20,000): ${remittance.id}`);
+  await StellarService.lockVaultPrincipal(remittance);
 
   const maturedStart = addMonths(now, -13);
   const matured = await prisma.vault.upsert({
@@ -99,7 +132,7 @@ async function main() {
   await StellarService.lockVaultPrincipal(matured);
 
   const locks = await prisma.stellarOperation.findMany({
-    where: { vaultId: { in: [inProgress.id, matured.id] } },
+    where: { vaultId: { in: [inProgress.id, remittance.id, matured.id] } },
   });
   for (const lock of locks) {
     console.log(`  on-chain ${lock.kind} for ${lock.vaultId}: ${lock.state}${lock.errorMessage ? ` (${lock.errorMessage})` : ''}`);
