@@ -9,7 +9,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Progress } from '@/components/ui/progress';
 import { Stat } from '@/components/ui/stat';
-import { ShareVerificationCard } from '@/components/vault/share-verification-card';
 import { apiRequest, postJson } from '@/lib/api-client';
 import { formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -96,15 +95,10 @@ export function VaultDetailClient({ id }: { id: string }) {
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-black text-brand-700">
-              {vault.goalName ?? `${vault.lockMonths}-month commitment vault`}
-            </p>
+            <p className="text-sm font-black text-brand-700">{vault.lockMonths}-month commitment vault</p>
             <h1 className="mt-2 text-4xl font-black text-ink">{formatPeso(vault.principal)}</h1>
             <p className="mt-2 text-sm font-semibold text-ink-muted">
               Started {formatShortDate(vault.startAt)} · {isActive ? `matures ${formatShortDate(vault.maturesAt)}` : `closed ${formatShortDate(vault.closedAt ?? vault.maturesAt)}`}
-              {vault.sourceAmount != null && vault.lockPercent != null
-                ? ` · ${vault.lockPercent}% of ${formatPeso(vault.sourceAmount)} remittance`
-                : ''}
             </p>
           </div>
           <span className="w-fit rounded-full bg-surface-sunken px-3 py-1 text-xs font-black text-ink">
@@ -130,8 +124,6 @@ export function VaultDetailClient({ id }: { id: string }) {
       </Card>
 
       {vault.stellar ? <OnChainCard stellar={vault.stellar} /> : null}
-
-      <ShareVerificationCard verificationUrl={vault.verificationUrl} goalName={vault.goalName} />
 
       {isActive ? (
         <Card>

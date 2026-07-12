@@ -8,11 +8,12 @@ import { Card } from '@/components/ui/card';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { HowItWorks } from '@/components/marketing/how-it-works';
 import { formatPeso } from '@/lib/money';
+import { rewardCatalog } from '@/lib/rewards';
 import {
-  DEFAULT_LOCK_PERCENT,
+  ANNUAL_REWARD_RATE,
   FLAT_FEE_PRINCIPAL_LIMIT_PHP,
   FLAT_WITHDRAWAL_FEE_PHP,
-  REMITTANCE_MIN_LOCK_PHP,
+  MIN_DEPOSIT_PHP,
 } from '@/lib/vault-rules';
 import { createMetadata } from '@/lib/seo';
 import { siteConfig } from '@/lib/site';
@@ -23,27 +24,29 @@ export const metadata: Metadata = createMetadata({
   path: '/',
 });
 
+const featuredDepositAmount = 50_000;
+
 const promises = [
-  ['Locked by the network', 'Every vault principal sits in a Stellar claimable balance with a time predicate. The network — not our database — enforces the lock until maturity.'],
-  ['Verifiable by anyone', 'Share a public link with senders abroad. They confirm the lock on stellar.expert without signing up for Betless.'],
-  ['Transparent exit', `Need the money early? Withdraw any time for a flat ${formatPeso(FLAT_WITHDRAWAL_FEE_PHP)} fee (1% above ${formatPeso(FLAT_FEE_PRINCIPAL_LIMIT_PHP)}), always shown before you confirm.`],
+  ['Your money comes back', 'When the lock period ends, 100% of your deposit is returned automatically. Every vault lock is independently verifiable on the Stellar network — not just a promise in our database.'],
+  ['Clear rewards', `You earn about ${Math.round(ANNUAL_REWARD_RATE * 100)}% of your deposit per year as points. 1 point = ₱1. No tiers, no fine print.`],
+  ['Transparent exit', `Need the money early? Withdraw any time for a flat ${formatPeso(FLAT_WITHDRAWAL_FEE_PHP)} fee (1% for vaults above ${formatPeso(FLAT_FEE_PRINCIPAL_LIMIT_PHP)}), always shown before you confirm.`],
 ];
 
 export default function HomePage() {
   return (
     <PublicLayout>
       <MarketingJsonLd />
-      <HeroSection />
+      <HeroSection featuredDepositAmount={featuredDepositAmount} />
 
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-16" id="how-it-works">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 max-w-2xl">
             <Badge>How it works</Badge>
             <h2 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">
-              From remittance to verified lock in four steps.
+              Five simple steps to start saving.
             </h2>
             <p className="mt-3 text-base leading-7 text-ink-muted">
-              Betless turns incoming money into savings at the moment it arrives — locked on Stellar, verifiable by anyone.
+              Everything Betless does, in plain language — from your first deposit to getting your money back.
             </p>
           </div>
           <HowItWorks />
@@ -62,17 +65,20 @@ export default function HomePage() {
       </section>
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-line bg-surface p-8 shadow-card sm:p-12">
-          <div className="max-w-3xl">
-            <Badge>Proof of reserves</Badge>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink">See every active lock — no login required.</h2>
-            <p className="mt-4 text-sm leading-7 text-ink-muted">
-              Our public reserves page aggregates all active vault locks. Each one links to an independent verification
-              page with on-chain explorer links when Stellar is configured.
-            </p>
-            <Link href="/reserves" className="mt-7 inline-flex">
-              <Button variant="secondary">View proof of reserves</Button>
-            </Link>
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-6 max-w-2xl">
+            <Badge>Rewards</Badge>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-ink">Points you can actually use.</h2>
+            <p className="mt-3 text-sm leading-7 text-ink-muted">1 point = ₱1, redeemable for real-world rewards from partner merchants.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {rewardCatalog.slice(0, 4).map((reward) => (
+              <div key={reward.id} className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+                <p className="text-xs font-bold uppercase tracking-wide text-brand-700">{reward.category}</p>
+                <p className="mt-2 font-black text-ink">{reward.name}</p>
+                <p className="mt-2 text-sm leading-6 text-ink-muted">{reward.points.toLocaleString('en-PH')} points</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -81,12 +87,11 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-line bg-surface p-8 shadow-card sm:p-12">
           <div className="max-w-3xl">
             <p className="text-sm font-black text-brand-700">Start today</p>
-            <h2 className="mt-4 text-4xl font-black tracking-tight text-ink">Lock your first remittance slice.</h2>
+            <h2 className="mt-4 text-4xl font-black tracking-tight text-ink">Open your first vault in minutes.</h2>
             <p className="mt-4 text-sm leading-7 text-ink-muted">
-              Name a goal, set {DEFAULT_LOCK_PERCENT}% auto-lock (or choose your own), and share the verification link
-              with family abroad. Minimum lock slice: {formatPeso(REMITTANCE_MIN_LOCK_PHP)}.
+              Create an account, deposit {formatPeso(MIN_DEPOSIT_PHP)} or more, choose a lock period, and start earning points after your first full month.
             </p>
-            <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create a lock pot</Button></Link>
+            <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create a vault</Button></Link>
           </div>
         </div>
       </section>

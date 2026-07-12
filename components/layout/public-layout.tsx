@@ -37,8 +37,8 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
 const footerLinks = {
   product: [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Create lock pot', href: '/create-vault' },
-    { label: 'Proof of reserves', href: '/reserves' },
+    { label: 'Create vault', href: '/create-vault' },
+    { label: 'Rewards', href: '/rewards' },
     { label: 'How it works', href: '/#how-it-works' },
   ],
 };
@@ -82,8 +82,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <div>
                 <Logo showTagline markClassName="h-8 w-8" />
                 <p className="mt-4 max-w-sm text-sm leading-6 text-ink-muted">
-                  Auto-lock remittance on Stellar for named savings goals. Shareable verification for senders abroad.
-                  100% returned at maturity.
+                  Commitment savings with monthly rewards. Lock a deposit, earn points, and get your full balance back at maturity.
                 </p>
               </div>
 

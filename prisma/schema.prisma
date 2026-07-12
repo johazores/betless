@@ -42,16 +42,6 @@ model Vault {
   startAt    DateTime    @default(now())
   maturesAt  DateTime
 
-  // Optional named savings goal (e.g. "College fund", "Tuition 2027").
-  goalName String?
-
-  // When set, the vault was funded by locking a portion of a larger incoming payment.
-  sourceAmount Decimal?
-  lockPercent  Int?
-
-  // Public token for shareable on-chain verification links (no auth required).
-  verificationToken String @unique @default(cuid())
-
   // Set when the vault closes (maturity or early withdrawal).
   closedAt       DateTime?
   withdrawalFee  Decimal?
