@@ -50,6 +50,12 @@ model Vault {
   // On-chain anchor point: the claimable balance holding this vault's principal.
   claimableBalanceId String? @unique
 
+  // Optional savings goal (e.g. "Laptop fund"). Shown in vault UI only.
+  goalLabel String?
+
+  // Cash-in rail selected at deposit (gcash | maya | instapay). Maps to SEP-24 in production.
+  paymentMethod String?
+
   idempotencyKey String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

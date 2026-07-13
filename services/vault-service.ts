@@ -4,6 +4,7 @@ import { formatPeso } from '@/lib/money';
 import { prisma } from '@/lib/prisma';
 import { calculateEarlyWithdrawalFee, calculateMonthlyPoints, calculateTotalPoints } from '@/lib/vault-rules';
 import type { CreateVaultInput } from '@/lib/validators';
+import { getPaymentMethodById } from '@/lib/payment-methods';
 import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
 import { NotificationService } from '@/services/notification-service';
@@ -13,6 +14,8 @@ type VaultRecord = {
   id: string;
   principal: unknown;
   lockMonths: number;
+  goalLabel: string | null;
+  paymentMethod: string | null;
   status: VaultStatus;
   startAt: Date;
   maturesAt: Date;
@@ -129,6 +132,8 @@ export class VaultService {
         appUserId: appUser.id,
         principal: input.amount,
         lockMonths: input.lockMonths,
+        goalLabel: input.goalLabel ?? null,
+        paymentMethod: input.paymentMethod ?? null,
         startAt,
         maturesAt: addMonths(startAt, input.lockMonths),
         idempotencyKey: input.idempotencyKey ?? null,
@@ -244,10 +249,17 @@ export class VaultService {
     const pointsEarned = vault.pointsTransactions.reduce((sum, transaction) => sum + transaction.points, 0);
     const monthsCompleted = monthlyPoints > 0 ? Math.round(pointsEarned / monthlyPoints) : 0;
 
+    const paymentMethodName = vault.paymentMethod
+      ? getPaymentMethodById(vault.paymentMethod)?.name ?? vault.paymentMethod
+      : null;
+
     return {
       id: vault.id,
       principal,
       lockMonths: vault.lockMonths,
+      goalLabel: vault.goalLabel,
+      paymentMethod: vault.paymentMethod,
+      paymentMethodName,
       status: vault.status,
       startAt: vault.startAt.toISOString(),
       maturesAt: vault.maturesAt.toISOString(),

@@ -9,14 +9,16 @@ import type { VaultView } from '@/types/vault';
 
 export function VaultCard({ vault }: { vault: VaultView }) {
   const isActive = vault.status === 'ACTIVE';
+  const title = vault.goalLabel ?? `${vault.lockMonths}-month vault`;
 
   return (
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-black text-brand-700">{vault.lockMonths}-month vault</p>
+          <p className="text-sm font-black text-brand-700">{title}</p>
           <h2 className="mt-2 text-2xl font-black text-ink">{formatPeso(vault.principal)}</h2>
           <p className="mt-1 text-sm font-semibold text-ink-muted">
+            {vault.goalLabel ? `${vault.lockMonths} months · ` : ''}
             {isActive
               ? `Matures ${formatShortDate(vault.maturesAt)} · ${vault.monthlyPoints.toLocaleString('en-PH')} points/month`
               : vault.returnedAmount != null

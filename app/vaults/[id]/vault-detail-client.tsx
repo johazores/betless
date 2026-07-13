@@ -95,11 +95,17 @@ export function VaultDetailClient({ id }: { id: string }) {
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-black text-brand-700">{vault.lockMonths}-month commitment vault</p>
+            <p className="text-sm font-black text-brand-700">
+              {vault.goalLabel ?? `${vault.lockMonths}-month commitment vault`}
+            </p>
             <h1 className="mt-2 text-4xl font-black text-ink">{formatPeso(vault.principal)}</h1>
             <p className="mt-2 text-sm font-semibold text-ink-muted">
+              {vault.goalLabel ? `Saving for ${vault.goalLabel} · ` : ''}
               Started {formatShortDate(vault.startAt)} · {isActive ? `matures ${formatShortDate(vault.maturesAt)}` : `closed ${formatShortDate(vault.closedAt ?? vault.maturesAt)}`}
             </p>
+            {vault.paymentMethodName ? (
+              <p className="mt-1 text-xs font-semibold text-ink-muted">Funded via {vault.paymentMethodName}</p>
+            ) : null}
           </div>
           <span className="w-fit rounded-full bg-surface-sunken px-3 py-1 text-xs font-black text-ink">
             {getVaultStatusLabel(vault.status)}

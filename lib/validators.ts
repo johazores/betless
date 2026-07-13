@@ -1,9 +1,12 @@
 import { toNumber } from '@/lib/money';
+import { type PaymentMethodId, paymentMethods } from '@/lib/payment-methods';
 import { MIN_DEPOSIT_PHP, isValidLockPeriod } from '@/lib/vault-rules';
 
 export type CreateVaultInput = {
   amount: number;
   lockMonths: number;
+  goalLabel?: string;
+  paymentMethod?: PaymentMethodId;
   idempotencyKey?: string;
 };
 
@@ -39,9 +42,23 @@ export function validateCreateVaultRequest(body: unknown): CreateVaultInput {
     throw new Error('Lock period must be 12 months or more, in 12-month steps.');
   }
 
+  const goalLabel = optionalToken(payload.goalLabel, 80);
+  const paymentMethodRaw = optionalToken(payload.paymentMethod, 32);
+  let paymentMethod: PaymentMethodId | undefined;
+
+  if (paymentMethodRaw) {
+    const known = paymentMethods.find((method) => method.id === paymentMethodRaw);
+    if (!known) {
+      throw new Error('Choose a valid payment method.');
+    }
+    paymentMethod = known.id;
+  }
+
   return {
     amount: Math.round(amount),
     lockMonths,
+    goalLabel,
+    paymentMethod,
     idempotencyKey: optionalToken(payload.idempotencyKey),
   };
 }

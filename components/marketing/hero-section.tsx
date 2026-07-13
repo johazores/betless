@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { HeroBackground } from '@/components/marketing/hero-background';
 import { HeroTrustStrip } from '@/components/marketing/hero-trust-strip';
 import { HeroVaultPreview } from '@/components/marketing/hero-vault-preview';
+import { LandingStatsStrip } from '@/components/marketing/landing-stats-strip';
 import { formatPeso } from '@/lib/money';
 import { MIN_DEPOSIT_PHP } from '@/lib/vault-rules';
 
@@ -72,6 +73,7 @@ export function HeroSection({ featuredDepositAmount }: HeroSectionProps) {
         </div>
       </section>
 
+      <LandingStatsStrip />
       <HeroTrustStrip />
     </>
   );

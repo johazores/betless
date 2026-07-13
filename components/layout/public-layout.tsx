@@ -41,6 +41,9 @@ const footerLinks = {
     { label: 'Rewards', href: '/rewards' },
     { label: 'How it works', href: '/#how-it-works' },
   ],
+  trust: [
+    { label: 'Verify reserves', href: '/trust' },
+  ],
 };
 
 export function PublicLayout({ children }: { children: ReactNode }) {
@@ -104,15 +107,32 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Trust & compliance</p>
+                <ul className="mt-4 space-y-2.5">
+                  {footerLinks.trust.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
                 <p className="mt-4 text-sm leading-6 text-ink-muted">
-                  Funds are held through licensed custodial partners. Vault locks are independently verifiable on the Stellar network. Rewards are fulfilled by partner merchants.
+                  Funds are held through licensed custodial partners. Vault locks are independently verifiable on the Stellar network.
                 </p>
               </div>
             </div>
 
             <div className="mt-10 flex flex-col gap-2 border-t border-line/70 pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
               <p>© {new Date().getFullYear()} Betless. All rights reserved.</p>
-              <p className="sm:text-right">Stellar-verified locks · Partner-fulfilled rewards</p>
+              <p className="sm:text-right">
+                <Link href="/trust" className="font-semibold text-chain hover:underline">
+                  Stellar-verified locks
+                </Link>
+                {' · '}Partner-fulfilled rewards
+              </p>
             </div>
           </PageContainer>
         </div>

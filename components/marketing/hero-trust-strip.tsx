@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const trustItems = [
   {
     icon: (
@@ -6,6 +8,7 @@ const trustItems = [
       </svg>
     ),
     label: 'Stellar-verified locks',
+    href: '/trust',
   },
   {
     icon: (
@@ -35,9 +38,18 @@ export function HeroTrustStrip() {
         </p>
         <ul className="flex flex-wrap gap-x-6 gap-y-2">
           {trustItems.map((item) => (
-            <li key={item.label} className="flex items-center gap-2 text-sm font-semibold text-ink">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-700">{item.icon}</span>
-              {item.label}
+            <li key={item.label}>
+              {item.href ? (
+                <Link href={item.href} className="flex items-center gap-2 text-sm font-semibold text-ink transition-colors hover:text-chain">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-700">{item.icon}</span>
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-700">{item.icon}</span>
+                  {item.label}
+                </span>
+              )}
             </li>
           ))}
         </ul>

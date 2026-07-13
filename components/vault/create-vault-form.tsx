@@ -86,6 +86,7 @@ export function CreateVaultForm() {
 
   const [amount, setAmount] = useState(String(MIN_DEPOSIT_PHP));
   const [lockMonths, setLockMonths] = useState('12');
+  const [goalLabel, setGoalLabel] = useState('');
   const [methodId, setMethodId] = useState(paymentMethods[0].id);
 
   const [otp, setOtp] = useState('');
@@ -182,6 +183,8 @@ export function CreateVaultForm() {
         body: JSON.stringify({
           amount: numericAmount,
           lockMonths: numericLockMonths,
+          goalLabel: goalLabel.trim() || undefined,
+          paymentMethod: methodId,
           idempotencyKey,
         }),
       });
@@ -208,13 +211,16 @@ export function CreateVaultForm() {
           </span>
           <h2 className="mt-5 text-2xl font-black tracking-tight text-ink">Deposit successful</h2>
           <p className="mt-2 text-sm leading-6 text-ink-muted">
-            {formatPeso(createdVault.principal)} is now locked in your {createdVault.lockMonths}-month vault.
+            {formatPeso(createdVault.principal)} is now locked
+            {createdVault.goalLabel ? <> for <span className="font-bold text-ink">{createdVault.goalLabel}</span></> : null}
+            {' '}in your {createdVault.lockMonths}-month vault.
           </p>
         </div>
 
         <dl className="mt-4 divide-y divide-line rounded-2xl border border-line bg-surface-muted px-5">
           <SummaryRow label="Amount deposited" value={formatPeso(createdVault.principal)} strong />
-          <SummaryRow label="Paid via" value={method.name} />
+          <SummaryRow label="Paid via" value={createdVault.paymentMethodName ?? method.name} />
+          {createdVault.goalLabel ? <SummaryRow label="Saving for" value={createdVault.goalLabel} /> : null}
           <SummaryRow label="Date" value={completedAt ? formatDateTime(completedAt.toISOString()) : '—'} />
           <SummaryRow
             label="Reference no."
@@ -226,6 +232,19 @@ export function CreateVaultForm() {
         <p className="mt-4 text-xs font-semibold leading-5 text-ink-muted">
           Your deposit lock is recorded on the Stellar network — you can verify it independently from your vault page.
         </p>
+
+        {createdVault.stellar?.lockExplorerUrl ? (
+          <p className="mt-2">
+            <a
+              href={createdVault.stellar.lockExplorerUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-bold text-chain hover:underline"
+            >
+              View lock transaction on stellar.expert ↗
+            </a>
+          </p>
+        ) : null}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link href={`/vaults/${createdVault.id}`} className="sm:flex-1">
@@ -277,6 +296,15 @@ export function CreateVaultForm() {
                 hint="Lock periods come in 12-month steps."
               />
             </div>
+
+            <Input
+              label="What are you saving for? (optional)"
+              value={goalLabel}
+              onChange={(event) => setGoalLabel(event.target.value)}
+              placeholder="e.g. Laptop fund, tuition, emergency buffer"
+              hint="A named goal helps you stay committed."
+              maxLength={80}
+            />
 
             {preview ? (
               <div className="rounded-2xl border border-line bg-surface-muted p-5">
@@ -371,7 +399,7 @@ export function CreateVaultForm() {
 
             <dl className="divide-y divide-line rounded-2xl border border-line bg-surface-muted px-5">
               <SummaryRow label="From" value={method.name} />
-              <SummaryRow label="To" value={`Betless ${numericLockMonths}-month vault`} />
+              <SummaryRow label="To" value={goalLabel.trim() ? `Betless · ${goalLabel.trim()}` : `Betless ${numericLockMonths}-month vault`} />
               <SummaryRow label="Deposit amount" value={formatPeso(numericAmount)} />
               <SummaryRow label="Convenience fee" value={formatPeso(0)} />
               <SummaryRow label="Total to pay" value={formatPeso(numericAmount)} strong />

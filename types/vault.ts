@@ -4,6 +4,9 @@ export type VaultView = {
   id: string;
   principal: number;
   lockMonths: number;
+  goalLabel: string | null;
+  paymentMethod: string | null;
+  paymentMethodName: string | null;
   status: VaultStatus;
   startAt: string;
   maturesAt: string;

@@ -90,6 +90,7 @@ export default function HomePage() {
             <h2 className="mt-4 text-4xl font-black tracking-tight text-ink">Open your first vault in minutes.</h2>
             <p className="mt-4 text-sm leading-7 text-ink-muted">
               Create an account, deposit {formatPeso(MIN_DEPOSIT_PHP)} or more, choose a lock period, and start earning points after your first full month.
+              Saving remittance or windfall income? Lock it before it gets spent — the same commitment mechanics apply.
             </p>
             <Link href="/create-vault" className="mt-7 inline-flex"><Button>Create a vault</Button></Link>
           </div>
