@@ -13,6 +13,7 @@ import { HowItWorks } from '@/components/marketing/how-it-works';
 import { OnChainPanel } from '@/components/dashboard/on-chain-panel';
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
 import { ReferralCard } from '@/components/referral/referral-card';
+import { computeCommitmentStats } from '@/lib/commitment-stats';
 import { apiRequest } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -73,6 +74,7 @@ export function DashboardClient() {
   }
 
   const activeVaults = vaults.filter((vault) => vault.status === 'ACTIVE');
+  const commitment = computeCommitmentStats(vaults);
   const totalPointsEarned = transactions
     .filter((transaction) => transaction.type === 'MONTHLY_REWARD')
     .reduce((sum, transaction) => sum + transaction.points, 0);
@@ -113,6 +115,31 @@ export function DashboardClient() {
               helper="Monthly rewards across all vaults"
             />
           </div>
+
+          {vaults.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricCard
+                label="Months committed"
+                value={commitment.monthsCommitted}
+                helper="Completed lock months across active vaults"
+              />
+              <MetricCard
+                label="Longest streak"
+                value={commitment.longestStreak}
+                helper={commitment.longestStreak === 1 ? 'month on your best vault' : 'months on your best vault'}
+              />
+              <MetricCard
+                label="Lifetime deposits"
+                value={formatPeso(commitment.lifetimeDeposits)}
+                helper="Total principal ever locked"
+              />
+              <MetricCard
+                label="Vaults completed"
+                value={commitment.completedVaults}
+                helper="Reached maturity in full"
+              />
+            </div>
+          ) : null}
 
           <ReferralCard variant="compact" onChanged={() => void loadDashboard()} />
 

@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SectionHeader } from '@/components/admin/section-header';
+import { ReconciliationPanel } from '@/components/admin/reconciliation-panel';
 import { fetchTabData } from '@/components/admin/admin-utils';
 import type { AnalyticsData } from '@/components/admin/types';
 import { formatNumber, formatPeso } from '@/components/admin/types';
+import type { TransparencyView } from '@/types/transparency';
 import { Card } from '@/components/ui/card';
 import { KpiCard } from '@/components/ui/kpi-card';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -14,12 +16,18 @@ import { Stat } from '@/components/ui/stat';
 
 export function DashboardSection() {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [transparency, setTransparency] = useState<TransparencyView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     try {
-      setData(await fetchTabData<AnalyticsData>('/api/admin/analytics'));
+      const [analytics, reconciliation] = await Promise.all([
+        fetchTabData<AnalyticsData>('/api/admin/analytics'),
+        fetchTabData<TransparencyView>('/api/admin/transparency').catch(() => null),
+      ]);
+      setData(analytics);
+      setTransparency(reconciliation);
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +76,8 @@ export function DashboardSection() {
           />
         </div>
       </section>
+
+      {transparency ? <ReconciliationPanel overview={transparency} /> : null}
 
       <Card padding="lg" className="shadow-sm">
         <div className="mb-1 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">

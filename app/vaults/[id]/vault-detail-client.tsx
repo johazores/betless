@@ -129,7 +129,7 @@ export function VaultDetailClient({ id }: { id: string }) {
         </div>
       </Card>
 
-      {vault.stellar ? <OnChainCard stellar={vault.stellar} /> : null}
+      {vault.stellar ? <OnChainCard stellar={vault.stellar} vaultId={vault.id} /> : null}
 
       {isActive ? (
         <Card>
@@ -220,7 +220,7 @@ const onChainStatusCopy: Record<VaultStellarView['status'], { label: string; des
   },
 };
 
-function OnChainCard({ stellar }: { stellar: VaultStellarView }) {
+function OnChainCard({ stellar, vaultId }: { stellar: VaultStellarView; vaultId: string }) {
   const copy = onChainStatusCopy[stellar.status];
 
   return (
@@ -248,6 +248,9 @@ function OnChainCard({ stellar }: { stellar: VaultStellarView }) {
             View release transaction ↗
           </a>
         ) : null}
+        <Link href={`/verify/${vaultId}`} className="text-chain hover:underline">
+          Share public verification →
+        </Link>
       </div>
     </Card>
   );

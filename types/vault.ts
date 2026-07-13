@@ -74,3 +74,16 @@ export type ClaimReferralResult = {
   bonusPoints: number;
   referrerName: string | null;
 };
+
+export type VaultVerificationView = {
+  id: string;
+  principal: number;
+  lockMonths: number;
+  goalLabel: string | null;
+  status: VaultStatus;
+  maturesAt: string;
+  closedAt: string | null;
+  progressPercent: number;
+  monthsCompleted: number;
+  stellar: VaultStellarView | null;
+};

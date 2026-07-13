@@ -8,7 +8,7 @@ import { getPaymentMethodById } from '@/lib/payment-methods';
 import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
 import { NotificationService } from '@/services/notification-service';
-import type { VaultView } from '@/types/vault';
+import type { VaultVerificationView, VaultView } from '@/types/vault';
 
 type VaultRecord = {
   id: string;
@@ -241,6 +241,75 @@ export class VaultService {
     });
 
     return decimalToNumber(result._sum.principal ?? 0);
+  }
+
+  /**
+   * Sweeps all users with active vaults: accrues due points and settles matured vaults.
+   * Intended for a scheduled cron in production; reads still trigger the same path lazily.
+   */
+  static async syncAllVaults(now = new Date()) {
+    const activeUsers = await prisma.vault.findMany({
+      where: { status: VaultStatus.ACTIVE },
+      select: { appUserId: true },
+      distinct: ['appUserId'],
+    });
+
+    const dueBefore = await prisma.vault.count({
+      where: { status: VaultStatus.ACTIVE, maturesAt: { lte: now } },
+    });
+
+    for (const { appUserId } of activeUsers) {
+      await this.syncVaults(appUserId, now);
+    }
+
+    const maturedDuringSweep = await prisma.vault.count({
+      where: {
+        status: VaultStatus.MATURED,
+        closedAt: { gte: new Date(now.getTime() - 60_000) },
+      },
+    });
+
+    return {
+      usersSynced: activeUsers.length,
+      vaultsDueBeforeSweep: dueBefore,
+      vaultsMaturedDuringSweep: maturedDuringSweep,
+    };
+  }
+
+  /** Redacted, public verification view for a single vault — no user PII. */
+  static async getPublicVerification(vaultId: string): Promise<VaultVerificationView | null> {
+    const vault = await prisma.vault.findUnique({
+      where: { id: vaultId },
+      include: {
+        pointsTransactions: {
+          where: { type: PointsTransactionType.MONTHLY_REWARD },
+          select: { points: true },
+        },
+        stellarOperations: {
+          select: { kind: true, state: true, txHash: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!vault) return null;
+
+    const principal = decimalToNumber(vault.principal);
+    const monthsCompleted = Math.min(fullMonthsBetween(vault.startAt, new Date()), vault.lockMonths);
+    const progressPercent = Math.min(100, Math.round((monthsCompleted / vault.lockMonths) * 100));
+
+    return {
+      id: vault.id,
+      principal,
+      lockMonths: vault.lockMonths,
+      goalLabel: vault.goalLabel,
+      status: vault.status,
+      maturesAt: vault.maturesAt.toISOString(),
+      closedAt: vault.closedAt ? vault.closedAt.toISOString() : null,
+      progressPercent,
+      monthsCompleted,
+      stellar: StellarService.toStellarView(vault),
+    };
   }
 
   private static toView(vault: VaultRecord): VaultView {

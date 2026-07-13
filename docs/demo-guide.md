@@ -65,11 +65,11 @@ Say:
 
 ### Step 3 — Dashboard (`/dashboard`)
 
-Do: let it load. If the seeded past-maturity vault was still active, it settles **right now** — point at the "Matured" card.
+Do: let it load. If the seeded past-maturity vault was still active, it settles **right now** — point at the "Matured" card. Scroll to the **commitment stats** row (months committed, longest streak, lifetime deposits).
 
 Say:
 
-> "Top of the screen, always visible: locked balance and available points. This vault just matured — the full ₱25,000 principal was returned automatically, the vault closed, and the points stay. Behind the scenes, the on-chain lock for that vault was just claimed on Stellar — the money's release is as verifiable as its lock."
+> "Top of the screen, always visible: locked balance and available points. Below that, commitment stats — how many months you've stayed locked in, your longest streak, and vaults completed. This vault just matured — the full ₱25,000 principal was returned automatically, the vault closed, and the points stay. Behind the scenes, the on-chain lock for that vault was just claimed on Stellar — the money's release is as verifiable as its lock."
 
 Point at the small **"Lock verified"** badge on the active vault card:
 
@@ -77,7 +77,7 @@ Point at the small **"Lock verified"** badge on the active vault card:
 
 ### Step 4 — Create a vault (`/create-vault`)
 
-Do: walk the four-step cash-in flow — enter ₱25,000 / 12 months (read the live preview aloud: points per month, maturity date, early-exit fee) → pick GCash → review the transfer summary → enter the verification code **123456** → land on the receipt.
+Do: walk the four-step cash-in flow — enter ₱25,000 / 12 months, optionally name a goal (e.g. "Tuition fund") → pick GCash → review the transfer summary → enter the verification code **123456** → land on the receipt.
 
 Say:
 
@@ -100,6 +100,18 @@ Then show the early-withdrawal section:
 > "And the emergency exit: withdraw any time, fee shown up front — flat ₱500 up to ₱50k, 1% above. Confirm, and one atomic Stellar transaction claims the balance and settles it back — there's no state where the lock is released but the money is unaccounted for."
 
 (Optional: actually withdraw the freshly created vault to show the confirmation flow and the release transaction link.)
+
+### Step 5b — Public verification (`/trust` and `/verify/[id]`)
+
+Do: from the vault detail page, click **"Share public verification →"** — opens `/verify/[id]` with no login required. Then open `/trust` in a new tab.
+
+Say:
+
+> "Judges don't have to trust our database. This page is public — anyone can see the vault amount, maturity, and the on-chain claimable balance ID. The platform-wide `/trust` page compares every active vault in our records against live Stellar claimable balances. Proof of reserves is a query, not a press release."
+
+Point at the reconciliation status on `/trust`:
+
+> "Matched means our Postgres ledger and the Stellar network agree. If Horizon is down, the product still works — the outbox retries when connectivity returns."
 
 ### Step 6 — Rewards (`/rewards`)
 
@@ -135,7 +147,8 @@ Why it isn't plastered across the UI: the target user is a saver, not a crypto u
 | Surface | Indicator | Why there |
 |---|---|---|
 | Vault card (dashboard) | "Lock verified" badge | Glanceable reassurance where users check their money |
-| Vault detail | "On-chain verification" card: status, balance ID, explorer links | The one place a user inspects a single vault deeply — receipts belong here |
+| Vault detail | "On-chain verification" card: status, balance ID, explorer links, shareable `/verify/[id]` link | The one place a user inspects a single vault deeply — receipts belong here |
+| Trust page (`/trust`) | Platform-wide reserve reconciliation | Public proof for judges and auditors — no login |
 | Create-vault preview | One sentence: the lock is recorded on Stellar and independently verifiable | Sets the trust expectation at the moment of commitment |
 | Landing page promise + footer | One clause each | Public trust claim for prospects, without a dedicated "blockchain" section |
 
@@ -168,7 +181,10 @@ Why it isn't plastered across the UI: the target user is a saver, not a crypto u
 > Correct, and it's a known, solved problem: channel accounts for parallel submission, and the outbox already serializes writes safely at demo scale. Muxed addresses keep per-user attribution on the pooled account without per-user base reserves.
 
 **"Points accrue 'lazily' — what if nobody logs in?"**
-> Accrual is deterministic from the vault's start date, so the ledger is always correct on read — idempotent via a unique (vault, month) constraint. Production adds a daily sweeper for maturity payouts; the same code path already exists and is triggered by reads today.
+> Accrual is deterministic from the vault's start date, so the ledger is always correct on read — idempotent via a unique (vault, month) constraint. Production runs a daily sweeper at `GET /api/cron/sync-vaults` (protected by `CRON_SECRET`) that calls the same `syncVaults` path for every user with active vaults — no duplicate logic.
+
+**"Can anyone verify a vault without logging in?"**
+> Yes. `/verify/[vaultId]` shows a redacted public proof page — amount, maturity, on-chain status, explorer links. `/trust` shows platform-wide reserve reconciliation. Both are designed for auditors, judges, and skeptical users.
 
 **"What's the business model?"**
 > Deposits are invested through licensed custodial partners; the spread between investment yield and the ~4% points cost funds the platform, plus early-withdrawal fees. Deliberately abstracted from the UI — savers see points, not portfolio mechanics.
@@ -178,7 +194,8 @@ Why it isn't plastered across the UI: the target user is a saver, not a crypto u
 ## 6. Extra polish worth doing before the demo (optional)
 
 - **Rehearse the maturity moment**: run `npm run demo:seed` shortly before presenting so the past-maturity vault settles live during your dashboard load.
-- **Pin browser tabs** in order: app, stellar.expert treasury account, this guide.
+- **Pin browser tabs** in order: app, `/trust`, stellar.expert treasury account, this guide.
 - **Have `docs/stellar-architecture.md` open** — the sequence diagrams answer deep-dive questions faster than talking.
+- **Create a vault with a goal label** during the live demo — "Tuition fund" reads better than a generic vault.
 - If asked for code, show `services/stellar-service.ts` (the outbox + lock/release) and `lib/vault-rules.ts` (one module, all business rules) — both are short and read well on a projector.
 - Don't demo on hotel Wi-Fi without a fallback: if Horizon is unreachable, the app still works fully off-chain — which is itself a talking point ("this is the graceful-degradation design working").

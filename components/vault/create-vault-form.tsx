@@ -246,6 +246,12 @@ export function CreateVaultForm() {
           </p>
         ) : null}
 
+        <p className="mt-3">
+          <Link href={`/verify/${createdVault.id}`} className="text-xs font-bold text-chain hover:underline">
+            Share public verification page →
+          </Link>
+        </p>
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link href={`/vaults/${createdVault.id}`} className="sm:flex-1">
             <Button className="w-full">View my vault</Button>
