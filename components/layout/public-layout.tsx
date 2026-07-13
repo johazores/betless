@@ -49,7 +49,7 @@ const footerLinks = {
 export function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface-muted">
-      <header className="sticky top-0 z-30 overflow-visible border-b border-line/70 bg-surface/85 backdrop-blur-md">
+      <header className="sticky top-0 z-30 overflow-visible border-b border-line/70 bg-surface/85 backdrop-blur-md print:hidden">
         <div className={pageGutterClass}>
           <PageContainer className="flex h-[4.25rem] items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-6 lg:gap-10">
@@ -63,6 +63,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
                 <NavLink href="/dashboard">Dashboard</NavLink>
                 <NavLink href="/rewards">Rewards</NavLink>
+                <NavLink href="/trust">Verify</NavLink>
                 <NavLink href="/#how-it-works">How it works</NavLink>
               </nav>
             </div>
@@ -78,7 +79,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="mt-auto border-t border-line/70 bg-surface">
+      <footer className="mt-auto border-t border-line/70 bg-surface print:hidden">
         <div className={cn(pageGutterClass, 'pb-28 pt-12 lg:pb-12')}>
           <PageContainer>
             <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">

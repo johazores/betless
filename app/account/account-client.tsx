@@ -272,7 +272,7 @@ export function AccountClient() {
                 ) : null}
 
                 {section === 'notifications' ? (
-                  <SettingsSection title="Email notifications" description={`Choose what we send to ${email}.`}>
+                  <SettingsSection title="Email notifications" description={`Choose what we send to ${email}. In-app alerts are always on; email delivery ships with production launch.`}>
                     <SettingRow title="Product updates" description="New features, partners, and platform news.">
                       <Toggle label="Product updates" checked={prefs.emailProductUpdates} onChange={(v) => updatePref('emailProductUpdates', v)} />
                     </SettingRow>
@@ -285,6 +285,9 @@ export function AccountClient() {
                     <SettingRow title="Referral activity" description="When someone joins using your invite link.">
                       <Toggle label="Referral activity" checked={prefs.emailReferralActivity} onChange={(v) => updatePref('emailReferralActivity', v)} />
                     </SettingRow>
+                    <p className="text-xs leading-5 text-ink-muted">
+                      Vault maturity reminders also appear in your in-app notification center when a lock is within 30 days of ending.
+                    </p>
                   </SettingsSection>
                 ) : null}
 

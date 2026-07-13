@@ -251,6 +251,11 @@ export function CreateVaultForm() {
             Share public verification page →
           </Link>
         </p>
+        <p className="mt-1">
+          <Link href={`/certificate/${createdVault.id}`} className="text-xs font-bold text-chain hover:underline">
+            View commitment certificate →
+          </Link>
+        </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link href={`/vaults/${createdVault.id}`} className="sm:flex-1">

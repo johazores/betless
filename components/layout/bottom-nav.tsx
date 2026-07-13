@@ -96,7 +96,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden print:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2 pt-2">
         <TabLink href="/" label="Home" active={isActive('/')} icon={<HomeIcon className="h-[22px] w-[22px]" />} />

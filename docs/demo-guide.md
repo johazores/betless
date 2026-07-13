@@ -113,6 +113,14 @@ Point at the reconciliation status on `/trust`:
 
 > "Matched means our Postgres ledger and the Stellar network agree. If Horizon is down, the product still works — the outbox retries when connectivity returns."
 
+### Step 5c — Commitment certificate (`/certificate/[id]`)
+
+Do: from the verification page or vault detail, open **View commitment certificate →**. Click **Print / save PDF**.
+
+Say:
+
+> "For lenders, landlords, or family abroad — this is portable proof of savings discipline. It links to the same on-chain verification. No account needed to view it. This is workshop idea #30 and #39 in spirit: verifiable financial behavior, not just a screenshot."
+
 ### Step 6 — Rewards (`/rewards`)
 
 Do: redeem a ₱500 grocery voucher with seeded points. Show the voucher code.

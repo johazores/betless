@@ -8,7 +8,8 @@ import { getPaymentMethodById } from '@/lib/payment-methods';
 import { StellarService } from '@/services/stellar-service';
 import { UserService } from '@/services/user-service';
 import { NotificationService } from '@/services/notification-service';
-import type { VaultVerificationView, VaultView } from '@/types/vault';
+import type { CommitmentCertificateView, VaultVerificationView, VaultView } from '@/types/vault';
+import { getSiteUrl } from '@/lib/site';
 
 type VaultRecord = {
   id: string;
@@ -92,6 +93,11 @@ export class VaultService {
           `${missingAccruals.length} monthly reward${missingAccruals.length === 1 ? '' : 's'} posted`,
           vault.id,
         );
+      }
+
+      const daysLeft = Math.ceil((vault.maturesAt.getTime() - now.getTime()) / 86_400_000);
+      if (daysLeft > 0 && daysLeft <= 30) {
+        void NotificationService.notifyVaultMaturitySoon(appUserId, vault.id, principal, daysLeft);
       }
 
       if (vault.maturesAt.getTime() <= now.getTime()) {
@@ -309,6 +315,19 @@ export class VaultService {
       progressPercent,
       monthsCompleted,
       stellar: StellarService.toStellarView(vault),
+    };
+  }
+
+  static async getCommitmentCertificate(vaultId: string): Promise<CommitmentCertificateView | null> {
+    const verification = await this.getPublicVerification(vaultId);
+    if (!verification) return null;
+
+    const baseUrl = getSiteUrl();
+    return {
+      ...verification,
+      issuedAt: new Date().toISOString(),
+      verifyUrl: `${baseUrl}/verify/${verification.id}`,
+      certificateRef: `BTL-${verification.id.slice(0, 8).toUpperCase()}`,
     };
   }
 

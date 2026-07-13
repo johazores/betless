@@ -62,3 +62,11 @@ export function formatRelativeTime(value: string | Date) {
   if (Math.abs(diffDay) < 7) return relativeFormatter.format(diffDay, 'day');
   return formatShortDate(date);
 }
+
+/** Whole days from now until the given date (negative if already past). */
+export function daysUntil(value: string | Date, now = new Date()) {
+  const target = new Date(value);
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}

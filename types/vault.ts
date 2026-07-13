@@ -87,3 +87,9 @@ export type VaultVerificationView = {
   monthsCompleted: number;
   stellar: VaultStellarView | null;
 };
+
+export type CommitmentCertificateView = VaultVerificationView & {
+  issuedAt: string;
+  verifyUrl: string;
+  certificateRef: string;
+};

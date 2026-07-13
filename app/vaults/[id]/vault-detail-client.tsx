@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { CopyLinkButton } from '@/components/ui/copy-link-button';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -220,6 +221,17 @@ const onChainStatusCopy: Record<VaultStellarView['status'], { label: string; des
   },
 };
 
+function ShareLinkButton({ path, label }: { path: string; label: string }) {
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    setUrl(`${window.location.origin}${path}`);
+  }, [path]);
+
+  if (!url) return null;
+  return <CopyLinkButton url={url} label={label} />;
+}
+
 function OnChainCard({ stellar, vaultId }: { stellar: VaultStellarView; vaultId: string }) {
   const copy = onChainStatusCopy[stellar.status];
 
@@ -237,7 +249,7 @@ function OnChainCard({ stellar, vaultId }: { stellar: VaultStellarView; vaultId:
         </p>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-4 text-sm font-bold">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold">
         {stellar.lockExplorerUrl ? (
           <a href={stellar.lockExplorerUrl} target="_blank" rel="noreferrer" className="text-brand-800 hover:text-brand-900">
             View lock transaction ↗
@@ -249,8 +261,16 @@ function OnChainCard({ stellar, vaultId }: { stellar: VaultStellarView; vaultId:
           </a>
         ) : null}
         <Link href={`/verify/${vaultId}`} className="text-chain hover:underline">
-          Share public verification →
+          Public verification →
         </Link>
+        <Link href={`/certificate/${vaultId}`} className="text-chain hover:underline">
+          Commitment certificate →
+        </Link>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <ShareLinkButton path={`/verify/${vaultId}`} label="Copy verify link" />
+        <ShareLinkButton path={`/certificate/${vaultId}`} label="Copy certificate link" />
       </div>
     </Card>
   );

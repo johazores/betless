@@ -13,6 +13,7 @@ import { HowItWorks } from '@/components/marketing/how-it-works';
 import { OnChainPanel } from '@/components/dashboard/on-chain-panel';
 import { ActivityTimeline } from '@/components/dashboard/activity-timeline';
 import { ReferralCard } from '@/components/referral/referral-card';
+import { UpcomingMaturityAlert } from '@/components/dashboard/upcoming-maturity-alert';
 import { computeCommitmentStats } from '@/lib/commitment-stats';
 import { apiRequest } from '@/lib/api-client';
 import { formatDateTime } from '@/lib/dates';
@@ -97,6 +98,8 @@ export function DashboardClient() {
               <Link href="/create-vault"><Button>New vault</Button></Link>
             </div>
           </div>
+
+          <UpcomingMaturityAlert vaults={vaults} />
 
           <div className="grid gap-4 md:grid-cols-3">
             <MetricCard

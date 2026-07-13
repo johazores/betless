@@ -5,6 +5,7 @@ import { MarketingJsonLd } from '@/components/seo/marketing-json-ld';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SavingsAudienceSection } from '@/components/marketing/savings-audience-section';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { HowItWorks } from '@/components/marketing/how-it-works';
 import { formatPeso } from '@/lib/money';
@@ -52,6 +53,8 @@ export default function HomePage() {
           <HowItWorks />
         </div>
       </section>
+
+      <SavingsAudienceSection />
 
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { LoadingState } from '@/components/ui/loading-state';
 import { Progress } from '@/components/ui/progress';
+import { CopyLinkButton } from '@/components/ui/copy-link-button';
 import { apiRequest } from '@/lib/api-client';
 import { formatShortDate } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
@@ -21,8 +22,13 @@ const stellarStatusCopy: Record<NonNullable<VaultVerificationView['stellar']>['s
 
 export function VerifyVaultClient({ id }: { id: string }) {
   const [vault, setVault] = useState<VaultVerificationView | null>(null);
+  const [shareUrl, setShareUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setShareUrl(`${window.location.origin}/verify/${id}`);
+  }, [id]);
 
   useEffect(() => {
     void (async () => {
@@ -138,6 +144,12 @@ export function VerifyVaultClient({ id }: { id: string }) {
         <Card>
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Reference</p>
           <p className="mt-2 break-all font-mono text-xs text-ink-muted">{vault.id}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {shareUrl ? <CopyLinkButton url={shareUrl} label="Copy verification link" /> : null}
+            <Link href={`/certificate/${vault.id}`} className="text-sm font-bold text-chain hover:underline">
+              View commitment certificate →
+            </Link>
+          </div>
           <p className="mt-4 text-sm text-ink-muted">
             <Link href="/trust" className="font-bold text-chain hover:underline">
               Verify all platform reserves

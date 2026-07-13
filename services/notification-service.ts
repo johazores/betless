@@ -156,6 +156,30 @@ export class NotificationService {
     });
   }
 
+  static async notifyVaultMaturitySoon(appUserId: string, vaultId: string, amount: number, daysLeft: number) {
+    const existing = await prisma.notification.findFirst({
+      where: {
+        appUserId,
+        category: 'VAULT',
+        title: 'Vault maturing soon',
+        actionUrl: `/vaults/${vaultId}`,
+      },
+    });
+    if (existing) return;
+
+    this.notify({
+      appUserId,
+      category: 'VAULT',
+      title: 'Vault maturing soon',
+      body:
+        daysLeft <= 1
+          ? `Your ${formatPeso(amount)} vault matures tomorrow. Your full deposit will be returned automatically.`
+          : `Your ${formatPeso(amount)} vault matures in ${daysLeft} days. Your full deposit will be returned automatically.`,
+      actionUrl: `/vaults/${vaultId}`,
+      metadata: { vaultId, amount, daysLeft },
+    });
+  }
+
   static notifyOnChainConfirmed(appUserId: string, vaultId: string, kind: string, txHash: string | null) {
     const labels: Record<string, string> = {
       LOCK: 'Deposit locked on Stellar',
