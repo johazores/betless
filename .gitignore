@@ -1,6 +1,19 @@
-node_modules
-.next
+node_modules/
+.next/
+coverage/
+
+# Local configuration and secrets
 .env
 .env*.local
+
+# Generated files
+*.tsbuildinfo
+*.log
+
+# OS/editor files
 .DS_Store
-coverage
+Thumbs.db
+
+# Local application work; not part of the public product repository
+.codex-doc-work/
+deliverables/

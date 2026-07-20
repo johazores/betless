@@ -23,6 +23,7 @@ const requiredFiles = [
   'services/stellar-service.ts',
   'lib/stellar-config.ts',
   'scripts/setup-stellar-testnet.mjs',
+  'scripts/audit-instawards.mjs',
   'lib/vault-rules.ts',
   'lib/rewards.ts',
   'lib/validators.ts',
@@ -39,8 +40,15 @@ const requiredFiles = [
   'pages/api/admin/config/index.ts',
   'components/layout/nav-summary.tsx',
   'prisma/schema.prisma',
+  'prisma.config.ts',
   'proxy.ts',
   'README.md',
+  'LICENSE',
+  'SECURITY.md',
+  'docs/instawards-evidence.md',
+  '.github/workflows/ci.yml',
+  'tests/vault-rules.test.ts',
+  'tests/stellar-config.test.ts',
 ];
 
 const uiFilesToScan = [
@@ -120,6 +128,19 @@ const rules = readFileSync(join(root, 'lib/vault-rules.ts'), 'utf8');
 for (const rule of ['MIN_DEPOSIT_PHP = 10_000', 'ANNUAL_REWARD_RATE = 0.04', 'FLAT_WITHDRAWAL_FEE_PHP = 500', 'FLAT_FEE_PRINCIPAL_LIMIT_PHP = 50_000', 'LOCK_MONTH_INCREMENT = 12']) {
   if (!rules.includes(rule)) {
     failures.push(`Business rule constant is missing or changed: ${rule}`);
+  }
+}
+
+const stellarService = readFileSync(join(root, 'services/stellar-service.ts'), 'utf8');
+for (const behavior of [
+  'Operation.createClaimableBalance',
+  'Operation.claimClaimableBalance',
+  'predicateBeforeAbsoluteTime',
+  'transaction.toXDR()',
+  '.setTimeout(',
+]) {
+  if (!stellarService.includes(behavior)) {
+    failures.push(`Stellar settlement behavior is missing: ${behavior}`);
   }
 }
 

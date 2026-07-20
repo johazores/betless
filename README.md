@@ -2,6 +2,34 @@
 
 Betless is a commitment savings app. Users lock a deposit for a fixed period, earn points every month, redeem those points for real-world rewards, and get their full deposit back at maturity.
 
+- Live testnet app: https://bet-less.vercel.app
+- Health endpoint: https://bet-less.vercel.app/api/health
+
+## What is working today
+
+- Account-based vault creation, dashboard, rewards, referrals, maturity, and early withdrawal.
+- Testnet PHPC locks using Stellar claimable balances with maturity predicates.
+- A persisted `StellarOperation` outbox containing signed XDR and transaction hashes before submission.
+- Lock and release receipts linked to Stellar Expert from the vault detail page.
+- A repeatable testnet setup script and an end-to-end settlement smoke test.
+
+The fiat transfer shown in the demo is simulated. A licensed Philippine anchor or custodial integration is still required before real customer funds can use the product. Points and merchant rewards remain off-chain.
+
+## Repository map
+
+Betless is currently a single Next.js repository because the UI and API share validation, money, date, and vault-rule modules.
+
+| Area | Location |
+| --- | --- |
+| Frontend | `app/`, `components/`, `public/` |
+| Backend/API | `pages/api/`, `services/`, `lib/` |
+| Data model | `prisma/` |
+| Stellar settlement | `services/stellar-service.ts`, `lib/stellar-config.ts` |
+| Testnet tooling | `scripts/setup-stellar-testnet.mjs`, `scripts/smoke-stellar.ts` |
+| Automated tests | `tests/` |
+
+There is no Soroban contracts directory because Betless does not deploy a smart contract. The lock is implemented with Stellar's native `createClaimableBalance` and `claimClaimableBalance` operations. This is a deliberate technical choice, not missing code.
+
 ## Product Flow
 
 1. Open the landing page.
@@ -26,7 +54,7 @@ Betless is a commitment savings app. Users lock a deposit for a fixed period, ea
 
 All of these constants live in `lib/vault-rules.ts` and are shared by the API, services, and UI so previews always match what the server applies.
 
-Behind the scenes, deposits are held and invested through licensed custodial partners; users only see the points they earn for maintaining their commitment.
+The production model assumes deposits will be held and invested through licensed custodial partners. That partner integration is not implemented in the current testnet build; its funding flow is simulated.
 
 ## How Points Accrue
 
@@ -38,11 +66,11 @@ There is no cron job. Monthly rewards are accrued lazily: whenever a user's data
 - TypeScript, Tailwind CSS.
 - Prisma + PostgreSQL.
 - Clerk for authentication (required for all vault features).
-- Stellar (optional) for on-chain custody of vault principal — see below.
+- Stellar for testnet custody of vault principal. Local UI development can run without Stellar configuration.
 
-## Stellar On-Chain Settlement (optional)
+## Stellar On-Chain Settlement
 
-When configured, each vault's principal is locked on Stellar in a claimable balance whose time predicate the network itself enforces until maturity (see `docs/stellar-architecture.md` for the full design). The layer is entirely optional: with no Stellar environment variables set, every on-chain call is a no-op and the app runs off-chain only.
+In a configured testnet deployment, each vault's principal is locked on Stellar in a claimable balance whose time predicate the network enforces until maturity. Local development can omit the Stellar variables; in that mode the UI works, but it must not be presented as proof of on-chain custody. See `docs/stellar-architecture.md` for the full design and trust boundaries.
 
 ```bash
 npm run stellar:setup   # creates testnet issuer/treasury/ops accounts, mints test PHPC
@@ -93,11 +121,22 @@ The database schema was rebuilt for the commitment savings model, so existing de
 - `docs/business-model.md` — product rules and implementation notes.
 - `docs/demo-guide.md` — step-by-step demo flow, talking points, and judge Q&A. Use `npm run demo:seed` to populate backdated demo vaults (with live on-chain locks) for the most recent user.
 - `docs/stellar-architecture.md` — audit of the previous Stellar integration and the on-chain custody architecture (claimable-balance vault locks, anchor rails, diagrams for all core flows). Phases 1–2 (outbox + claimable-balance locks) are implemented; anchor rails remain future work.
+- `docs/instawards-evidence.md` — current public evidence, sprint evidence requirements, and known gaps.
+- `SECURITY.md` — key custody, centralization, and incident boundaries.
 
 ## QA Commands
 
 ```bash
-npm run typecheck
-npm run verify:mvp
 npm run check
+npm run audit:instawards
 ```
+
+`npm run check` runs TypeScript validation, domain tests, product-structure verification, and the Instawards repository audit. The live Stellar smoke test is intentionally separate because it writes transactions to testnet:
+
+```bash
+npm run stellar:smoke
+```
+
+## License
+
+MIT. See `LICENSE`.
