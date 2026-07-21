@@ -23,12 +23,16 @@ for (const file of [
   'README.md',
   'SECURITY.md',
   'docs/instawards-evidence.md',
+  'docs/instawards-integration.md',
   'docs/instawards-test-plan.md',
   'docs/stellar-architecture.md',
   'services/stellar-service.ts',
+  'services/stellar-sweep-service.ts',
   'services/transparency-service.ts',
+  'pages/api/internal/stellar/sweep.ts',
   'scripts/configure-early-exit-multisig.mjs',
   'scripts/smoke-stellar.ts',
+  'scripts/sweep-stellar.ts',
   '.github/workflows/ci.yml',
 ]) {
   requireFile(file);
@@ -67,6 +71,11 @@ for (const required of ['lowThreshold: 2', 'medThreshold: 2', 'highThreshold: 2'
   if (!multisig.includes(required)) failures.push(`Missing 2-of-3 policy evidence: ${required}`);
 }
 
+const sweeper = read('services/stellar-sweep-service.ts');
+for (const required of ["state: { in: ['PENDING', 'SUBMITTED'] }", 'retryOperation', 'stellar.sweep.lease']) {
+  if (!sweeper.includes(required)) failures.push(`Missing global sweep evidence: ${required}`);
+}
+
 const exampleEnvironment = read('.env.example');
 for (const prohibited of [
   'ADMIN_BOOTSTRAP_PASSWORD="Admin@123"',
@@ -102,6 +111,7 @@ if (stellarCommits < 1) failures.push('No committed Stellar-specific development
 warnings.push('Frontend and backend remain in one public monorepo; confirm this structure with the Chapter Lead.');
 warnings.push('No Soroban contract repository is expected because Betless uses native claimable balances.');
 warnings.push('The multisignature setup script configures policy only; the separated approval workflow remains a sprint deliverable.');
+warnings.push('Predicate-aware persisted reconciliation remains a sprint deliverable.');
 warnings.push('Public transaction receipts and Chapter Lead verification still require external evidence.');
 
 if (failures.length) {
