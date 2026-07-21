@@ -46,6 +46,7 @@
     "typescript": "^5.9.0"
   },
   "overrides": {
+    "axios": "^1.18.1",
     "postcss": "$postcss"
   }
 }
