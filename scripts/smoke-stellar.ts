@@ -1,6 +1,7 @@
 /** One-shot smoke test for the current Stellar settlement layer on testnet. */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import type { StellarOperation } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { StellarService } from '../services/stellar-service';
 import { addMonths } from '../lib/dates';
@@ -44,7 +45,7 @@ async function main() {
   });
 
   if (!afterLock.claimableBalanceId) throw new Error('Lock did not produce a claimable-balance ID.');
-  const lock = afterLock.stellarOperations.find((operation) => operation.kind === 'LOCK');
+  const lock = afterLock.stellarOperations.find((operation: StellarOperation) => operation.kind === 'LOCK');
   if (!lock?.txHash || lock.state !== 'CONFIRMED') {
     throw new Error(`Lock did not confirm: ${lock?.state ?? 'missing operation'}`);
   }
@@ -56,7 +57,9 @@ async function main() {
     where: { id: vault.id },
     include: { stellarOperations: { orderBy: { createdAt: 'asc' } } },
   });
-  const release = afterRelease.stellarOperations.find((operation) => operation.kind === 'CLAIM_EARLY');
+  const release = afterRelease.stellarOperations.find(
+    (operation: StellarOperation) => operation.kind === 'CLAIM_EARLY',
+  );
   if (!release?.txHash || release.state !== 'CONFIRMED') {
     throw new Error(`Early release did not confirm: ${release?.state ?? 'missing operation'}`);
   }
@@ -69,8 +72,8 @@ async function main() {
     vaultId: vault.id,
     claimableBalanceId: afterRelease.claimableBalanceId,
     receipts: afterRelease.stellarOperations
-      .filter((operation) => operation.txHash)
-      .map((operation) => ({
+      .filter((operation: StellarOperation) => operation.txHash)
+      .map((operation: StellarOperation) => ({
         kind: operation.kind,
         state: operation.state,
         transactionHash: operation.txHash,
