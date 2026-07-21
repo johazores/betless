@@ -20,6 +20,8 @@
     "db:reset:force": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "stellar:setup": "node scripts/setup-stellar-testnet.mjs",
+    "stellar:configure-multisig": "node --env-file=.env scripts/configure-early-exit-multisig.mjs",
+    "stellar:sweep": "tsx --env-file=.env scripts/sweep-stellar.ts",
     "stellar:smoke": "tsx --env-file=.env scripts/smoke-stellar.ts",
     "demo:seed": "tsx --env-file=.env scripts/seed-demo.ts"
   },

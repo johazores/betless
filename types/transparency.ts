@@ -19,6 +19,7 @@ export type TransparencyView = {
     message: string;
     unmatchedDbVaults: number;
     unmatchedChainBalances: number;
+    amountMismatches: number;
   };
 };
 
