@@ -9,6 +9,7 @@ coverage/
 # Generated files
 *.tsbuildinfo
 *.log
+artifacts/
 
 # OS/editor files
 .DS_Store
