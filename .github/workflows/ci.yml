@@ -33,8 +33,17 @@ jobs:
       - name: Generate Prisma client
         run: npm run prisma:generate
 
-      - name: Run repository checks
-        run: npm run check
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Domain tests
+        run: npm test
+
+      - name: Verify product structure
+        run: npm run verify:mvp
+
+      - name: Audit Instawards evidence
+        run: npm run audit:instawards
 
       - name: Audit dependencies
         run: npm audit --audit-level=moderate
