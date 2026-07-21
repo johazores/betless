@@ -23,6 +23,8 @@ type ActiveVaultRow = {
   claimableBalanceId: string | null;
 };
 
+const AMOUNT_TOLERANCE = 0.0000001;
+
 async function fetchTreasuryClaimableBalances(): Promise<ChainBalance[]> {
   const server = getHorizonServer();
   const treasury = getTreasuryKeypair().publicKey();
@@ -57,7 +59,11 @@ export class TransparencyService {
         select: { id: true, principal: true, claimableBalanceId: true },
       }) as Promise<ActiveVaultRow[]>,
       prisma.stellarOperation.findMany({
-        where: { kind: 'LOCK', state: 'CONFIRMED' },
+        where: {
+          kind: 'LOCK',
+          state: 'CONFIRMED',
+          vault: { status: VaultStatus.ACTIVE },
+        },
         select: { vaultId: true, claimableBalanceId: true, amount: true },
       }),
     ]);
@@ -87,6 +93,7 @@ export class TransparencyService {
           message: 'On-chain verification is not configured in this environment.',
           unmatchedDbVaults: 0,
           unmatchedChainBalances: 0,
+          amountMismatches: 0,
         },
       };
     }
@@ -116,6 +123,7 @@ export class TransparencyService {
           message: 'Could not reach the Stellar network. Try again shortly.',
           unmatchedDbVaults: 0,
           unmatchedChainBalances: 0,
+          amountMismatches: 0,
         },
       };
     }
@@ -123,27 +131,32 @@ export class TransparencyService {
     const chainById = new Map(chainBalances.map((balance) => [balance.id, balance.amount]));
     const chainLockedPrincipal = chainBalances.reduce((sum, balance) => sum + balance.amount, 0);
 
-    const activeWithChainId = activeVaults.filter((vault: ActiveVaultRow) => vault.claimableBalanceId);
+    const activeWithChainId = activeVaults.filter(
+      (vault: ActiveVaultRow): vault is ActiveVaultRow & { claimableBalanceId: string } =>
+        Boolean(vault.claimableBalanceId),
+    );
     const unmatchedDbVaults = activeWithChainId.filter(
-      (vault: ActiveVaultRow) => vault.claimableBalanceId && !chainById.has(vault.claimableBalanceId),
+      (vault) => !chainById.has(vault.claimableBalanceId),
     ).length;
 
-    const dbChainIds = new Set(
-      activeVaults
-        .map((vault: ActiveVaultRow) => vault.claimableBalanceId)
-        .filter((id: string | null): id is string => Boolean(id)),
-    );
+    const amountMismatches = activeWithChainId.filter((vault) => {
+      const chainAmount = chainById.get(vault.claimableBalanceId);
+      if (chainAmount === undefined) return false;
+      return Math.abs(chainAmount - decimalToNumber(vault.principal)) > AMOUNT_TOLERANCE;
+    }).length;
+
+    const dbChainIds = new Set(activeWithChainId.map((vault) => vault.claimableBalanceId));
     const unmatchedChainBalances = chainBalances.filter((balance) => !dbChainIds.has(balance.id)).length;
 
     let status: TransparencyView['reconciliation']['status'] = 'matched';
-    let message = 'Active vault locks match on-chain claimable balances.';
+    let message = 'Active vault locks match the recorded on-chain balances.';
 
-    if (verifiedLocks < activeVaults.length) {
+    if (unmatchedDbVaults > 0 || unmatchedChainBalances > 0 || amountMismatches > 0) {
+      status = 'mismatch';
+      message = 'A custody mismatch requires review. Pending work does not hide a confirmed mismatch.';
+    } else if (verifiedLocks < activeVaults.length) {
       status = 'pending';
       message = `${activeVaults.length - verifiedLocks} active vault${activeVaults.length - verifiedLocks === 1 ? '' : 's'} still settling on-chain.`;
-    } else if (unmatchedDbVaults > 0 || unmatchedChainBalances > 0) {
-      status = 'mismatch';
-      message = 'A reconciliation review is needed — contact support if this persists.';
     }
 
     return {
@@ -167,6 +180,7 @@ export class TransparencyService {
         message,
         unmatchedDbVaults,
         unmatchedChainBalances,
+        amountMismatches,
       },
     };
   }
