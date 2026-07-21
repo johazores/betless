@@ -1,10 +1,21 @@
-/** One-shot smoke test for the Stellar settlement layer (testnet). */
+/** One-shot smoke test for the current Stellar settlement layer on testnet. */
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 import { prisma } from '../lib/prisma';
 import { StellarService } from '../services/stellar-service';
 import { addMonths } from '../lib/dates';
+import { buildTransactionExplorerUrl, getStellarNetwork } from '../lib/stellar-config';
+
+const outputPath = resolve(process.env.INSTAWARDS_RECEIPT_OUTPUT ?? 'artifacts/betless-baseline-receipts.json');
+const preserveRows = process.env.PRESERVE_STELLAR_SMOKE === '1';
 
 async function main() {
-  console.log('Stellar enabled:', StellarService.isEnabled());
+  if (!StellarService.isEnabled()) {
+    throw new Error('Stellar settlement is not configured.');
+  }
+  if (getStellarNetwork() !== 'TESTNET') {
+    throw new Error('The evidence smoke test is restricted to Stellar testnet.');
+  }
 
   const user = await prisma.appUser.upsert({
     where: { clerkUserId: 'smoke-test-user' },
@@ -31,29 +42,57 @@ async function main() {
     where: { id: vault.id },
     include: { stellarOperations: true },
   });
-  console.log('claimableBalanceId:', afterLock.claimableBalanceId);
-  for (const op of afterLock.stellarOperations) {
-    console.log(`  op ${op.kind}: ${op.state} tx=${op.txHash} err=${op.errorMessage ?? '-'}`);
+
+  if (!afterLock.claimableBalanceId) throw new Error('Lock did not produce a claimable-balance ID.');
+  const lock = afterLock.stellarOperations.find((operation) => operation.kind === 'LOCK');
+  if (!lock?.txHash || lock.state !== 'CONFIRMED') {
+    throw new Error(`Lock did not confirm: ${lock?.state ?? 'missing operation'}`);
   }
 
-  if (!afterLock.claimableBalanceId) throw new Error('Lock failed');
-
-  console.log('Releasing early (ops claims + settles back to treasury)...');
+  console.log('Releasing early through the current ops claimant...');
   await StellarService.releaseVaultPrincipal(afterLock, 'CLAIM_EARLY');
 
   const afterRelease = await prisma.vault.findUniqueOrThrow({
     where: { id: vault.id },
-    include: { stellarOperations: true },
+    include: { stellarOperations: { orderBy: { createdAt: 'asc' } } },
   });
-  for (const op of afterRelease.stellarOperations) {
-    console.log(`  op ${op.kind}: ${op.state} tx=${op.txHash} err=${op.errorMessage ?? '-'}`);
+  const release = afterRelease.stellarOperations.find((operation) => operation.kind === 'CLAIM_EARLY');
+  if (!release?.txHash || release.state !== 'CONFIRMED') {
+    throw new Error(`Early release did not confirm: ${release?.state ?? 'missing operation'}`);
   }
 
-  console.log('View:', JSON.stringify(StellarService.toStellarView(afterRelease), null, 2));
+  const manifest = {
+    project: 'Betless',
+    purpose: 'Current single-key baseline before the proposed multisignature sprint',
+    network: 'Stellar testnet',
+    generatedAt: new Date().toISOString(),
+    vaultId: vault.id,
+    claimableBalanceId: afterRelease.claimableBalanceId,
+    receipts: afterRelease.stellarOperations
+      .filter((operation) => operation.txHash)
+      .map((operation) => ({
+        kind: operation.kind,
+        state: operation.state,
+        transactionHash: operation.txHash,
+        explorerUrl: buildTransactionExplorerUrl(operation.txHash!),
+        claimableBalanceId: operation.claimableBalanceId,
+        createdAt: operation.createdAt.toISOString(),
+      })),
+  };
 
-  await prisma.vault.delete({ where: { id: vault.id } });
-  await prisma.appUser.delete({ where: { id: user.id } });
-  console.log('Cleaned up. Smoke test passed.');
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  console.log('Receipt manifest:', outputPath);
+
+  if (preserveRows) {
+    console.log('Evidence rows preserved:', vault.id);
+  } else {
+    await prisma.vault.delete({ where: { id: vault.id } });
+    await prisma.appUser.delete({ where: { id: user.id } });
+    console.log('Temporary database rows removed. On-chain receipts remain public.');
+  }
+
+  console.log('Smoke test passed.');
 }
 
 main()
